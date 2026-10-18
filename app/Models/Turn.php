@@ -9,4 +9,14 @@ class Turn extends Model
 {
     /** @use HasFactory<\Database\Factories\TurnFactory> */
     use HasFactory;
+
+    protected $fillable = ['trainer_id', 'client_id', 'hora', 'dia'];
+
+    public function trainer(){
+        return $this->belongsTo(Trainer::class);
+    }
+
+    public function client(){
+        return $this->belongsTo(Client::class);
+    }
 }

@@ -9,4 +9,10 @@ class Plan extends Model
 {
     /** @use HasFactory<\Database\Factories\PlanFactory> */
     use HasFactory;
+
+    protected $fillable = ['precio', 'nombre', 'descripcion', 'duracion'];
+
+    public function subscriptions(){
+        return $this->hasMany(Subscription::class);
+    }
 }
