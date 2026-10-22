@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Trainer;
+use App\Models\Employee;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +19,15 @@ class TrainerFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'employee_id' => Employee::factory(),
+            'especialidad' => fake()->randomElement([
+                'Musculación y Hipertrofia',
+                'Entrenamiento Funcional',
+                'CrossFit',
+                'Ciclismo Indoor',
+                'Rehabilitación y Postural',
+                'Calistenia',
+            ]),
         ];
     }
 }
