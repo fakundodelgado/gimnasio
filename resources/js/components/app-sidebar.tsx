@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
+//import { useAuth } from '@/hooks/use-auth';
 
 const mainNavItems: NavItem[] = [
     {
