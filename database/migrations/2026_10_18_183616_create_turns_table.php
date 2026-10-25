@@ -17,6 +17,7 @@ return new class extends Migration
             $table->time('hora');
             $table->foreignId('trainer_id')->constrained()->onDelete('restrict');
             $table->foreignId('client_id')->constrained()->onDelete('restrict');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nombre')->unique();
             $table->text('descripcion')->nullable();
             $table->integer('duracion')->default(30);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

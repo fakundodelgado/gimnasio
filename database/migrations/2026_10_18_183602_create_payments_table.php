@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('subscription_id')->constrained()->onDelete('restrict');
             $table->foreignId('employee_id')->constrained()->onDelete('restrict');
             $table->string('metodo_pago');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

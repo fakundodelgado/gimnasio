@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained()->onDelete('cascade');
             $table->string('especialidad');
             // Podria agregar sueldo? aunque no es lo principal en este proyecto.
+            $table->softDeletes();
             $table->timestamps();
         });
     }

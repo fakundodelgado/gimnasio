@@ -15,14 +15,19 @@ class PaymentSeeder extends Seeder
      */
     public function run(): void
     {
-        $suscripciones = Subscription::all();
+        $suscripcionesPagas = Subscription::whereIn('estado', ['activa', 'vencida'])->get();
         $empleados = Employee::all();
 
-        if ($empleados->isNotEmpty() && $suscripciones->isNotEmpty()) {
-            Payment::factory(20)->create([
-                'subscription_id' => fn() => $suscripciones->random()->id,
-                'employee_id'     => fn() => $empleados->random()->id,
-            ]);
+        if ($empleados->isNotEmpty() && $suscripcionesPagas->isNotEmpty()) {
+            $suscripcionesPagas->each(function ($suscripcion) use ($empleados) {
+                Payment::factory()->create([
+                    'subscription_id' => $suscripcion->id,
+                    'employee_id' => $empleados->random()->id,
+                    // Esto me ayuda a generar fechas de pagos adecuadas, sino me tiraba cualquier cosa sin sentido.
+                    // Por ejemplo un pago con fecha actual y una suscripcion de hace meses por ejemplo.
+                    'created_at' => $suscripcion->fecha_inicio,
+                ]);
+            });
         }
     }
 }

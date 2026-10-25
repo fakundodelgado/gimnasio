@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('fecha_inicio');
             $table->date('fecha_fin');
             $table->enum('estado', ['activa', 'vencida', 'cancelada'])->default('activa');
+            $table->softDeletes();
             $table->timestamps();
         });
     }
