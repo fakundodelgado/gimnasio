@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('precio',10,2); //es como el numeric en postgresql
             $table->date('fecha_inicio');
             $table->date('fecha_fin');
-            $table->enum('estado', ['activa', 'vencida', 'cancelada'])->default('activa');
+            $table->enum('estado', ['activa', 'vencida', 'cancelada', 'pendiente'])->default('activa');
             $table->softDeletes();
             $table->timestamps();
         });
