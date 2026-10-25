@@ -31,7 +31,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $updated_at
  */
 
-#[Fillable(['nombre', 'apellido', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -53,14 +53,14 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
-    public function client(){
+    public function client()
+    {
         return $this->hasOne(Client::class);
     }
 
-    public function employee(){
+    public function employee()
+    {
         return $this->hasOne(Employee::class);
     }
-
-
 
 }

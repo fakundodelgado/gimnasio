@@ -131,8 +131,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $superUser = User::firstOrCreate(
             ['email' => 'super@gimnasio.com'],
             [
-                'nombre'   => 'Super',
-                'apellido' => 'Admin',
+                'name' => 'Super Admin',
                 'password' => bcrypt('12345678'),
             ]
         );
@@ -142,8 +141,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminUser = User::firstOrCreate(
             ['email' => 'admin@gimnasio.com'],
             [
-                'nombre'   => 'Administrador',
-                'apellido' => 'General',
+                'name'   => 'Administrador General',
                 'password' => bcrypt('12345678'),
             ]
         );
@@ -153,8 +151,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $employeeUser = User::firstOrCreate(
             ['email' => 'empleado@gimnasio.com'],
             [
-                'nombre'   => 'Laura',
-                'apellido' => 'Gómez',
+                'name'   => 'Laura Gómez',
                 'password' => bcrypt('12345678'),
             ]
         );
@@ -172,8 +169,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $trainerUser = User::firstOrCreate(
             ['email' => 'trainer@gimnasio.com'],
             [
-                'nombre'   => 'Carlos',
-                'apellido' => 'Fitness',
+                'name'   => 'Carlos Fitness',
                 'password' => bcrypt('12345678'),
             ]
         );
@@ -198,8 +194,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $clientUser = User::firstOrCreate(
             ['email' => 'cliente@gimnasio.com'],
             [
-                'nombre'   => 'Juan',
-                'apellido' => 'Pérez',
+                'name'   => 'Juan Pérez',
                 'password' => bcrypt('12345678'),
             ]
         );

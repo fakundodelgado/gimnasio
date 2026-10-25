@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 //use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule; 
 use Override;
 
 class StorePlanRequest extends FormRequest
@@ -24,7 +25,8 @@ class StorePlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre' => ['required', 'string', 'max:255' ,'unique:plans,nombre',],
+            // Lo que hace el whereNull es permitir varias filas inactivas en la BD con el mismo nombre, pero nunca dos activas con el mismo nombre.
+            'nombre' => ['required', 'string', 'max:255' , Rule::unique('plans', 'nombre')->whereNull('deleted_at'),],
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0'],
             'duracion' => ['required', 'integer', 'min:30'],

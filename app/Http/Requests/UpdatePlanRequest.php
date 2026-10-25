@@ -29,7 +29,7 @@ class UpdatePlanRequest extends FormRequest
         $planId = $this->route('plan')?->id ?? $this->route('plan');
     
         return [
-            'nombre' => ['required', 'string', 'max:255' , Rule::unique('plans', 'nombre')->ignore($planId),],
+            'nombre' => ['required', 'string', 'max:255' , Rule::unique('plans', 'nombre')->whereNull('deleted_at')->ignore($planId),],
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0'],
             'duracion' => ['required', 'integer', 'min:30'],

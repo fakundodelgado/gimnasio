@@ -20,7 +20,7 @@ class PlanController extends Controller
         Gate::authorize('viewAny', Plan::class);
 
         // Por ahora devuelvo todo, pero en un futuro deberia de filtrar
-        $planes = Plan::all();
+        $planes = Plan::withCount('subscriptions')->latest()->get();
 
         return Inertia::render('Planes/Index', ['planes' => $planes]);
     }
@@ -57,6 +57,8 @@ class PlanController extends Controller
     public function show(Plan $plan)
     {
         Gate::authorize('view', $plan);
+
+        $plan->loadCount('subscriptions');
 
         return Inertia::render('Planes/Show', ['plan' => $plan]);
     }
