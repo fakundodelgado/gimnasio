@@ -33,7 +33,6 @@ class UpdatePlanRequest extends FormRequest
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0'],
             'duracion' => ['required', 'integer', 'min:30'],
-
         ];
 
     }
