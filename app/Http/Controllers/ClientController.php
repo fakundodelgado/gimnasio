@@ -105,7 +105,7 @@ class ClientController extends Controller
 
         Gate::authorize('delete', $cliente); 
 
-        DB::transaction(function () use ($cliente) {
+        DB::transaction(function () use ($cliente){
             $user = $cliente->user;
 
             $cliente->delete();
