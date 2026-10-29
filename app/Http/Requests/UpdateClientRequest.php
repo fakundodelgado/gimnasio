@@ -14,7 +14,7 @@ class UpdateClientRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /*
@@ -24,7 +24,7 @@ class UpdateClientRequest extends FormRequest
      */
     public function rules(): array
     {
-        $userId = $this->route('client')?->user_id;
+        $userId = $this->route('cliente')?->user_id;
 
         return array_merge(UserService::rules($userId), [
             'telefono' => ['nullable', 'string', 'digits_between:8,15'],
