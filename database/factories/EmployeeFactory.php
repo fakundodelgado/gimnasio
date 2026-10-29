@@ -20,7 +20,7 @@ class EmployeeFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'cuil' => fake()->unique()->numerify("##-########-#"),
+            'cuil' => fake()->unique()->numerify("###########"),
             'telefono' => fake()->numerify("##########"),
         ];
     }

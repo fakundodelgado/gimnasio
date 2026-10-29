@@ -102,17 +102,18 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Employee $empleado)
+    public function destroy(Employee $empleado, UserService $userService, EmployeeService $employeeService)
     {
         
         Gate::authorize('delete', $empleado);
 
-        DB::transaction(function () use ($empleado){
+        DB::transaction(function () use ($empleado, $employeeService, $userService){
 
             $user = $empleado->user;
 
-            $empleado->delete();
-            $user?->delete();
+            $employeeService->deleteEmployee($empleado);
+            
+            $userService->deleteUser($user);
 
         });
 

@@ -31,9 +31,9 @@ class EmployeeService{
     {
         return [
             'required' => 'El campo :attribute es obligatrio.',
-            'unique' => 'El :attribute ingresado ya le pertenece a otro empleado.',
+            'cuil.unique' => 'El :attribute ingresado ya le pertenece a otro empleado.',
             'digits' => 'El campo :attribute solo puede contener digitos.',
-            'digits_between' => 'El campo :attribute debe contener como minimo 8 digitos.'
+            'telefono.digits_between' => 'El campo :attribute debe contener como minimo 8 digitos.'
         ];
     }
 
@@ -56,6 +56,37 @@ class EmployeeService{
 
         return $empleado;
 
+    }
+
+    public function deleteEmployee(Employee $employee): bool
+    {
+    // Mantiene el CUIL original al final para poder recuperarlo luego
+    $employee->update([
+        'cuil' => 'deleted_' . time() . '_' . $employee->cuil,
+    ]);
+
+    return $employee->delete();
+    }
+
+    public function restoreEmployee(Employee $employee): Employee
+    {
+    // Extrae el CUIL original removiendo 'deleted_TIMESTAMP_'
+    $cuilOriginal = preg_replace('/^deleted_\d+_/', '', $employee->cuil);
+
+    // Verifica que no esté ocupado por un empleado activo
+    $cuilOcupado = Employee::where('cuil', $cuilOriginal)
+        ->whereNull('deleted_at')
+        ->exists();
+
+    if ($cuilOcupado) {
+        throw new \Exception("No se puede restaurar: el CUIL {$cuilOriginal} pertenece a un empleado activo.");
+    }
+
+    $employee->cuil = $cuilOriginal;
+    $employee->save();
+    $employee->restore();
+
+    return $employee;
     }
 
 }

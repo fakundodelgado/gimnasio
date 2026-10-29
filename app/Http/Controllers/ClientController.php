@@ -100,16 +100,19 @@ class ClientController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Client $cliente)
+    public function destroy(Client $cliente, UserService $userService)
     {
 
         Gate::authorize('delete', $cliente); 
 
-        DB::transaction(function () use ($cliente){
+        DB::transaction(function () use ($cliente, $userService){
+            
             $user = $cliente->user;
 
             $cliente->delete();
-            $user?->delete();
+            
+            $userService->deleteUser($user);
+
         });
 
         return redirect()->route('clientes.index')->with('success', 'Cliente "eliminado" correctamente.');

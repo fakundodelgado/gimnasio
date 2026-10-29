@@ -40,7 +40,7 @@ class UserService
     {
         return [
             'required' => 'el campo :attribute es obligatorio.',
-            'unique' => 'el :attribute ingresado pertenece a otro usuario.',
+            'email.unique' => 'el :attribute ingresado pertenece a otro usuario.',
         ];  
     }
 
@@ -72,4 +72,37 @@ class UserService
 
         return $user;
     }
+
+    public function deleteUser(User $user): bool
+    {
+        // 1. Anonimizar el email para liberar la restricción UNIQUE de la BD
+        $user->update([
+            'email' => 'deleted_' . time() . '_' . $user->email,
+        ]);
+
+        // 2. Ejecutar el Soft Delete del usuario
+        return $user->delete();
+    }
+
+    // Restaura de ser necesario
+    public function restoreUser(User $user): User
+    {
+        //Reconstruir el email 
+        $emailOriginal = preg_replace('/^deleted_\d+_/', '', $user->email);
+
+        //Verificar si el correo original fue ocupado por otro usuario activo
+        $emailOcupado = User::where('email', $emailOriginal)->whereNull('deleted_at')->exists();
+
+        if ($emailOcupado) {
+            throw new \Exception("No se puede restaurar: el correo {$emailOriginal} ya está siendo utilizado por otro usuario activo.");
+        }
+
+        $user->email = $emailOriginal;
+        $user->save();
+
+        $user->restore();
+
+        return $user;
+    }
+    
 }
