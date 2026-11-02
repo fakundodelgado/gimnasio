@@ -9,21 +9,94 @@ use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         // Se debe controlar que el cliente solo pueda ver sus suscripciones...
         Gate::authorize('viewAny', Subscription::class);
 
-        $suscripciones = Subscription::with(['client.user', 'plan'])->latest()->get();
+        // Parametros por lo cuales voy a filtrar
+        $buscar = trim($request->input('buscar', ''));
+        $estado = $request->input('estado', '');
+        $orden = $request->input('orden', 'fecha_inicio');
+        $direccion = $request->input('direccion', 'desc');
+        $porPagina = (int) $request->input('por_pagina', 5);
+        $papelera = $request->input('papelera', 'sin_eliminados');
 
-        return Inertia::render('Suscripciones/Index', ['suscripciones' => $suscripciones]);
+        // Compruebo que los valores sean validos
+        $camposPermitidos = ['id', 'fecha_inicio', 'fecha_fin', 'precio', 'estado'];
+        if (!in_array($orden, $camposPermitidos, true)) {
+            $orden = 'fecha_inicio';
+        }
 
+        if (!in_array($direccion, ['asc', 'desc'], true)) {
+            $direccion = 'desc';
+        }
+
+        if (!in_array($porPagina, [5, 10, 20], true)) {
+            $porPagina = 5;
+        }
+
+        // Lo que fue borrado de forma logica solo estara disponible para el admin o super(administrador)
+        $user = $request->user();
+
+        $esAdmin = $user->hasRole(['admin', 'super']); // Ve todo incluso las que sufrieron un softdelete
+        $esCliente = $user->hasRole('client'); // Solo ve sus suscripciones
+
+        if (!$esAdmin) {
+            $papelera = 'sin_eliminados';
+        }
+
+        $suscripciones = Subscription::with(['client.user', 'plan'])
+            // Papelera 
+            ->when($esAdmin && $papelera === 'solo_eliminados', function ($query) {
+                $query->onlyTrashed();
+            })
+            ->when($esAdmin && $papelera === 'todos', function ($query) {
+                $query->withTrashed();
+            })
+            // Si es cliente, solo ve sus propias suscripciones
+            ->when($esCliente && $user->client, function ($query) use ($user) {
+                $query->where('client_id', $user->client->id);
+            })
+            // Búsqueda por Nombre de Cliente o N° Suscripción (ID)
+            ->when($buscar !== '', function ($query) use ($buscar) {
+                $query->where(function ($q) use ($buscar) {
+                    if (is_numeric($buscar)) {
+                        $q->where('id', $buscar);
+                    }
+                    $q->orWhereHas('client.user', function ($userQuery) use ($buscar) {
+                        $userQuery->where('name', 'like', "%{$buscar}%");
+                    });
+                });
+            })
+            // Filtro por Estado
+            ->when($request->filled('estado'), function ($query) use ($estado) {
+                $query->where('estado', $estado);
+            })
+            ->orderBy($orden, $direccion)
+            ->paginate($porPagina)
+            ->withQueryString();
+
+        // Le paso el resultado de la consulta y todos los filtros
+        return Inertia::render('Suscripciones/Index', [
+            'suscripciones' => $suscripciones,
+            'filtros' => [
+                'buscar'     => $buscar,
+                'estado'     => $estado,
+                'orden'      => $orden,
+                'direccion'  => $direccion,
+                'por_pagina' => $porPagina,
+                'papelera'   => $papelera,
+            ],
+            'esAdmin' => $esAdmin,
+        ]);
     }
 
     /**
@@ -51,7 +124,6 @@ class SubscriptionController extends Controller
         Subscription::create($request->validated());
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion creada correctamente.');
-
     }
 
     /**
