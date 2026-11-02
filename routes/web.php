@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\TrainerController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -20,6 +21,8 @@ Route::middleware(['auth'])->group(function () {
     ->parameters(['entrenadores' => 'entrenador']);
     Route::resource('suscripciones', SubscriptionController::class)
     ->parameters(['suscripciones' => 'suscripcion']);
+    Route::resource('pagos', PaymentController::class);
+    //->parameters(['pagos' => 'pago']);
 });
 
 require __DIR__.'/settings.php';
