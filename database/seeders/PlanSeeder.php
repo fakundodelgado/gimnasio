@@ -13,22 +13,18 @@ class PlanSeeder extends Seeder
      */
     public function run(): void
     {
-        Plan::firstOrCreate(['nombre' => 'Pase Libre Mensual'], [
+        Plan::firstOrCreate(['nombre' => 'Pase Basico'], [
             'precio' => 25000,
             'descripcion' => fake()->paragraph(),
             'duracion' => 30,
+            'incluye_entrenador' => false,
         ]);
 
-        Plan::firstOrCreate(['nombre' => 'Plan Trimestral'], [
-            'precio' => 35000,
-            'descripcion' => fake()->paragraph(),
-            'duracion' => 90,
-        ]);
-
-        Plan::firstOrCreate(['nombre' => 'Plan Anual Premium'], [
+        Plan::firstOrCreate(['nombre' => 'Plan Premium'], [
             'precio' => 50000,
             'descripcion' => fake()->paragraph(),
-            'duracion' => 360,
+            'duracion' => 30,
+            'incluye_entrenador' => true,
         ]);
     }
 }

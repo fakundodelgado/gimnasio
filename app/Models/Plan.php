@@ -11,9 +11,15 @@ class Plan extends Model
     /** @use HasFactory<\Database\Factories\PlanFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['precio', 'nombre', 'descripcion', 'duracion'];
+    protected $fillable = ['precio', 'nombre', 'descripcion', 'duracion', 'incluye_entrenador',];
 
-    public function subscriptions(){
+    protected $casts = [
+        'incluye_entrenador' => 'boolean',
+        'precio'             => 'decimal:2',
+    ];
+
+    public function subscriptions()
+    {
         return $this->hasMany(Subscription::class);
     }
 }

@@ -25,11 +25,10 @@ class SubscriptionFactory extends Factory
         return [
             'client_id' => Client::factory(),
             'plan_id' => $plan,
-            'precio' => fake()->randomFloat(2,5000,50000),
+            'precio' => fake()->randomFloat(2, 5000, 50000),
             'fecha_inicio' => $fecha_inicio->format('Y-m-d'), //Year-month-day
             'fecha_fin' => (clone $fecha_inicio)->modify('+30 days')->format('Y-m-d'),
-            'estado' => fake()->randomElement(['activa', 'vencida', 'cancelada']),
-
+            'estado' => fake()->randomElement(['activa', 'vencida', 'cancelada', 'pendiente']),
         ];
     }
 
@@ -62,7 +61,7 @@ class SubscriptionFactory extends Factory
 
     public function cancelada(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'estado' => 'cancelada',
         ]);
     }

@@ -9,6 +9,7 @@ use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
@@ -121,7 +122,19 @@ class SubscriptionController extends Controller
 
         Gate::authorize('create', Subscription::class);
 
-        Subscription::create($request->validated());
+        DB::transaction(function () use ($request) {
+            // 1. Crear la suscripción
+            Subscription::create($request->validated());
+
+            // 2. Cargar el plan asignado
+            $plan = Plan::findOrFail($request->plan_id);
+
+            // 3. Si el nuevo plan NO incluye entrenador, limpiamos la asignación del cliente
+            if (!$plan->incluye_entrenador) {
+                $client = Client::findOrFail($request->client_id);
+                $client->update(['trainer_id' => null]);
+            }
+        });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion creada correctamente.');
     }
@@ -161,7 +174,19 @@ class SubscriptionController extends Controller
     {
         Gate::authorize('update', $suscripcion);
 
-        $suscripcion->update($request->validated());
+        DB::transaction(function () use ($request, $suscripcion) {
+            // 1. Actualizar la suscripción
+            $suscripcion->update($request->validated());
+
+            // 2. Obtener el cliente y evaluar su nueva suscripción activa
+            $client = $suscripcion->client;
+            $planActivo = $client->fresh()->activeSubscription?->plan;
+
+            // 3. Si el nuevo plan no incluye entrenador (o venció/no existe), reseteamos
+            if (!$planActivo || !$planActivo->incluye_entrenador) {
+                $client->update(['trainer_id' => null]);
+            }
+        });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscipcion actualizada correctamente.');
     }
@@ -173,7 +198,20 @@ class SubscriptionController extends Controller
     {
         Gate::authorize('delete', $suscripcion);
 
-        $suscripcion->delete();
+        DB::transaction(function () use ($suscripcion) {
+            $client = $suscripcion->client;
+
+            // 1. Eliminar (o soft delete) la suscripción
+            $suscripcion->delete();
+
+            // 2. Verificar si al eliminarla le queda alguna OTRA suscripción activa vigente
+            $planActivo = $client->fresh()->activeSubscription?->plan;
+
+            // Si ya no tiene plan activo o el que tiene no incluye entrenador, limpiamos
+            if (!$planActivo || !$planActivo->incluye_entrenador) {
+                $client->update(['trainer_id' => null]);
+            }
+        });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion eliminada correctamente.');
     }

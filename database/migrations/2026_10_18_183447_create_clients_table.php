@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('telefono')->nullable();
+            $table->foreignId('trainer_id')->nullable()->constrained('trainers')->onDelete('set null'); // Puede o no tener un entrenador...
             $table->softDeletes();
             $table->timestamps();
         });

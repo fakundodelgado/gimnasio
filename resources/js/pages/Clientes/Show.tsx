@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React from "react";
+import { Head, Link } from "@inertiajs/react";
 
 interface User {
     id: number;
@@ -7,11 +7,31 @@ interface User {
     email: string;
 }
 
+interface Plan {
+    id: number;
+    nombre: string;
+    incluye_entrenador: boolean;
+}
+
+interface ActiveSubscription {
+    id: number;
+    plan?: Plan;
+}
+
+interface Trainer {
+    id: number;
+    employee?: {
+        user?: User;
+    };
+}
+
 interface Client {
     id: number;
     user_id: number;
     telefono: string | null;
     user: User;
+    active_subscription?: ActiveSubscription | null;
+    trainer?: Trainer | null;
 }
 
 interface ShowProps {
@@ -19,9 +39,12 @@ interface ShowProps {
 }
 
 export default function Show({ cliente }: ShowProps) {
+    const planActivo = cliente?.active_subscription?.plan;
+    const entrenador = cliente?.trainer?.employee?.user;
+
     return (
         <>
-            <Head title={`Cliente: ${cliente?.user?.name || ''}`} />
+            <Head title={`Cliente: ${cliente?.user?.name || ""}`} />
 
             <div className="max-w-2xl mx-auto p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -40,7 +63,7 @@ export default function Show({ cliente }: ShowProps) {
                             Nombre Completo
                         </h2>
                         <p className="text-lg font-medium text-gray-900 mt-1">
-                            {cliente?.user?.name || 'No especificado'}
+                            {cliente?.user?.name || "No especificado"}
                         </p>
                     </div>
 
@@ -50,7 +73,8 @@ export default function Show({ cliente }: ShowProps) {
                                 Correo Electrónico
                             </h2>
                             <p className="text-base font-semibold text-gray-900 mt-1">
-                                {cliente?.user?.email || 'Sin correo registrado'}
+                                {cliente?.user?.email ||
+                                    "Sin correo registrado"}
                             </p>
                         </div>
 
@@ -59,7 +83,28 @@ export default function Show({ cliente }: ShowProps) {
                                 Teléfono de Contacto
                             </h2>
                             <p className="text-base font-semibold text-gray-900 mt-1">
-                                {cliente?.telefono || 'Sin registrar'}
+                                {cliente?.telefono || "Sin registrar"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Bloque de Información de Membresía y Entrenador */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-md border border-blue-100">
+                        <div>
+                            <h2 className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                                Plan Activo
+                            </h2>
+                            <p className="text-base font-bold text-gray-900 mt-1">
+                                {planActivo?.nombre || "Sin suscripción activa"}
+                            </p>
+                        </div>
+
+                        <div>
+                            <h2 className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                                Entrenador Personal
+                            </h2>
+                            <p className="text-base font-bold text-gray-900 mt-1">
+                                {entrenador?.name || "Sin entrenador asignado"}
                             </p>
                         </div>
                     </div>

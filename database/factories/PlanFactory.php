@@ -28,6 +28,7 @@ class PlanFactory extends Factory
             ]),
             'descripcion' => fake()->paragraph(),
             'duracion' => fake()->randomElement([30, 90, 180]),
+            'incluye_entrenador' => fake()->boolean(),
         ];
     }
 
@@ -35,7 +36,7 @@ class PlanFactory extends Factory
 
     public function mensual(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'duracion' => 30,
         ]);
     }

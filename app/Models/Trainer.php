@@ -13,11 +13,13 @@ class Trainer extends Model
 
     protected $fillable = ['employee_id', 'especialidad'];
 
-    public function employee(){
+    public function employee()
+    {
         return $this->belongsTo(Employee::class);
     }
 
-    public function turns(){
-        return $this->hasMany(Turn::class);
+    public function clients()
+    {
+        return $this->hasMany(Client::class);
     }
 }

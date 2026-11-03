@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 //use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 // uso este en particular porque es el que vimos en clase, aunque podria usar el primero que esta comentado.
-use Illuminate\Validation\Rule; 
+use Illuminate\Validation\Rule;
 use Override;
 
 class UpdatePlanRequest extends FormRequest
@@ -27,14 +27,14 @@ class UpdatePlanRequest extends FormRequest
     {
 
         $planId = $this->route('plan')?->id ?? $this->route('plan');
-    
+
         return [
-            'nombre' => ['required', 'string', 'max:255' , Rule::unique('plans', 'nombre')->whereNull('deleted_at')->ignore($planId),],
+            'nombre' => ['required', 'string', 'max:255', Rule::unique('plans', 'nombre')->whereNull('deleted_at')->ignore($planId),],
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0'],
             'duracion' => ['required', 'integer', 'min:30'],
+            'incluye_entrenador' => ['required', 'boolean'],
         ];
-
     }
 
     #[Override]
@@ -45,7 +45,7 @@ class UpdatePlanRequest extends FormRequest
             'descripcion' => 'descripcion del plan',
             'precio' => 'precio del plan',
             'duracion' => 'duracion del plan',
-        ];  
+        ];
     }
 
     #[Override]
@@ -56,6 +56,6 @@ class UpdatePlanRequest extends FormRequest
             'unique' => 'el :attribute ingresado pertenece a otro plan.',
             'min' => 'el campo :attribute no puede ser menor a :min.',
             'max' => 'el campo :attribute no puede ser mayor a :max',
-        ];  
+        ];
     }
 }

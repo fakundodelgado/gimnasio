@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 //use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule; 
+use Illuminate\Validation\Rule;
 use Override;
 
 class StorePlanRequest extends FormRequest
@@ -26,11 +26,11 @@ class StorePlanRequest extends FormRequest
     {
         return [
             // Lo que hace el whereNull es permitir varias filas inactivas en la BD con el mismo nombre, pero nunca dos activas con el mismo nombre.
-            'nombre' => ['required', 'string', 'max:255' , Rule::unique('plans', 'nombre')->whereNull('deleted_at'),],
+            'nombre' => ['required', 'string', 'max:255', Rule::unique('plans', 'nombre')->whereNull('deleted_at'),],
             'descripcion' => ['nullable', 'string'],
             'precio' => ['required', 'numeric', 'min:0'],
             'duracion' => ['required', 'integer', 'min:30'],
-
+            'incluye_entrenador' => ['required', 'boolean'],
         ];
     }
 
@@ -42,7 +42,7 @@ class StorePlanRequest extends FormRequest
             'descripcion' => 'descripcion del plan',
             'precio' => 'precio del plan',
             'duracion' => 'duracion del plan',
-        ];  
+        ];
     }
 
     #[Override]
@@ -53,7 +53,6 @@ class StorePlanRequest extends FormRequest
             'unique' => 'el :attribute ingresado pertenece a otro plan.',
             'min' => 'el campo :attribute no puede ser menor a :min.',
             'max' => 'el campo :attribute no puede ser mayor a :max',
-        ];  
+        ];
     }
-
 }

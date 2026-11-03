@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
-            $table->decimal('precio',10,2);
+            $table->decimal('precio', 10, 2);
             $table->string('nombre'); // Para poder implementar el softDelete
             $table->text('descripcion')->nullable();
             $table->integer('duracion')->default(30);
+            $table->boolean('incluye_entrenador')->default(false); // Determina si el cliente tiene acceso a un entrenador o no...
             $table->softDeletes();
             $table->timestamps();
         });

@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 //use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest; 
+use Illuminate\Foundation\Http\FormRequest;
 use App\Services\UserService;
 use Override;
 
@@ -27,6 +27,7 @@ class StoreClientRequest extends FormRequest
     {
         return array_merge(UserService::rules(), [
             'telefono' => ['nullable', 'string', 'digits_between:8,15'],
+            'trainer_id' => ['nullable', 'exists:trainers,id'],
         ]);
     }
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head, Link, useForm } from '@inertiajs/react';
+import React from "react";
+import { Head, Link, useForm } from "@inertiajs/react";
 
 interface Plan {
     id: number;
@@ -7,6 +7,7 @@ interface Plan {
     descripcion: string | null;
     precio: number;
     duracion: number;
+    incluye_entrenador: boolean;
 }
 
 interface EditProps {
@@ -15,10 +16,11 @@ interface EditProps {
 
 export default function Edit({ plan }: EditProps) {
     const { data, setData, put, processing, errors } = useForm({
-        nombre: plan.nombre || '',
-        descripcion: plan.descripcion || '',
-        precio: plan.precio || '',
+        nombre: plan.nombre || "",
+        descripcion: plan.descripcion || "",
+        precio: plan.precio || "",
         duracion: plan.duracion || 30,
+        incluye_entrenador: Boolean(plan.incluye_entrenador),
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +43,10 @@ export default function Edit({ plan }: EditProps) {
                     </Link>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white p-6 shadow rounded-lg space-y-4">
+                <form
+                    onSubmit={handleSubmit}
+                    className="bg-white p-6 shadow rounded-lg space-y-4"
+                >
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Nombre del Plan
@@ -49,11 +54,13 @@ export default function Edit({ plan }: EditProps) {
                         <input
                             type="text"
                             value={data.nombre}
-                            onChange={(e) => setData('nombre', e.target.value)}
+                            onChange={(e) => setData("nombre", e.target.value)}
                             className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                         {errors.nombre && (
-                            <p className="text-red-600 text-sm mt-1">{errors.nombre}</p>
+                            <p className="text-red-600 text-sm mt-1">
+                                {errors.nombre}
+                            </p>
                         )}
                     </div>
 
@@ -63,12 +70,16 @@ export default function Edit({ plan }: EditProps) {
                         </label>
                         <textarea
                             value={data.descripcion}
-                            onChange={(e) => setData('descripcion', e.target.value)}
+                            onChange={(e) =>
+                                setData("descripcion", e.target.value)
+                            }
                             className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             rows={3}
                         />
                         {errors.descripcion && (
-                            <p className="text-red-600 text-sm mt-1">{errors.descripcion}</p>
+                            <p className="text-red-600 text-sm mt-1">
+                                {errors.descripcion}
+                            </p>
                         )}
                     </div>
 
@@ -81,11 +92,15 @@ export default function Edit({ plan }: EditProps) {
                                 type="number"
                                 step="0.01"
                                 value={data.precio}
-                                onChange={(e) => setData('precio', e.target.value)}
+                                onChange={(e) =>
+                                    setData("precio", e.target.value)
+                                }
                                 className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
                             {errors.precio && (
-                                <p className="text-red-600 text-sm mt-1">{errors.precio}</p>
+                                <p className="text-red-600 text-sm mt-1">
+                                    {errors.precio}
+                                </p>
                             )}
                         </div>
 
@@ -96,13 +111,46 @@ export default function Edit({ plan }: EditProps) {
                             <input
                                 type="number"
                                 value={data.duracion}
-                                onChange={(e) => setData('duracion', parseInt(e.target.value) || 0)}
+                                onChange={(e) =>
+                                    setData(
+                                        "duracion",
+                                        parseInt(e.target.value) || 0,
+                                    )
+                                }
                                 className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                             />
                             {errors.duracion && (
-                                <p className="text-red-600 text-sm mt-1">{errors.duracion}</p>
+                                <p className="text-red-600 text-sm mt-1">
+                                    {errors.duracion}
+                                </p>
                             )}
                         </div>
+                    </div>
+
+                    {/* Campo de Regla de Negocio: incluye_entrenador */}
+                    <div className="pt-2">
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={data.incluye_entrenador}
+                                onChange={(e) =>
+                                    setData(
+                                        "incluye_entrenador",
+                                        e.target.checked,
+                                    )
+                                }
+                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                                ¿Este plan incluye asignación de Entrenador
+                                Personal?
+                            </span>
+                        </label>
+                        {errors.incluye_entrenador && (
+                            <p className="text-red-600 text-sm mt-1">
+                                {errors.incluye_entrenador}
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
@@ -117,7 +165,7 @@ export default function Edit({ plan }: EditProps) {
                             disabled={processing}
                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                         >
-                            {processing ? 'Actualizando...' : 'Actualizar Plan'}
+                            {processing ? "Actualizando..." : "Actualizar Plan"}
                         </button>
                     </div>
                 </form>

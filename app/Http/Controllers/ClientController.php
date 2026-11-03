@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Trainer;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Services\UserService;
@@ -50,9 +51,11 @@ class ClientController extends Controller
         }
 
         // 4. Construcción de la consulta Eloquent con Query Builder
-        $query = Client::with(['user' => function ($q) {
-            $q->withTrashed(); // Carga la relación user incluso si sufrió Soft Delete
-        }]);
+        $query = Client::with([
+            'user' => fn($q) => $q->withTrashed(),
+            'trainer.employee.user',
+            'activeSubscription.plan'
+        ]);
 
         // Papelera (Exclusivo Admin / Super Admin)
         $query->when($esAdmin && $papelera === 'solo_eliminados', function ($q) {
@@ -82,7 +85,7 @@ class ClientController extends Controller
         if ($orden === 'nombre') {
             $query->join('users', 'clients.user_id', '=', 'users.id')
                 ->orderBy('users.name', $direccion)
-                ->select('clients.*'); // Retorna únicamente campos del modelo Client
+                ->select('clients.*');
         } else {
             $query->orderBy("clients.{$orden}", $direccion);
         }
@@ -124,7 +127,8 @@ class ClientController extends Controller
             $user = $userService->createUser($request->validated(), 'client');
 
             $user->client()->create([
-                'telefono' => $request->telefono,
+                'telefono'   => $request->telefono,
+                'trainer_id' => null, // El cliente inicia sin entrenador hasta que un plan o admin se lo asigne
             ]);
         });
 
@@ -138,7 +142,7 @@ class ClientController extends Controller
     {
         Gate::authorize('view', $cliente);
 
-        $cliente->load('user');
+        $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
 
         return Inertia::render('Clientes/Show', ['cliente' => $cliente]);
     }
@@ -150,9 +154,14 @@ class ClientController extends Controller
     {
         Gate::authorize('update', $cliente);
 
-        $cliente->load('user');
+        $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
 
-        return Inertia::render('Clientes/Edit', ['cliente' => $cliente]);
+        $entrenadores = Trainer::with('employee.user')->get();
+
+        return Inertia::render('Clientes/Edit', [
+            'cliente'      => $cliente,
+            'entrenadores' => $entrenadores,
+        ]);
     }
 
     /**
@@ -162,13 +171,34 @@ class ClientController extends Controller
     {
         Gate::authorize('update', $cliente);
 
-        DB::transaction(function () use ($request, $cliente, $userService) {
+        $user = $request->user();
+        $esAdmin = $user->hasRole(['admin', 'super']);
+
+        // Regla de Negocio: Si un Admin/SuperAdmin intenta asignar/cambiar entrenador
+        if ($esAdmin && $request->filled('trainer_id')) {
+            $planActivo = $cliente->activeSubscription?->plan;
+
+            if (!$planActivo || !$planActivo->incluye_entrenador) {
+                return redirect()->back()->withErrors([
+                    'trainer_id' => 'El cliente no posee un plan activo que incluya entrenador.'
+                ]);
+            }
+        }
+
+        DB::transaction(function () use ($request, $cliente, $userService, $esAdmin) {
 
             $userService->updateUser($cliente->user, $request->validated());
 
-            $cliente->update([
+            $datosCliente = [
                 'telefono' => $request->telefono,
-            ]);
+            ];
+
+            // Únicamente si quien edita es Admin o SuperAdmin procesamos la asignación de trainer_id
+            if ($esAdmin && $request->has('trainer_id')) {
+                $datosCliente['trainer_id'] = $request->trainer_id;
+            }
+
+            $cliente->update($datosCliente);
         });
 
         return redirect()->route('clientes.index')->with('success', 'Cliente actualizado correctamente.');
@@ -179,7 +209,6 @@ class ClientController extends Controller
      */
     public function destroy(Client $cliente, UserService $userService)
     {
-
         Gate::authorize('delete', $cliente);
 
         DB::transaction(function () use ($cliente, $userService) {

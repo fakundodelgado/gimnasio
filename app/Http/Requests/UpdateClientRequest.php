@@ -26,9 +26,15 @@ class UpdateClientRequest extends FormRequest
     {
         $userId = $this->route('cliente')?->user_id;
 
-        return array_merge(UserService::rules($userId), [
+        $reglas = array_merge(UserService::rules($userId), [
             'telefono' => ['nullable', 'string', 'digits_between:8,15'],
         ]);
+
+        if ($this->user()->hasRole(['employee', 'admin', 'super'])) {
+            $reglas['trainer_id'] = ['nullable', 'exists:trainers,id'];
+        }
+
+        return $reglas;
     }
 
     #[Override]

@@ -16,7 +16,10 @@ class PaymentSeeder extends Seeder
     public function run(): void
     {
         $suscripcionesPagas = Subscription::whereIn('estado', ['activa', 'vencida'])->get();
-        $empleados = Employee::all();
+
+        $empleados = Employee::whereHas('user', function ($query) {
+            $query->role('employee');
+        })->get();
 
         if ($empleados->isNotEmpty() && $suscripcionesPagas->isNotEmpty()) {
             $suscripcionesPagas->each(function ($suscripcion) use ($empleados) {

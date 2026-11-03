@@ -8,6 +8,24 @@ interface User {
     deleted_at?: string | null;
 }
 
+interface Plan {
+    id: number;
+    nombre: string;
+    incluye_entrenador: boolean;
+}
+
+interface ActiveSubscription {
+    id: number;
+    plan?: Plan;
+}
+
+interface Trainer {
+    id: number;
+    employee?: {
+        user?: User;
+    };
+}
+
 interface Client {
     id: number;
     user_id: number;
@@ -15,6 +33,8 @@ interface Client {
     direccion?: string;
     deleted_at: string | null;
     user?: User;
+    active_subscription?: ActiveSubscription | null;
+    trainer?: Trainer | null;
 }
 
 interface ClientesPaginados {
@@ -222,72 +242,123 @@ export default function Index({
                         </th>
                         <th>Email</th>
                         <th>Teléfono</th>
+                        <th>Plan Activo</th>
+                        <th>Entrenador</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {clientes.data.length > 0 ? (
-                        clientes.data.map((cliente: Client) => (
-                            <tr
-                                key={cliente.id}
-                                style={{
-                                    background: cliente.deleted_at
-                                        ? "#fef2f2"
-                                        : "transparent",
-                                }}
-                            >
-                                <td>#{cliente.id}</td>
-                                <td>
-                                    {cliente.user?.name ||
-                                        `Cliente #${cliente.id}`}
-                                    {cliente.deleted_at && (
-                                        <span
-                                            style={{
-                                                color: "red",
-                                                fontSize: "11px",
-                                                display: "block",
-                                            }}
-                                        >
-                                            (ELIMINADO)
-                                        </span>
-                                    )}
-                                </td>
-                                <td>{cliente.user?.email || "-"}</td>
-                                <td>{cliente.telefono || "-"}</td>
-                                <td>
-                                    {!cliente.deleted_at && (
-                                        <>
-                                            <Link
-                                                href={`/clientes/${cliente.id}`}
-                                                style={{ marginRight: "8px" }}
-                                            >
-                                                Ver
-                                            </Link>
-                                            <Link
-                                                href={`/clientes/${cliente.id}/edit`}
-                                                style={{ marginRight: "8px" }}
-                                            >
-                                                Editar
-                                            </Link>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(cliente.id)
-                                                }
+                        clientes.data.map((cliente: Client) => {
+                            const planActivo =
+                                cliente.active_subscription?.plan;
+                            const entrenador = cliente.trainer?.employee?.user;
+
+                            return (
+                                <tr
+                                    key={cliente.id}
+                                    style={{
+                                        background: cliente.deleted_at
+                                            ? "#fef2f2"
+                                            : "transparent",
+                                    }}
+                                >
+                                    <td>#{cliente.id}</td>
+                                    <td>
+                                        {cliente.user?.name ||
+                                            `Cliente #${cliente.id}`}
+                                        {cliente.deleted_at && (
+                                            <span
                                                 style={{
                                                     color: "red",
-                                                    cursor: "pointer",
+                                                    fontSize: "11px",
+                                                    display: "block",
                                                 }}
                                             >
-                                                Eliminar
-                                            </button>
-                                        </>
-                                    )}
-                                </td>
-                            </tr>
-                        ))
+                                                (ELIMINADO)
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>{cliente.user?.email || "-"}</td>
+                                    <td>{cliente.telefono || "-"}</td>
+                                    <td>
+                                        {planActivo ? (
+                                            <span
+                                                style={{
+                                                    fontWeight: "bold",
+                                                    color: "#16a34a",
+                                                }}
+                                            >
+                                                {planActivo.nombre}
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: "#9ca3af" }}>
+                                                Sin plan
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {entrenador ? (
+                                            <span
+                                                style={{
+                                                    fontWeight: "bold",
+                                                    color: "#2563eb",
+                                                }}
+                                            >
+                                                {entrenador.name}
+                                            </span>
+                                        ) : (
+                                            <span
+                                                style={{
+                                                    color: "#9ca3af",
+                                                    fontStyle: "italic",
+                                                }}
+                                            >
+                                                {planActivo?.incluye_entrenador
+                                                    ? "Pendiente"
+                                                    : "No incluye"}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {!cliente.deleted_at && (
+                                            <>
+                                                <Link
+                                                    href={`/clientes/${cliente.id}`}
+                                                    style={{
+                                                        marginRight: "8px",
+                                                    }}
+                                                >
+                                                    Ver
+                                                </Link>
+                                                <Link
+                                                    href={`/clientes/${cliente.id}/edit`}
+                                                    style={{
+                                                        marginRight: "8px",
+                                                    }}
+                                                >
+                                                    Editar
+                                                </Link>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDelete(cliente.id)
+                                                    }
+                                                    style={{
+                                                        color: "red",
+                                                        cursor: "pointer",
+                                                    }}
+                                                >
+                                                    Eliminar
+                                                </button>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })
                     ) : (
                         <tr>
-                            <td colSpan={5} style={{ textAlign: "center" }}>
+                            <td colSpan={7} style={{ textAlign: "center" }}>
                                 No hay clientes registrados.
                             </td>
                         </tr>

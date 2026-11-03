@@ -7,6 +7,7 @@ interface Plan {
     descripcion?: string;
     precio: number;
     duracion: number; // Duración en días
+    incluye_entrenador: boolean;
     deleted_at: string | null;
 }
 
@@ -216,6 +217,12 @@ export default function Index({
                         >
                             Duración (Días){indicadorOrden("duracion")}
                         </th>
+                        <th
+                            onClick={() => ordenarPor("incluye_entrenador")}
+                            style={{ cursor: "pointer" }}
+                        >
+                            Entrenador{indicadorOrden("incluye_entrenador")}
+                        </th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -253,6 +260,22 @@ export default function Index({
                                 </td>
                                 <td>{plan.duracion} días</td>
                                 <td>
+                                    {plan.incluye_entrenador ? (
+                                        <span
+                                            style={{
+                                                fontWeight: "bold",
+                                                color: "#16a34a",
+                                            }}
+                                        >
+                                            ✓ Incluye
+                                        </span>
+                                    ) : (
+                                        <span style={{ color: "#6b7280" }}>
+                                            ✕ No incluye
+                                        </span>
+                                    )}
+                                </td>
+                                <td>
                                     {!plan.deleted_at && (
                                         <>
                                             <Link
@@ -285,7 +308,7 @@ export default function Index({
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={5} style={{ textAlign: "center" }}>
+                            <td colSpan={6} style={{ textAlign: "center" }}>
                                 No hay planes registrados.
                             </td>
                         </tr>

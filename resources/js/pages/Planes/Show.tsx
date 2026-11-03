@@ -1,5 +1,5 @@
-import React from 'react';
-import { Head, Link } from '@inertiajs/react';
+import React from "react";
+import { Head, Link } from "@inertiajs/react";
 
 interface Plan {
     id: number;
@@ -7,6 +7,7 @@ interface Plan {
     descripcion: string | null;
     precio: number;
     duracion: number;
+    incluye_entrenador: boolean;
     subscriptions_count?: number;
 }
 
@@ -35,7 +36,9 @@ export default function Show({ plan }: ShowProps) {
                         <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             Nombre del Plan
                         </h2>
-                        <p className="text-lg font-medium text-gray-900 mt-1">{plan.nombre}</p>
+                        <p className="text-lg font-medium text-gray-900 mt-1">
+                            {plan.nombre}
+                        </p>
                     </div>
 
                     <div>
@@ -43,16 +46,18 @@ export default function Show({ plan }: ShowProps) {
                             Descripción
                         </h2>
                         <p className="text-gray-700 mt-1">
-                            {plan.descripcion || 'Sin descripción registrada.'}
+                            {plan.descripcion || "Sin descripción registrada."}
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
                         <div>
                             <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 Precio
                             </h2>
-                            <p className="text-xl font-bold text-gray-900 mt-1">${plan.precio}</p>
+                            <p className="text-xl font-bold text-gray-900 mt-1">
+                                ${plan.precio}
+                            </p>
                         </div>
 
                         <div>
@@ -61,6 +66,23 @@ export default function Show({ plan }: ShowProps) {
                             </h2>
                             <p className="text-xl font-bold text-gray-900 mt-1">
                                 {plan.duracion} días
+                            </p>
+                        </div>
+
+                        <div>
+                            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Entrenador
+                            </h2>
+                            <p className="text-base font-bold mt-1">
+                                {plan.incluye_entrenador ? (
+                                    <span className="text-green-600">
+                                        Incluido
+                                    </span>
+                                ) : (
+                                    <span className="text-gray-500">
+                                        No incluido
+                                    </span>
+                                )}
                             </p>
                         </div>
 
