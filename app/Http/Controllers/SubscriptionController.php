@@ -7,21 +7,19 @@ use App\Models\Plan;
 use App\Models\Client;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class SubscriptionController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+    #[Middleware('permission:listar suscripciones')]
     public function index(Request $request)
     {
-        // Se debe controlar que el cliente solo pueda ver sus suscripciones...
-        Gate::authorize('viewAny', Subscription::class);
-
         // Parametros por lo cuales voy a filtrar
         $buscar = trim($request->input('buscar', ''));
         $estado = $request->input('estado', '');
@@ -103,9 +101,9 @@ class SubscriptionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    #[Middleware('permission:crear suscripcion')]
     public function create()
     {
-        Gate::authorize('create', Subscription::class);
 
         $clientes = Client::with('user:id,name')->get();
 
@@ -117,10 +115,10 @@ class SubscriptionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+    #[Middleware('permission:crear suscripcion')]
     public function store(StoreSubscriptionRequest $request)
     {
-
-        Gate::authorize('create', Subscription::class);
 
         DB::transaction(function () use ($request) {
             // 1. Crear la suscripción
@@ -142,9 +140,9 @@ class SubscriptionController extends Controller
     /**
      * Display the specified resource.
      */
+    #[Middleware('permission:mostrar suscripcion')]
     public function show(Subscription $suscripcion)
     {
-        Gate::authorize('view', $suscripcion);
 
         $suscripcion->load(['client.user', 'plan']);
 
@@ -154,9 +152,10 @@ class SubscriptionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    #[Middleware('permission:editar suscripcion')]
     public function edit(Subscription $suscripcion)
     {
-        Gate::authorize('update', $suscripcion);
+
 
         $clientes = Client::with('user:id,name')->get();
 
@@ -170,9 +169,9 @@ class SubscriptionController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    #[Middleware('permission:editar suscripcion')]
     public function update(UpdateSubscriptionRequest $request, Subscription $suscripcion)
     {
-        Gate::authorize('update', $suscripcion);
 
         DB::transaction(function () use ($request, $suscripcion) {
             // 1. Actualizar la suscripción
@@ -194,9 +193,10 @@ class SubscriptionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
+    #[Middleware('permission:eliminar suscripcion')]
     public function destroy(Subscription $suscripcion)
     {
-        Gate::authorize('delete', $suscripcion);
 
         DB::transaction(function () use ($suscripcion) {
             $client = $suscripcion->client;
@@ -215,4 +215,6 @@ class SubscriptionController extends Controller
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion eliminada correctamente.');
     }
+
+    // !!! Restore...
 }

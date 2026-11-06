@@ -7,19 +7,18 @@ use App\Models\Employee;
 use App\Models\Subscription;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class PaymentController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+    #[Middleware('permission:listar pagos')]
     public function index(Request $request)
     {
-        Gate::authorize('viewAny', Payment::class);
-
         $buscar = trim($request->input('buscar', ''));
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
@@ -41,14 +40,13 @@ class PaymentController extends Controller
         }
 
         $user = $request->user();
-        $esAdmin = $user->hasRole(['admin', 'super-admin']);
+        $esAdmin = $user->hasRole(['admin', 'super']);
         $esCliente = $user->hasRole('client');
 
         if (!$esAdmin) {
             $papelera = 'sin_eliminados';
         }
 
-        // Carga ansiosa completa incluyendo el Plan, la Suscripción y el Empleado
         $query = Payment::with([
             'subscription.client' => function ($clientQuery) {
                 $clientQuery->withTrashed()->with([
@@ -75,24 +73,20 @@ class PaymentController extends Controller
                 $q->withTrashed();
             });
 
-        // Si es cliente, solo ve los pagos de sus propias suscripciones
         $query->when($esCliente && $user->client, function ($q) use ($user) {
             $q->whereHas('subscription', function ($subQ) use ($user) {
                 $subQ->where('client_id', $user->client->id);
             });
         });
 
-        // Búsqueda Inteligente: ID de Pago, ID de Suscripción o Nombre de Cliente/Empleado
         $query->when($buscar !== '', function ($q) use ($buscar, $papelera) {
             $q->where(function ($subQ) use ($buscar, $papelera) {
 
-                // 1. Si es numérico, busca por ID de Pago o ID de Suscripción
                 if (is_numeric($buscar)) {
                     $subQ->where('payments.id', $buscar)
                         ->orWhere('payments.subscription_id', $buscar);
                 }
 
-                // 2. Coincidencia por Nombre del Cliente que realiza el pago
                 $subQ->orWhereHas('subscription.client', function ($clientQuery) use ($buscar, $papelera) {
                     if ($papelera !== 'sin_eliminados') {
                         $clientQuery->withTrashed();
@@ -105,7 +99,6 @@ class PaymentController extends Controller
                     });
                 });
 
-                // 3. Coincidencia por Nombre del Empleado que cobró en caja
                 $subQ->orWhereHas('employee', function ($empQuery) use ($buscar, $papelera) {
                     if ($papelera !== 'sin_eliminados') {
                         $empQuery->withTrashed();
@@ -135,18 +128,16 @@ class PaymentController extends Controller
                 'por_pagina' => $porPagina,
                 'papelera'   => $papelera,
             ],
-            'esAdmin' => $esAdmin, // <--- Pasado explícitamente a React
+            'esAdmin' => $esAdmin,
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
+    #[Middleware('permission:crear pago')]
     public function create()
     {
-
-        Gate::authorize('create', Payment::class);
-
         $empleados = Employee::with('user:id,name')->get();
 
         $suscripciones = Subscription::with(['client.user:id,name', 'plan:id,nombre'])->get();
@@ -157,11 +148,10 @@ class PaymentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+    #[Middleware('permission:crear pago')]
     public function store(StorePaymentRequest $request)
     {
-
-        Gate::authorize('create', Payment::class);
-
         Payment::create($request->validated());
 
         return redirect()->route('pagos.index')->with('success', 'Pago creado correctamente');
@@ -170,11 +160,10 @@ class PaymentController extends Controller
     /**
      * Display the specified resource.
      */
+
+    #[Middleware('permission:mostrar pago')]
     public function show(Payment $pago)
     {
-
-        Gate::authorize('view', $pago);
-
         $pago->load(['subscription.plan', 'employee.user']);
 
         return Inertia::render('Pagos/Show', ['pago' => $pago]);
@@ -183,10 +172,10 @@ class PaymentController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+
+    #[Middleware('permission:editar pago')]
     public function edit(Payment $pago)
     {
-        Gate::authorize('update', $pago);
-
         $empleados = Employee::with('user:id,name')->get();
 
         $suscripciones = Subscription::with(['client.user:id,name', 'plan:id,nombre'])->get();
@@ -199,10 +188,10 @@ class PaymentController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
+    #[Middleware('permission:editar pago')]
     public function update(UpdatePaymentRequest $request, Payment $pago)
     {
-        Gate::authorize('update', $pago);
-
         $pago->update($request->validated());
 
         return redirect()->route('pagos.index')->with('success', 'Pago actualizado con exito');
@@ -211,12 +200,14 @@ class PaymentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
+    #[Middleware('permission:eliminar pago')]
     public function destroy(Payment $pago)
     {
-        Gate::authorize('delete', $pago);
-
         $pago->delete();
 
         return redirect()->route('pagos.index')->with('success', 'Pago eliminado correctamente');
     }
+
+    // !!! Faltaria la opcion de restaurar si el modelo de negocios asi lo permitiera
 }

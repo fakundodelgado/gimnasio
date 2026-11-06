@@ -7,20 +7,20 @@ use App\Http\Requests\StoreTrainerRequest;
 use App\Http\Requests\UpdateTrainerRequest;
 use App\Services\EmployeeService;
 use App\Services\UserService;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class TrainerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    #[Middleware('permission:listar entrenadores')]
     public function index(Request $request)
     {
-        Gate::authorize('viewAny', Trainer::class);
-
         $buscar = trim($request->input('buscar', ''));
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
@@ -51,7 +51,6 @@ class TrainerController extends Controller
             }
         ]);
 
-        // Papelera (Exclusivo Admin / Super Admin)
         $query->when($papelera === 'solo_eliminados', function ($q) {
             $q->onlyTrashed();
         })
@@ -59,25 +58,20 @@ class TrainerController extends Controller
                 $q->withTrashed();
             });
 
-        // Búsqueda por N° Socio (ID) o por Nombre/Email en la relación User
         $query->when($buscar !== '', function ($q) use ($buscar) {
             $q->where(function ($subQ) use ($buscar) {
 
-                // 1. ID exacto del Trainer si es numérico
                 if (is_numeric($buscar)) {
                     $subQ->where('trainers.id', $buscar);
                 }
 
-                // 2. Especialidad en la tabla trainers
                 $subQ->orWhere('trainers.especialidad', 'like', "%{$buscar}%");
 
-                // 3. Buscar por CUIL en la relación Employee (incluyendo eliminados)
                 $subQ->orWhereHas('employee', function ($empQuery) use ($buscar) {
                     $empQuery->withTrashed()
                         ->where('cuil', 'like', "%{$buscar}%");
                 });
 
-                // 4. Buscar por Nombre/Email en Employee -> User (incluyendo eliminados en ambos niveles)
                 $subQ->orWhereHas('employee', function ($empQuery) use ($buscar) {
                     $empQuery->withTrashed()
                         ->whereHas('user', function ($uQuery) use ($buscar) {
@@ -122,21 +116,19 @@ class TrainerController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+
+    #[Middleware('permission:crear entrenador')]
     public function create()
     {
-
-        Gate::authorize('create', Trainer::class);
-
         return Inertia::render('Entrenadores/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
+    #[Middleware('permission:crear entrenador')]
     public function store(StoreTrainerRequest $request, UserService $userService, EmployeeService $employeeService)
     {
-        Gate::authorize('create', Trainer::class);
-
         DB::transaction(function () use ($request, $userService, $employeeService) {
 
             $user = $userService->createUser($request->validated(), 'trainer');
@@ -154,10 +146,9 @@ class TrainerController extends Controller
     /**
      * Display the specified resource.
      */
+    #[Middleware('permission:mostrar entrenador')]
     public function show(Trainer $entrenador)
     {
-        Gate::authorize('view', $entrenador);
-
         $entrenador->load('employee.user');
 
         return Inertia::render('Entrenadores/Show', ['entrenador' => $entrenador]);
@@ -166,10 +157,9 @@ class TrainerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    #[Middleware('permission:editar entrenador')]
     public function edit(Trainer $entrenador)
     {
-        Gate::authorize('update', $entrenador);
-
         $entrenador->load('employee.user');
 
         return Inertia::render('Entrenadores/Edit', ['entrenador' => $entrenador]);
@@ -178,10 +168,10 @@ class TrainerController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
+    #[Middleware('permission:editar entrenador')]
     public function update(UpdateTrainerRequest $request, Trainer $entrenador, UserService $userService, EmployeeService $employeeService)
     {
-        Gate::authorize('update', $entrenador);
-
         DB::transaction(function () use ($request, $entrenador, $userService, $employeeService) {
 
             $user = $entrenador->employee->user;
@@ -201,10 +191,10 @@ class TrainerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
+    #[Middleware('permission:eliminar entrenador')]
     public function destroy(Trainer $entrenador, UserService $userService, EmployeeService $employeeService)
     {
-        Gate::authorize('delete', $entrenador);
-
         DB::transaction(function () use ($entrenador, $userService, $employeeService) {
 
             $user = $entrenador->employee->user;

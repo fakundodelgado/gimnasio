@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Http\Requests\StorePlanRequest;
 use App\Http\Requests\UpdatePlanRequest;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 
 class PlanController extends Controller
@@ -15,10 +15,9 @@ class PlanController extends Controller
     /**
      * Display a listing of the resource.
      */
+    #[Middleware('permission:listar planes')]
     public function index(Request $request)
     {
-
-        Gate::authorize('viewAny', Plan::class);
 
         // Parametros de entrada para mis filtros
         $buscar = trim($request->input('buscar', ''));
@@ -86,20 +85,18 @@ class PlanController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    #[Middleware('permission:crear plan')]
     public function create()
     {
-        Gate::authorize('create', Plan::class);
-
         return Inertia::render('Planes/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
+    #[Middleware('permission:crear plan')]
     public function store(StorePlanRequest $request)
     {
-
-        Gate::authorize('create', Plan::class);
 
         $validados = $request->validated();
 
@@ -111,10 +108,9 @@ class PlanController extends Controller
     /**
      * Display the specified resource.
      */
+    #[Middleware('permission:mostrar plan')]
     public function show(Plan $plan)
     {
-        Gate::authorize('view', $plan);
-
         $plan->loadCount('subscriptions');
 
         return Inertia::render('Planes/Show', ['plan' => $plan]);
@@ -123,20 +119,18 @@ class PlanController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    #[Middleware('permission:editar plan')]
     public function edit(Plan $plan)
     {
-        Gate::authorize('update', $plan);
-
         return Inertia::render('Planes/Edit', ['plan' => $plan]);
     }
 
     /**
      * Update the specified resource in storage.
      */
+    #[Middleware('permission:editar plan')]
     public function update(UpdatePlanRequest $request, Plan $plan)
     {
-        Gate::authorize('update', $plan);
-
         $validados = $request->validated();
 
         $plan->update($validados);
@@ -147,13 +141,13 @@ class PlanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    #[Middleware('permission:eliminar plan')]
     public function destroy(Plan $plan)
     {
-
-        Gate::authorize('delete', $plan);
-
         $plan->delete();
 
         return redirect()->route('planes.index')->with('success', 'plan "eliminado" correctamente.');
     }
+
+    // !!! De ser necesario habria que incluir el restore
 }

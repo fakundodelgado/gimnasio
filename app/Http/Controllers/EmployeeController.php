@@ -7,19 +7,20 @@ use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
 use App\Services\EmployeeService;
 use App\Services\UserService;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class EmployeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    #[Middleware('permission:listar empleados')]
     public function index(Request $request)
     {
-        Gate::authorize('viewAny', Employee::class);
 
         $buscar = trim($request->input('buscar', ''));
         $orden = $request->input('orden', 'id');
@@ -52,7 +53,7 @@ class EmployeeController extends Controller
                 $q->withTrashed();
             });
 
-        // Búsqueda por N° Socio (ID) o por Nombre/Email en la relación User
+        // Busca por ID o por Nombre, Email (Tengo que modificarlo, no funciona adecuadamente)
         $query->when($buscar !== '', function ($q) use ($buscar) {
             $q->where(function ($subQ) use ($buscar) {
                 if (is_numeric($buscar)) {
@@ -74,7 +75,7 @@ class EmployeeController extends Controller
         if ($orden === 'nombre') {
             $query->join('users', 'employees.user_id', '=', 'users.id')
                 ->orderBy('users.name', $direccion)
-                ->select('employees.*'); // Retorna únicamente campos del modelo Client
+                ->select('employees.*'); // Retorna solo los datos del empleado pero usa el name de user para ordenar
         } else {
             $query->orderBy("employees.{$orden}", $direccion)
                 ->select('employees.*');
@@ -97,19 +98,20 @@ class EmployeeController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+
+    #[Middleware('permission:crear empleado')]
     public function create()
     {
-        Gate::authorize('create', Employee::class);
-
         return Inertia::render('Empleados/Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
+
+    #[Middleware('permission:crear empleado')]
     public function store(StoreEmployeeRequest $request, EmployeeService $employeeService, UserService $userService)
     {
-        Gate::authorize('create', Employee::class);
 
         DB::transaction(function () use ($request, $employeeService, $userService) {
 
@@ -124,10 +126,10 @@ class EmployeeController extends Controller
     /**
      * Display the specified resource.
      */
+
+    #[Middleware('permission:mostrar empleado')]
     public function show(Employee $empleado)
     {
-
-        Gate::authorize('view', $empleado);
 
         $empleado->load('user');
 
@@ -137,9 +139,10 @@ class EmployeeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+
+    #[Middleware('permission:editar empleado')]
     public function edit(Employee $empleado)
     {
-        Gate::authorize('update', $empleado);
 
         // traigo los datos del user asociado al usuario
         $empleado->load('user');
@@ -150,9 +153,10 @@ class EmployeeController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
+    #[Middleware('permission:editar empleado')]
     public function update(UpdateEmployeeRequest $request, Employee $empleado, UserService $userService, EmployeeService $employeeService)
     {
-        Gate::authorize('update', $empleado);
 
         DB::transaction(function () use ($request, $empleado, $userService, $employeeService) {
 
@@ -167,10 +171,10 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+
+    #[Middleware('permission:eliminar empleado')]
     public function destroy(Employee $empleado, UserService $userService, EmployeeService $employeeService)
     {
-
-        Gate::authorize('delete', $empleado);
 
         DB::transaction(function () use ($empleado, $employeeService, $userService) {
 
