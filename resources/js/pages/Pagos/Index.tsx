@@ -69,7 +69,6 @@ interface Filtros {
 }
 
 interface PageProps {
-    flash: { success?: string };
     pagos: PagosPaginados;
     filtros: Filtros;
     esAdmin: boolean;
@@ -85,8 +84,6 @@ export default function Index({
     filtros: Filtros;
     esAdmin: boolean;
 }) {
-    const { flash } = usePage<PageProps>().props;
-
     const [buscar, setBuscar] = useState(filtros.buscar ?? "");
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
@@ -137,18 +134,6 @@ export default function Index({
     return (
         <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
             <h2>Historial de Pagos y Caja</h2>
-
-            {flash?.success && (
-                <div
-                    style={{
-                        color: "green",
-                        marginBottom: "15px",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {flash.success}
-                </div>
-            )}
 
             <Link
                 href="/pagos/create"

@@ -38,7 +38,6 @@ interface Filtros {
 }
 
 interface PageProps {
-    flash: { success?: string };
     empleados: EmpleadosPaginados;
     filtros: Filtros;
     [key: string]: unknown;
@@ -51,8 +50,6 @@ export default function Index({
     empleados: EmpleadosPaginados;
     filtros: Filtros;
 }) {
-    const { flash } = usePage<PageProps>().props;
-
     const [buscar, setBuscar] = useState(filtros.buscar ?? "");
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
@@ -103,18 +100,6 @@ export default function Index({
     return (
         <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
             <h2>Listado de Empleados</h2>
-
-            {flash?.success && (
-                <div
-                    style={{
-                        color: "green",
-                        marginBottom: "15px",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {flash.success}
-                </div>
-            )}
 
             <Link
                 href="/empleados/create"

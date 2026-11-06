@@ -51,7 +51,6 @@ interface Filtros {
 }
 
 interface PageProps {
-    flash: { success?: string };
     suscripciones: SuscripcionesPaginadas;
     filtros: Filtros;
     esAdmin: boolean;
@@ -67,8 +66,6 @@ export default function Index({
     filtros: Filtros;
     esAdmin: boolean;
 }) {
-    const { flash } = usePage<PageProps>().props;
-
     const [buscar, setBuscar] = useState(filtros.buscar ?? "");
     const [estado, setEstado] = useState(filtros.estado ?? "");
     const [orden, setOrden] = useState(filtros.orden ?? "fecha_inicio");
@@ -122,18 +119,6 @@ export default function Index({
     return (
         <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
             <h2>Listado de Suscripciones</h2>
-
-            {flash?.success && (
-                <div
-                    style={{
-                        color: "green",
-                        marginBottom: "15px",
-                        fontWeight: "bold",
-                    }}
-                >
-                    {flash.success}
-                </div>
-            )}
 
             <Link
                 href="/suscripciones/create"
