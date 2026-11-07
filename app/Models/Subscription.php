@@ -13,15 +13,28 @@ class Subscription extends Model
 
     protected $fillable = ['client_id', 'plan_id', 'precio', 'fecha_fin', 'fecha_inicio', 'estado'];
 
-    public function client(){
+    protected $casts = [
+        'fecha_fin' => 'date',
+        'fecha_inicio' => 'date',
+    ];
+
+    public function client()
+    {
         return $this->belongsTo(Client::class);
     }
 
-    public function plan(){
+    public function plan()
+    {
         return $this->belongsTo(Plan::class);
     }
 
-    public function payments(){
+    public function payments()
+    {
         return $this->hasMany(Payment::class);
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d');
     }
 }

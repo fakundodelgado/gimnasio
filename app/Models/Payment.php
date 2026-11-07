@@ -11,15 +11,24 @@ class Payment extends Model
     /** @use HasFactory<\Database\Factories\PaymentFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['subscription_id', 'employee_id', 'fecha_pago', 'metodo_pago', 'monto' ];
+    protected $fillable = ['subscription_id', 'employee_id', 'fecha_pago', 'metodo_pago', 'monto'];
 
-    public function employee(){
+    protected $casts = [
+        'fecha_pago' => 'date',
+    ];
+
+    public function employee()
+    {
         return $this->belongsTo(Employee::class);
     }
 
-    public function subscription(){
+    public function subscription()
+    {
         return $this->belongsTo(Subscription::class);
     }
 
-    
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d');
+    }
 }

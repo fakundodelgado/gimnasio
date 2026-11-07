@@ -25,9 +25,16 @@ class StorePaymentRequest extends FormRequest
     {
         return [
             'monto' => ['required', 'numeric', 'min:5000', 'max:100000'],
+
+            /*
+
+            Ambos se asignaran automaticamente asi que no tiene sentido validarlos
+
             'fecha_pago' => ['required', 'date',],
-            'subscription_id' => ['required', 'exists:subscriptions,id'],
             'employee_id' => ['required', 'exists:employees,id'],
+
+            */
+            'subscription_id' => ['required', 'exists:subscriptions,id'],
             'metodo_pago' => ['required', 'in:tarjeta,efectivo,transferencia']
         ];
     }
@@ -41,7 +48,7 @@ class StorePaymentRequest extends FormRequest
             'subscription_id' => 'ID de la suscripcion',
             'employee_id' => 'ID del empleado que lo registro',
             'metodo_pago' => 'metodo de pago'
-        ];  
+        ];
     }
 
     #[Override]
@@ -54,8 +61,7 @@ class StorePaymentRequest extends FormRequest
             'max' => 'el valor ingresado en el campo :attribute es mayor al maximo admitido',
             'in' => 'el valor del campo :attribute no es uno de los admitidos',
             'exists' => 'el valor del campo :attribute no es valido',
-            'date' => 'el campo :attribute solo acepta fechas', 
-        ];  
+            'date' => 'el campo :attribute solo acepta fechas',
+        ];
     }
-
 }

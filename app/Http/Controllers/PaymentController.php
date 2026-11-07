@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\Employee;
+use App\Models\User;
 use App\Models\Subscription;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class PaymentController extends Controller
@@ -114,7 +116,7 @@ class PaymentController extends Controller
         });
 
         // Ordenamiento dinámico seguro
-        $query->orderBy("payments.{$orden}", $direccion);
+        $query->orderBy("payments.{$orden}", $direccion)->orderBy('id', 'desc');
 
         // Paginación limpia
         $pagos = $query->paginate($porPagina)->withQueryString();
@@ -138,11 +140,10 @@ class PaymentController extends Controller
     #[Middleware('permission:crear pago')]
     public function create()
     {
-        $empleados = Employee::with('user:id,name')->get();
-
         $suscripciones = Subscription::with(['client.user:id,name', 'plan:id,nombre'])->get();
+        $fecha = Carbon::today()->toDateString();
 
-        return Inertia::render('Pagos/Create', ['empleados' => $empleados, 'suscripciones' => $suscripciones]);
+        return Inertia::render('Pagos/Create', ['suscripciones' => $suscripciones, 'fecha' => $fecha]);
     }
 
     /**
@@ -152,7 +153,20 @@ class PaymentController extends Controller
     #[Middleware('permission:crear pago')]
     public function store(StorePaymentRequest $request)
     {
-        Payment::create($request->validated());
+
+        $datos = $request->validated();
+        $datos['fecha_pago'] = Carbon::today()->toDateString();
+
+        $user = $request->user();
+
+        if ($user && $user->employee) {
+            $datos['employee_id'] = $user->employee->id;
+        } else {
+            $adminEmpleado = User::where('name', 'Administracion')->first();
+            $datos['employee_id'] = $adminEmpleado->employee->id;
+        }
+
+        Payment::create($datos);
 
         return redirect()->route('pagos.index')->with('success', 'Pago creado correctamente');
     }

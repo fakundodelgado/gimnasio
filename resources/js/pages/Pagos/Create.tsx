@@ -6,11 +6,6 @@ interface User {
     name: string;
 }
 
-interface Employee {
-    id: number;
-    user?: User;
-}
-
 interface Plan {
     id: number;
     nombre: string;
@@ -28,16 +23,14 @@ interface Subscription {
 }
 
 interface Props {
-    empleados: Employee[];
+    fecha: string;
     suscripciones: Subscription[];
 }
 
-export default function Create({ empleados, suscripciones }: Props) {
+export default function Create({ fecha, suscripciones }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         monto: "",
-        fecha_pago: "",
         subscription_id: "",
-        employee_id: "",
         metodo_pago: "efectivo",
     });
 
@@ -98,33 +91,6 @@ export default function Create({ empleados, suscripciones }: Props) {
                 </div>
 
                 <div>
-                    <label>Empleado que Registra:</label>
-                    <select
-                        value={data.employee_id}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                            setData("employee_id", e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    >
-                        <option value="">-- Seleccionar Empleado --</option>
-                        {empleados.map((e) => (
-                            <option key={e.id} value={e.id}>
-                                {e.user ? e.user.name : `Empleado #${e.id}`}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.employee_id && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.employee_id}
-                        </div>
-                    )}
-                </div>
-
-                <div>
                     <label>Monto:</label>
                     <input
                         type="number"
@@ -148,23 +114,7 @@ export default function Create({ empleados, suscripciones }: Props) {
 
                 <div>
                     <label>Fecha de Pago:</label>
-                    <input
-                        type="date"
-                        value={data.fecha_pago}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setData("fecha_pago", e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    />
-                    {errors.fecha_pago && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.fecha_pago}
-                        </div>
-                    )}
+                    <p>{fecha}</p>
                 </div>
 
                 <div>

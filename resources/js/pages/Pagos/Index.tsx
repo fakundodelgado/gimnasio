@@ -302,11 +302,7 @@ export default function Index({
                                         {pago.metodo_pago}
                                     </span>
                                 </td>
-                                <td>
-                                    {new Date(
-                                        pago.fecha_pago,
-                                    ).toLocaleDateString("es-AR")}
-                                </td>
+                                <td>{pago.fecha_pago}</td>
                                 <td>
                                     {pago.employee?.user?.name ??
                                         "Sistema / Admin"}

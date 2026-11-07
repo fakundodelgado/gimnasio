@@ -307,6 +307,24 @@ class RolesAndPermissionsSeeder extends Seeder
             ]
         );
 
+        // Empleado fantasma con fines administrativos
+        $employeeAdminUser = User::firstOrCreate(
+            ['email' => 'empleadofalso@gimnasio.com'],
+            [
+                'name'   => 'Administracion',
+                'password' => bcrypt('12345678'),
+            ]
+        );
+        $employeeAdminUser->assignRole('employee');
+
+        Employee::firstOrCreate(
+            ['user_id' => $employeeAdminUser->id],
+            [
+                'cuil'     => '27389998889',
+                'telefono' => '3874112239',
+            ]
+        );
+
         // trainer
         $trainerUser = User::firstOrCreate(
             ['email' => 'trainer@gimnasio.com'],
