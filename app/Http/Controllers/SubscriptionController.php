@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateSubscriptionRequest;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
 
 class SubscriptionController extends Controller
@@ -104,12 +105,13 @@ class SubscriptionController extends Controller
     #[Middleware('permission:crear suscripcion')]
     public function create()
     {
-
         $clientes = Client::with('user:id,name')->get();
 
         $planes = Plan::all();
 
-        return Inertia::render('Suscripciones/Create', ['clientes' => $clientes, 'planes' => $planes]);
+        $inicio = Carbon::today()->toDateString();
+
+        return Inertia::render('Suscripciones/Create', ['clientes' => $clientes, 'planes' => $planes, 'inicio' => $inicio]);
     }
 
     /**
@@ -120,16 +122,22 @@ class SubscriptionController extends Controller
     public function store(StoreSubscriptionRequest $request)
     {
 
-        DB::transaction(function () use ($request) {
-            // 1. Crear la suscripción
-            Subscription::create($request->validated());
+        $datos = $request->validated();
 
-            // 2. Cargar el plan asignado
-            $plan = Plan::findOrFail($request->plan_id);
+        $fechaInicio = Carbon::today();
+        $plan = Plan::findOrFail($datos['plan_id']);
+        $fechaFin = $fechaInicio->copy()->addDays($plan->duracion);
 
-            // 3. Si el nuevo plan NO incluye entrenador, limpiamos la asignación del cliente
+        $datos['fecha_fin'] = $fechaFin->toDateString();
+        $datos['fecha_inicio'] = $fechaInicio->toDateString();
+
+        DB::transaction(function () use ($datos, $plan) {
+
+            Subscription::create($datos);
+
+            // Se debe cambiar igual, asi que por ahora no importa...
             if (!$plan->incluye_entrenador) {
-                $client = Client::findOrFail($request->client_id);
+                $client = Client::findOrFail($datos['client_id']);
                 $client->update(['trainer_id' => null]);
             }
         });

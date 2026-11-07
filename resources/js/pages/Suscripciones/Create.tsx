@@ -15,22 +15,37 @@ interface Plan {
     id: number;
     nombre: string;
     precio: number | string;
+    duracion: number;
+    incluye_entrenador: boolean;
 }
 
 interface Props {
     clientes: Client[];
     planes: Plan[];
+    inicio: string;
 }
 
-export default function Create({ clientes, planes }: Props) {
+export default function Create({ clientes, planes, inicio }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         client_id: "",
         plan_id: "",
         precio: "",
-        fecha_inicio: "",
-        fecha_fin: "",
         estado: "activa",
     });
+
+    // Encuentro el plan seleccionado
+    const planSeleccionado = planes.find((p) => p.id === Number(data.plan_id));
+
+    const fechaFin = () => {
+        if (!planSeleccionado) {
+            return "Seleccionar un plan";
+        }
+
+        const fecha = new Date(inicio);
+        fecha.setDate(fecha.getDate() + planSeleccionado.duracion);
+        // Para que tenga el mismo formato que el otro...
+        return fecha.toISOString().split("T")[0];
+    };
 
     const handlePlanChange = (e: ChangeEvent<HTMLSelectElement>) => {
         const selectedPlanId = e.target.value;
@@ -142,44 +157,12 @@ export default function Create({ clientes, planes }: Props) {
 
                 <div>
                     <label>Fecha de Inicio:</label>
-                    <input
-                        type="date"
-                        value={data.fecha_inicio}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setData("fecha_inicio", e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    />
-                    {errors.fecha_inicio && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.fecha_inicio}
-                        </div>
-                    )}
+                    <p>{inicio}</p>
                 </div>
 
                 <div>
-                    <label>Fecha de Fin / Vencimiento:</label>
-                    <input
-                        type="date"
-                        value={data.fecha_fin}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setData("fecha_fin", e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    />
-                    {errors.fecha_fin && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.fecha_fin}
-                        </div>
-                    )}
+                    <label>Fecha de Vencimiento:</label>
+                    <p>{fechaFin()}</p>
                 </div>
 
                 <div>

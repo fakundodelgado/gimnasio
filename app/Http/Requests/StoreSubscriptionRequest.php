@@ -28,11 +28,19 @@ class StoreSubscriptionRequest extends FormRequest
             'client_id' => ['required', 'exists:clients,id'],
             'plan_id' => ['required', 'exists:plans,id'],
             'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+
+            /*
+
+            Como mi idea actual es forzarlas al crearlas, creo que carece de sentido hacer esta comprobación.
+            En el update si deben de comprobarse puesto que ambos valores deberian de ser editables.
+
+            'fecha_inicio' => ['nullable', 'date'],  
+            'fecha_fin' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+
+            */
+
             'estado' => ['required', 'string', 'in:activa,vencida,pendiente,cancelada'],
         ];
-
     }
 
     #[Override]
@@ -45,7 +53,7 @@ class StoreSubscriptionRequest extends FormRequest
             'fecha_inicio' => 'inicio de suscripcion',
             'fecha_fin' => 'vencimiento de suscripcion',
             'estado' => 'estado de la suscripcion',
-        ];  
+        ];
     }
 
     #[Override]
@@ -60,6 +68,6 @@ class StoreSubscriptionRequest extends FormRequest
             'date' => 'el valor ingresado en el campo :attribute debe ser una fecha',
             'in' => 'el valor del campo :attribute no es valido',
             'after_or_equal' => 'el campo :attribute debe ser posterior o igual a la fecha de inicio',
-        ];  
+        ];
     }
 }
