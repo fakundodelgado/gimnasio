@@ -1,5 +1,6 @@
 import React, { FormEvent, ChangeEvent } from "react";
 import { useForm, Link } from "@inertiajs/react";
+import { SelectBuscador, SelectOption } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
@@ -34,6 +35,18 @@ export default function Create({ fecha, suscripciones }: Props) {
         metodo_pago: "efectivo",
     });
 
+    // Mapeo para el SelectBuscador
+    const opcionesSuscripciones = suscripciones.map((s) => {
+        const clientName =
+            s.client?.user?.name || `Cliente #${s.client?.id || s.id}`;
+        const planName = s.plan?.nombre || "Plan N/A";
+
+        return {
+            id: s.id,
+            label: `#${s.id} - ${clientName} (${planName})`,
+        };
+    });
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         post("/pagos");
@@ -58,31 +71,18 @@ export default function Create({ fecha, suscripciones }: Props) {
                 }}
             >
                 <div>
-                    <label>Suscripción a Pagar:</label>
-                    <select
+                    <label style={{ display: "block", marginBottom: "5px" }}>
+                        Suscripción a Pagar (Buscar por Boleta o Cliente):
+                    </label>
+                    <SelectBuscador
+                        options={opcionesSuscripciones}
                         value={data.subscription_id}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                            setData("subscription_id", e.target.value)
+                        onChange={(id) =>
+                            setData("subscription_id", String(id))
                         }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    >
-                        <option value="">-- Seleccionar Suscripción --</option>
-                        {suscripciones.map((s) => {
-                            const clientName =
-                                s.client?.user?.name || `Cliente #${s.id}`;
-                            const planName = s.plan?.nombre || "Plan N/A";
-                            return (
-                                <option key={s.id} value={s.id}>
-                                    Suscripción #{s.id} - {clientName} (
-                                    {planName})
-                                </option>
-                            );
-                        })}
-                    </select>
+                        placeholder="Buscar por boleta o cliente..."
+                        error={errors.subscription_id}
+                    />
                     {errors.subscription_id && (
                         <div style={{ color: "red", fontSize: "13px" }}>
                             {errors.subscription_id}
@@ -114,7 +114,9 @@ export default function Create({ fecha, suscripciones }: Props) {
 
                 <div>
                     <label>Fecha de Pago:</label>
-                    <p>{fecha}</p>
+                    <p style={{ margin: "5px 0", fontWeight: "bold" }}>
+                        {fecha}
+                    </p>
                 </div>
 
                 <div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Head, Link, useForm } from "@inertiajs/react";
+import { SelectBuscador } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
@@ -21,6 +22,7 @@ interface ActiveSubscription {
 interface Trainer {
     id: number;
     especialidad?: string;
+    clients_count?: number; // Conteo traído con withCount('clients') desde el controlador
     employee?: {
         user?: User;
     };
@@ -40,6 +42,8 @@ interface EditProps {
     entrenadores?: Trainer[];
 }
 
+const CUPO_MAXIMO_POR_ENTRENADOR = 10; // Ajustá este límite según las reglas de tu gimnasio
+
 export default function Edit({ cliente, entrenadores = [] }: EditProps) {
     const planActivo = cliente?.active_subscription?.plan;
     const permiteEntrenador = planActivo?.incluye_entrenador ?? false;
@@ -49,7 +53,30 @@ export default function Edit({ cliente, entrenadores = [] }: EditProps) {
         email: cliente?.user?.email || "",
         password: "",
         telefono: cliente?.telefono || "",
-        trainer_id: cliente?.trainer_id || "",
+        trainer_id: cliente?.trainer_id ? String(cliente?.trainer_id) : "",
+    });
+
+    // Mapeo respetando la interfaz de SelectBuscador (id, label, disabled)
+    const opcionesEntrenadores = entrenadores.map((t) => {
+        const esElEntrenadorActual =
+            String(cliente?.trainer_id) === String(t.id);
+        const clientesAsignados = t.clients_count ?? 0;
+
+        // Deshabilita si superó el cupo y NO es su entrenador actual
+        const sinCupo =
+            clientesAsignados >= CUPO_MAXIMO_POR_ENTRENADOR &&
+            !esElEntrenadorActual;
+
+        const nombre = t.employee?.user?.name || `Entrenador #${t.id}`;
+        const textoCupo = sinCupo
+            ? `(SIN CUPO - ${clientesAsignados}/${CUPO_MAXIMO_POR_ENTRENADOR})`
+            : `(${clientesAsignados}/${CUPO_MAXIMO_POR_ENTRENADOR} cupos)`;
+
+        return {
+            id: t.id,
+            label: `#${t.id} - ${nombre} ${textoCupo}`,
+            disabled: sinCupo,
+        };
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -151,28 +178,22 @@ export default function Edit({ cliente, entrenadores = [] }: EditProps) {
                         </div>
                     </div>
 
-                    {/* Bloque adaptado de Asignación de Entrenador */}
+                    {/* Bloque de Asignación de Entrenador con SelectBuscador */}
                     <div className="pt-4 border-t">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Entrenador Asignado
                         </label>
 
                         {permiteEntrenador ? (
-                            <select
+                            <SelectBuscador
+                                options={opcionesEntrenadores}
                                 value={data.trainer_id}
-                                onChange={(e) =>
-                                    setData("trainer_id", e.target.value)
+                                onChange={(id) =>
+                                    setData("trainer_id", id ? String(id) : "")
                                 }
-                                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">-- Sin Entrenador --</option>
-                                {entrenadores.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                        {t.employee?.user?.name ||
-                                            `Entrenador #${t.id}`}
-                                    </option>
-                                ))}
-                            </select>
+                                placeholder="Buscar entrenador por ID o nombre..."
+                                error={errors.trainer_id}
+                            />
                         ) : (
                             <div className="p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
                                 {planActivo ? (

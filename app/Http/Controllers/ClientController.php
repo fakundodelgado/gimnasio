@@ -152,7 +152,9 @@ class ClientController extends Controller
 
         $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
 
-        $entrenadores = Trainer::with('employee.user')->get();
+        $entrenadores = Trainer::with('employee.user')
+            ->withCount('clients') // Cuenta cuántos clientes tienen su id en la columna client.trainer_id
+            ->get();
 
         return Inertia::render('Clientes/Edit', [
             'cliente'      => $cliente,

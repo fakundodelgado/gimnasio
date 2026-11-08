@@ -40,6 +40,7 @@ class StoreSubscriptionRequest extends FormRequest
             */
 
             'estado' => ['required', 'string', 'in:activa,vencida,pendiente,cancelada'],
+            'trainer_id' => ['nullable', 'exists:trainers,id'], // Para que tambien me llegue por el request ahora que el formulario acepta esa opcion
         ];
     }
 

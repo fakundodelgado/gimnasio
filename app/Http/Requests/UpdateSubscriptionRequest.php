@@ -33,8 +33,8 @@ class UpdateSubscriptionRequest extends FormRequest
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'estado' => ['required', 'string', 'in:activa,vencida,pendiente,cancelada'],
+            'trainer_id' => ['nullable', 'exists:trainers,id'],
         ];
-
     }
 
     #[Override]
@@ -47,7 +47,7 @@ class UpdateSubscriptionRequest extends FormRequest
             'fecha_inicio' => 'inicio de suscripcion',
             'fecha_fin' => 'vencimiento de suscripcion',
             'estado' => 'estado de la suscripcion',
-        ];  
+        ];
     }
 
     #[Override]
@@ -62,6 +62,6 @@ class UpdateSubscriptionRequest extends FormRequest
             'date' => 'el valor ingresado en el campo :attribute debe ser una fecha',
             'in' => 'el valor del campo :attribute no es valido',
             'after_or_equal' => 'el campo :attribute debe ser posterior o igual a la fecha de inicio',
-        ];  
+        ];
     }
 }

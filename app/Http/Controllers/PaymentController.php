@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
-use App\Models\Employee;
 use App\Models\User;
 use App\Models\Subscription;
 use App\Http\Requests\StorePaymentRequest;
@@ -140,7 +139,11 @@ class PaymentController extends Controller
     #[Middleware('permission:crear pago')]
     public function create()
     {
-        $suscripciones = Subscription::with(['client.user:id,name', 'plan:id,nombre'])->get();
+
+        $suscripciones = Subscription::with(['client.user', 'plan'])
+            ->where('estado', 'pendiente')
+            ->get();
+
         $fecha = Carbon::today()->toDateString();
 
         return Inertia::render('Pagos/Create', ['suscripciones' => $suscripciones, 'fecha' => $fecha]);
@@ -153,11 +156,18 @@ class PaymentController extends Controller
     #[Middleware('permission:crear pago')]
     public function store(StorePaymentRequest $request)
     {
-
         $datos = $request->validated();
         $datos['fecha_pago'] = Carbon::today()->toDateString();
-
         $user = $request->user();
+        $suscripcion = Subscription::findOrFail($datos['subscription_id']);
+        $totalPagadoPrevio = Payment::where('subscription_id', $suscripcion->id)->sum('monto');
+        $saldoPendiente = $suscripcion->precio - $totalPagadoPrevio;
+
+        if ($datos['monto'] > $saldoPendiente) {
+            return back()->withErrors([
+                'monto' => "El monto ingresado ($" . number_format($datos['monto'], 2) . ") supera el saldo pendiente de la suscripción ($" . number_format($saldoPendiente, 2) . ")."
+            ]);
+        }
 
         if ($user && $user->employee) {
             $datos['employee_id'] = $user->employee->id;
@@ -167,6 +177,10 @@ class PaymentController extends Controller
         }
 
         Payment::create($datos);
+
+        if (($totalPagadoPrevio + $datos['monto']) >= $suscripcion->precio) {
+            $suscripcion->update(['estado' => 'activa']);
+        }
 
         return redirect()->route('pagos.index')->with('success', 'Pago creado correctamente');
     }
@@ -190,13 +204,15 @@ class PaymentController extends Controller
     #[Middleware('permission:editar pago')]
     public function edit(Payment $pago)
     {
-        $empleados = Employee::with('user:id,name')->get();
 
-        $suscripciones = Subscription::with(['client.user:id,name', 'plan:id,nombre'])->get();
+        $suscripciones = Subscription::with(['client.user', 'plan'])
+            ->where('estado', 'pendiente')
+            ->orWhere('id', $pago->subscription_id)
+            ->get();
 
         $pago->load(['subscription.plan', 'employee.user']);
 
-        return Inertia::render('Pagos/Edit', ['pago' => $pago, 'empleados' => $empleados, 'suscripciones' => $suscripciones]);
+        return Inertia::render('Pagos/Edit', ['pago' => $pago, 'suscripciones' => $suscripciones]);
     }
 
     /**
@@ -206,9 +222,42 @@ class PaymentController extends Controller
     #[Middleware('permission:editar pago')]
     public function update(UpdatePaymentRequest $request, Payment $pago)
     {
-        $pago->update($request->validated());
+        $datos = $request->validated();
+        $suscripcionAnteriorId = $pago->subscription_id;
+        $nuevaSuscripcion = Subscription::findOrFail($datos['subscription_id']);
 
-        return redirect()->route('pagos.index')->with('success', 'Pago actualizado con exito');
+        $otrosPagos = Payment::where('subscription_id', $nuevaSuscripcion->id)
+            ->where('id', '!=', $pago->id)
+            ->sum('monto');
+
+        $saldoPendiente = $nuevaSuscripcion->precio - $otrosPagos;
+
+        if ($datos['monto'] > $saldoPendiente) {
+            return back()->withErrors([
+                'monto' => "El monto ($" . number_format($datos['monto'], 2) . ") supera el saldo restante de la suscripción ($" . number_format($saldoPendiente, 2) . ")."
+            ]);
+        }
+
+        $pago->update($datos);
+
+        if ($suscripcionAnteriorId !== $pago->subscription_id) {
+            $subAnterior = Subscription::find($suscripcionAnteriorId);
+            if ($subAnterior) {
+                $pagadoAnterior = Payment::where('subscription_id', $subAnterior->id)->sum('monto');
+                if ($pagadoAnterior < $subAnterior->precio) {
+                    $subAnterior->update(['estado' => 'pendiente']);
+                }
+            }
+        }
+
+        $totalPagadoActual = $otrosPagos + $datos['monto'];
+        if ($totalPagadoActual >= $nuevaSuscripcion->precio) {
+            $nuevaSuscripcion->update(['estado' => 'activa']);
+        } else {
+            $nuevaSuscripcion->update(['estado' => 'pendiente']);
+        }
+
+        return redirect()->route('pagos.index')->with('success', 'Pago actualizado correctamente');
     }
 
     /**
