@@ -250,7 +250,7 @@ export default function Index({
                         >
                             Fecha{indicadorOrden("fecha_pago")}
                         </th>
-                        <th>Cobrado Por</th>
+                        {esAdmin && <th>Cobrado Por</th>}
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -303,10 +303,12 @@ export default function Index({
                                     </span>
                                 </td>
                                 <td>{pago.fecha_pago}</td>
-                                <td>
-                                    {pago.employee?.user?.name ??
-                                        "Sistema / Admin"}
-                                </td>
+                                {esAdmin && (
+                                    <td>
+                                        {pago.employee?.user?.name ??
+                                            "Sistema / Admin"}
+                                    </td>
+                                )}
                                 <td>
                                     {!pago.deleted_at ? (
                                         <>
@@ -346,7 +348,10 @@ export default function Index({
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={8} style={{ textAlign: "center" }}>
+                            <td
+                                colSpan={esAdmin ? 8 : 7}
+                                style={{ textAlign: "center" }}
+                            >
                                 No hay registros de pagos.
                             </td>
                         </tr>
