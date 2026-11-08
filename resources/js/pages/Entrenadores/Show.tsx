@@ -13,6 +13,7 @@ interface Props {
                 email: string;
             };
         };
+        limite_alumnos: number;
     };
 }
 
@@ -78,6 +79,15 @@ export default function Show({ entrenador }: Props) {
                     </h2>
                     <p className="mt-1 text-gray-800 font-medium">
                         {entrenador.especialidad}
+                    </p>
+                </div>
+
+                <div className="border-t pt-4">
+                    <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                        Limite de alumnos
+                    </h2>
+                    <p className="mt-1 text-gray-800 font-medium">
+                        {entrenador.limite_alumnos}
                     </p>
                 </div>
 

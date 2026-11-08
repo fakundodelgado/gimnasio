@@ -28,6 +28,7 @@ class TrainerFactory extends Factory
                 'Rehabilitación y Postural',
                 'Calistenia',
             ]),
+            'limite_alumnos' => fake()->numberBetween(10, 30),
         ];
     }
 }

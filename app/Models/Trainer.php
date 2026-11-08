@@ -11,7 +11,7 @@ class Trainer extends Model
     /** @use HasFactory<\Database\Factories\TrainerFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['employee_id', 'especialidad'];
+    protected $fillable = ['employee_id', 'especialidad', 'limite_alumnos'];
 
     public function employee()
     {

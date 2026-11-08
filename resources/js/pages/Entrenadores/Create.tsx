@@ -9,6 +9,7 @@ export default function Create() {
         cuil: "",
         telefono: "",
         especialidad: "",
+        limite_alumnos: "",
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -154,6 +155,32 @@ export default function Create() {
                         <p className="text-red-500 text-xs mt-1">
                             {errors.especialidad}
                         </p>
+                    )}
+                </div>
+                <div>
+                    <label
+                        htmlFor="limite_alumnos"
+                        className="block text-sm font-medium text-gray-700"
+                    >
+                        Límite de Alumnos (10 a 30)
+                    </label>
+                    <input
+                        type="number"
+                        id="limite_alumnos"
+                        name="limite_alumnos"
+                        min="10"
+                        max="30"
+                        value={data.limite_alumnos}
+                        onChange={(e) =>
+                            setData("limite_alumnos", e.target.value)
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                    />
+                    {errors.limite_alumnos && (
+                        <div className="text-red-600 text-sm mt-1">
+                            {errors.limite_alumnos}
+                        </div>
                     )}
                 </div>
 

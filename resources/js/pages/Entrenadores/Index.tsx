@@ -21,6 +21,8 @@ interface Trainer {
     id: number;
     employee_id: number;
     especialidad: string;
+    limite_alumnos: number;
+    clients_count?: number;
     deleted_at: string | null;
     employee?: Employee;
 }
@@ -215,6 +217,7 @@ export default function Index({
                         >
                             Especialidad{indicadorOrden("especialidad")}
                         </th>
+                        <th>Cupo de Alumnos</th>
                         <th>Email</th>
                         <th>Acciones</th>
                     </tr>
@@ -248,6 +251,10 @@ export default function Index({
                                 </td>
                                 <td>{tr.employee?.cuil || "-"}</td>
                                 <td>{tr.especialidad || "-"}</td>
+                                <td>
+                                    {tr.clients_count ?? 0} /{" "}
+                                    {tr.limite_alumnos}
+                                </td>
                                 <td>{tr.employee?.user?.email || "-"}</td>
                                 <td>
                                     {!tr.deleted_at && (

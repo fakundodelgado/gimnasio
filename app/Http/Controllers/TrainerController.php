@@ -41,7 +41,22 @@ class TrainerController extends Controller
             $porPagina = 5;
         }
 
-        $query = Trainer::with([
+        $query = Trainer::query()->select('trainers.*');
+
+        if ($orden === 'nombre') {
+            $query->leftJoin('employees', 'trainers.employee_id', '=', 'employees.id')
+                ->leftJoin('users', 'employees.user_id', '=', 'users.id')
+                ->orderBy('users.name', $direccion);
+        } elseif ($orden === 'cuil') {
+            $query->leftJoin('employees', 'trainers.employee_id', '=', 'employees.id')
+                ->orderBy('employees.cuil', $direccion);
+        } else {
+            $query->orderBy("trainers.{$orden}", $direccion);
+        }
+
+        $query->orderBy('trainers.id', 'asc');
+
+        $query->with([
             'employee' => function ($empQuery) {
                 $empQuery->withTrashed()->with([
                     'user' => function ($userQuery) {
@@ -51,16 +66,20 @@ class TrainerController extends Controller
             }
         ]);
 
+        $query->withCount(['clients' => function ($q) {
+            $q->whereHas('subscriptions', function ($subQ) {
+                $subQ->where('estado', 'activa');
+            });
+        }]);
+
         $query->when($papelera === 'solo_eliminados', function ($q) {
             $q->onlyTrashed();
-        })
-            ->when($papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
+        })->when($papelera === 'todos', function ($q) {
+            $q->withTrashed();
+        });
 
         $query->when($buscar !== '', function ($q) use ($buscar) {
             $q->where(function ($subQ) use ($buscar) {
-
                 if (is_numeric($buscar)) {
                     $subQ->where('trainers.id', $buscar);
                 }
@@ -84,20 +103,6 @@ class TrainerController extends Controller
                 });
             });
         });
-
-        if ($orden === 'nombre') {
-            $query->join('employees', 'trainers.employee_id', '=', 'employees.id')
-                ->join('users', 'employees.user_id', '=', 'users.id')
-                ->orderBy('users.name', $direccion)
-                ->select('trainers.*');
-        } elseif ($orden === 'cuil') {
-            $query->join('employees', 'trainers.employee_id', '=', 'employees.id')
-                ->orderBy('employees.cuil', $direccion)
-                ->select('trainers.*');
-        } else {
-            $query->orderBy("trainers.{$orden}", $direccion)
-                ->select('trainers.*');
-        }
 
         $entrenadores = $query->paginate($porPagina)->withQueryString();
 

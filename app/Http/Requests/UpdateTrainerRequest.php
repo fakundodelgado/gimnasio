@@ -33,8 +33,8 @@ class UpdateTrainerRequest extends FormRequest
 
         return array_merge(UserService::rules($user_id), EmployeeService::rules($employee_id), [
             'especialidad' => ['required', 'string', 'max:255'],
+            'limite_alumnos' => ['required', 'min:10', 'integer', 'max:30'],
         ]);
-
     }
 
     #[Override]
@@ -42,6 +42,7 @@ class UpdateTrainerRequest extends FormRequest
     {
         return array_merge(UserService::attributes(), EmployeeService::attributes(), [
             'especialidad' => 'especialidad del entrenador',
+            'limite_alumnos' => 'cantidad maxima de alumnos'
         ]);
     }
 
@@ -51,7 +52,9 @@ class UpdateTrainerRequest extends FormRequest
         return array_merge(UserService::messages(), EmployeeService::messages(), [
             'required' => 'El campo :attribute es obligatorio.',
             'string' => 'El campo :attribute debe ser una cadena de caracteres.',
-        ]); 
+            'min' => 'El campo :attribute tiene un valor inferior al minimo (:min)',
+            'max' => 'El campo :attribute tiene un valor mayor al maximo (:max)',
+            'integer' => 'El campo :attribute solo admite numeros enteros'
+        ]);
     }
-
 }

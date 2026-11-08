@@ -347,6 +347,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ['employee_id' => $trainerEmployee->id],
             [
                 'especialidad' => 'Musculación y Funcional',
+                'limite_alumnos' => 5,
             ]
         );
 

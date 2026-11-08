@@ -1,6 +1,7 @@
 <?php
 
 namespace Database\Seeders;
+
 use App\Models\User;
 use App\Models\Employee;
 use App\Models\Trainer;
@@ -14,7 +15,7 @@ class TrainerSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(2)->create()->each(function ($user){
+        User::factory(3)->create()->each(function ($user) {
 
             $user->assignRole('trainer');
 
