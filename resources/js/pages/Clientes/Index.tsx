@@ -14,8 +14,9 @@ interface Plan {
     incluye_entrenador: boolean;
 }
 
-interface ActiveSubscription {
+interface UltimaSuscripcion {
     id: number;
+    estado: string; // <-- Agregado para que no falle al leer el estado
     plan?: Plan;
 }
 
@@ -33,7 +34,7 @@ interface Client {
     direccion?: string;
     deleted_at: string | null;
     user?: User;
-    active_subscription?: ActiveSubscription | null;
+    ultima_suscripcion?: UltimaSuscripcion | null;
     trainer?: Trainer | null;
 }
 
@@ -235,8 +236,7 @@ export default function Index({
                 <tbody>
                     {clientes.data.length > 0 ? (
                         clientes.data.map((cliente: Client) => {
-                            const planActivo =
-                                cliente.active_subscription?.plan;
+                            const ultimoPlan = cliente.ultima_suscripcion?.plan;
                             const entrenador = cliente.trainer?.employee?.user;
 
                             return (
@@ -267,17 +267,40 @@ export default function Index({
                                     <td>{cliente.user?.email || "-"}</td>
                                     <td>{cliente.telefono || "-"}</td>
                                     <td>
-                                        {planActivo ? (
-                                            <span
-                                                style={{
-                                                    fontWeight: "bold",
-                                                    color: "#16a34a",
-                                                }}
-                                            >
-                                                {planActivo.nombre}
-                                            </span>
+                                        {cliente.ultima_suscripcion ? (
+                                            <div>
+                                                <span
+                                                    className={
+                                                        cliente
+                                                            .ultima_suscripcion
+                                                            .estado === "activa"
+                                                            ? "text-green-600 font-semibold"
+                                                            : cliente
+                                                                    .ultima_suscripcion
+                                                                    .estado ===
+                                                                "vencida"
+                                                              ? "text-red-600 font-semibold"
+                                                              : "text-gray-600"
+                                                    }
+                                                >
+                                                    {
+                                                        cliente
+                                                            .ultima_suscripcion
+                                                            .plan?.nombre
+                                                    }
+                                                </span>
+                                                <span className="text-xs text-gray-500 block capitalize">
+                                                    (
+                                                    {
+                                                        cliente
+                                                            .ultima_suscripcion
+                                                            .estado
+                                                    }
+                                                    )
+                                                </span>
+                                            </div>
                                         ) : (
-                                            <span style={{ color: "#9ca3af" }}>
+                                            <span className="text-gray-400 italic">
                                                 Sin plan
                                             </span>
                                         )}
@@ -299,7 +322,7 @@ export default function Index({
                                                     fontStyle: "italic",
                                                 }}
                                             >
-                                                {planActivo?.incluye_entrenador
+                                                {ultimoPlan?.incluye_entrenador
                                                     ? "Pendiente"
                                                     : "No incluye"}
                                             </span>

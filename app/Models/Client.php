@@ -30,8 +30,15 @@ class Client extends Model
     }
 
     // Como no tengo una actualizacion automatica podria pasar que haya pasado la fecha de fin pero que aun no la hayan cambiado a vencida, por eso la doble verificación.
+    public function ultimaSuscripcion()
+    {
+        return $this->hasOne(Subscription::class, 'client_id', 'id')->latestOfMany();
+    }
+
     public function activeSubscription()
     {
-        return $this->hasOne(Subscription::class)->where('estado', 'activa')->where('fecha_fin', '>=', now())->latestOfMany();
+        return $this->hasOne(Subscription::class, 'client_id', 'id')
+            ->where('estado', 'activa')
+            ->latestOfMany();
     }
 }

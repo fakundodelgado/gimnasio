@@ -50,8 +50,8 @@ class ClientController extends Controller
 
         $query = Client::with([
             'user' => fn($q) => $q->withTrashed(),
-            'trainer.employee.user',
-            'activeSubscription.plan'
+            'ultimaSuscripcion.plan',
+            'trainer.employee.user'
         ]);
 
         $query->when($esAdmin && $papelera === 'solo_eliminados', function ($q) {

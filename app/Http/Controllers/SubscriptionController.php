@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\Client;
+use App\Models\Trainer;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
 use Inertia\Inertia;
@@ -111,7 +112,16 @@ class SubscriptionController extends Controller
 
         $inicio = Carbon::today()->toDateString();
 
-        return Inertia::render('Suscripciones/Create', ['clientes' => $clientes, 'planes' => $planes, 'inicio' => $inicio]);
+        // Necesito saber cuantos alumnos tienen
+        $entrenadores = Trainer::with('employee.user')
+            ->withCount(['clients' => function ($query) {
+                $query->whereHas('subscriptions', function ($q) {
+                    $q->where('estado', 'activa');
+                });
+            }])
+            ->get();
+
+        return Inertia::render('Suscripciones/Create', ['clientes' => $clientes, 'planes' => $planes, 'inicio' => $inicio, 'entrenadores' => $entrenadores]);
     }
 
     /**
@@ -131,14 +141,32 @@ class SubscriptionController extends Controller
         $datos['fecha_fin'] = $fechaFin->toDateString();
         $datos['fecha_inicio'] = $fechaInicio->toDateString();
 
+        if (!$plan->incluye_entrenador) {
+            $datos['trainer_id'] = null;
+        }
+
+        if (!empty($datos['trainer_id'])) {
+            $entrenador = Trainer::withCount(['clients' => function ($q) {
+                $q->whereHas('subscriptions', fn($sub) => $sub->where('estado', 'activa'));
+            }])->findOrFail($datos['trainer_id']);
+
+            if ($entrenador->clients_count >= $entrenador->limite_alumnos) {
+                return back()->withErrors([
+                    'trainer_id' => 'El entrenador seleccionado ya no tiene cupo disponible.'
+                ]);
+            }
+        }
+
         DB::transaction(function () use ($datos, $plan) {
 
             Subscription::create($datos);
 
-            // Se debe cambiar igual, asi que por ahora no importa...
+            $client = Client::findOrFail($datos['client_id']);
+
             if (!$plan->incluye_entrenador) {
-                $client = Client::findOrFail($datos['client_id']);
                 $client->update(['trainer_id' => null]);
+            } else {
+                $client->update(['trainer_id' => $datos['trainer_id']]);
             }
         });
 
@@ -163,15 +191,28 @@ class SubscriptionController extends Controller
     #[Middleware('permission:editar suscripcion')]
     public function edit(Subscription $suscripcion)
     {
+        $suscripcion->load('client');
 
+        $suscripcion->trainer_id = $suscripcion->client?->trainer_id;
 
-        $clientes = Client::with('user:id,name')->get();
+        $clientes = Client::with('user:id,name,email')->get();
 
         $planes = Plan::all();
 
-        $suscripcion->load(['client.user', 'plan']);
+        $entrenadores = Trainer::with('employee.user')
+            ->withCount(['clients' => function ($query) {
+                $query->whereHas('subscriptions', function ($q) {
+                    $q->where('estado', 'activa');
+                });
+            }])
+            ->get();
 
-        return Inertia::render('Suscripciones/Edit', ['suscripcion' => $suscripcion, 'clientes' => $clientes, 'planes' => $planes]);
+        return Inertia::render('Suscripciones/Edit', [
+            'suscripcion'  => $suscripcion,
+            'clientes'     => $clientes,
+            'planes'       => $planes,
+            'entrenadores' => $entrenadores,
+        ]);
     }
 
     /**
@@ -181,17 +222,43 @@ class SubscriptionController extends Controller
     public function update(UpdateSubscriptionRequest $request, Subscription $suscripcion)
     {
 
-        DB::transaction(function () use ($request, $suscripcion) {
-            // 1. Actualizar la suscripción
-            $suscripcion->update($request->validated());
+        $datos = $request->validated();
 
-            // 2. Obtener el cliente y evaluar su nueva suscripción activa
-            $client = $suscripcion->client;
-            $planActivo = $client->fresh()->activeSubscription?->plan;
+        $plan = Plan::findOrFail($datos['plan_id']);
 
-            // 3. Si el nuevo plan no incluye entrenador (o venció/no existe), reseteamos
-            if (!$planActivo || !$planActivo->incluye_entrenador) {
+        if (!$plan->incluye_entrenador) {
+            $datos['trainer_id'] = null;
+        }
+
+        if (!empty($datos['trainer_id'])) {
+
+            if ((int) $datos['trainer_id'] !== (int) $suscripcion->trainer_id) {
+                $entrenador = Trainer::withCount(['clients' => function ($q) {
+                    $q->whereHas('subscriptions', fn($sub) => $sub->where('estado', 'activa'));
+                }])->findOrFail($datos['trainer_id']);
+
+                if ($entrenador->clients_count >= $entrenador->limite_alumnos) {
+                    return back()->withErrors([
+                        'trainer_id' => 'El entrenador seleccionado ya no tiene cupo disponible.'
+                    ]);
+                }
+            }
+        }
+
+        if (isset($datos['fecha_inicio'])) {
+            $fechaInicio = Carbon::parse($datos['fecha_inicio']);
+            $datos['fecha_fin'] = $fechaInicio->copy()->addDays($plan->duracion)->toDateString();
+        }
+
+        DB::transaction(function () use ($suscripcion, $datos, $plan) {
+            $suscripcion->update($datos);
+
+            $client = Client::findOrFail($suscripcion->client_id);
+
+            if (!$plan->incluye_entrenador) {
                 $client->update(['trainer_id' => null]);
+            } else {
+                $client->update(['trainer_id' => $datos['trainer_id']]);
             }
         });
 
