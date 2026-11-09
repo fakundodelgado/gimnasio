@@ -15,6 +15,8 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 use App\Mail\SendMail;
 use Illuminate\Support\Facades\Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\PagosExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class PaymentController extends Controller
@@ -304,5 +306,36 @@ class PaymentController extends Controller
 
         $pdf = Pdf::loadView('pdfs.pagos.pagos', ['pagos' => $pagos]);
         return $pdf->download('resumen_pagos.pdf');
+    }
+
+    public function export(Request $request)
+    {
+
+        $buscar = trim($request->input('buscar', ''));
+        $orden = $request->input('orden', 'id');
+        $direccion = $request->input('direccion', 'asc');
+        $papelera = $request->input('papelera', 'sin_eliminados');
+
+        $camposPermitidos = ['id', 'fecha_pago', 'monto', 'metodo_pago'];
+
+        if (!in_array($orden, $camposPermitidos, true)) {
+            $orden = 'id';
+        }
+
+        if (!in_array($direccion, ['asc', 'desc'], true)) {
+            $direccion = 'asc';
+        }
+
+        $filtros = [
+            'buscar' => $buscar,
+            'papelera' => $papelera,
+            'orden' => $orden,
+            'direccion' => $direccion,
+        ];
+
+        return Excel::download(
+            new PagosExport($filtros),
+            'reporte_pagos.xlsx'
+        );
     }
 }
