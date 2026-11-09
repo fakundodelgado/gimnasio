@@ -11,6 +11,9 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Routing\Attributes\Controllers\Middleware;
+//use Illuminate\Support\Facades\Auth;
+use App\Mail\SendMail;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
@@ -159,7 +162,7 @@ class PaymentController extends Controller
         $datos = $request->validated();
         $datos['fecha_pago'] = Carbon::today()->toDateString();
         $user = $request->user();
-        $suscripcion = Subscription::findOrFail($datos['subscription_id']);
+        $suscripcion = Subscription::with('client.user', 'plan')->findOrFail($datos['subscription_id']);
         $totalPagadoPrevio = Payment::where('subscription_id', $suscripcion->id)->sum('monto');
         $saldoPendiente = $suscripcion->precio - $totalPagadoPrevio;
 
@@ -181,6 +184,23 @@ class PaymentController extends Controller
         if (($totalPagadoPrevio + $datos['monto']) >= $suscripcion->precio) {
             $suscripcion->update(['estado' => 'activa']);
         }
+
+        $cliente = $suscripcion->client->user;
+
+        $nombre = $cliente->name;
+        $correo = $cliente->email;
+
+        // $datos ya estaba ocupado
+        $info = array(
+            'nombre' => $nombre,
+            'correo' => $correo,
+            'suscripcion' => $datos['subscription_id'],
+            'plan' => $suscripcion->plan->nombre,
+            'fecha' => $datos['fecha_pago'],
+            'monto' => $datos['monto'],
+        );
+
+        Mail::to($info['correo'])->send(new SendMail($info));
 
         return redirect()->route('pagos.index')->with('success', 'Pago creado correctamente');
     }
