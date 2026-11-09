@@ -14,6 +14,8 @@ use Illuminate\Routing\Attributes\Controllers\Middleware;
 //use Illuminate\Support\Facades\Auth;
 use App\Mail\SendMail;
 use Illuminate\Support\Facades\Mail;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class PaymentController extends Controller
 {
@@ -293,4 +295,14 @@ class PaymentController extends Controller
     }
 
     // !!! Faltaria la opcion de restaurar si el modelo de negocios asi lo permitiera
+
+    // Dado que los datos son generados puede que las fechas y los IDs no sean demasiado coherentes, por ejemplo
+    // puede suceder que el primer pago sea de hace un dia y el ultimo de hace un mes, lo que en teoria carece de sentido.
+    public function pdf()
+    {
+        $pagos = Payment::with(['subscription.client.user', 'subscription.plan', 'employee.user'])->orderBy('id')->get();
+
+        $pdf = Pdf::loadView('pdfs.pagos.pagos', ['pagos' => $pagos]);
+        return $pdf->download('resumen_pagos.pdf');
+    }
 }

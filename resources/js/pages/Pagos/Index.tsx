@@ -209,6 +209,16 @@ export default function Index({
                 >
                     Buscar
                 </button>
+
+                {esAdmin && (
+                    <a
+                        href="/pagos/pdf"
+                        target="_blank"
+                        className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition inline-flex items-center gap-2"
+                    >
+                        Descargar PDF
+                    </a>
+                )}
             </form>
 
             {/* Tabla de Pagos */}
