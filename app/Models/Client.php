@@ -35,6 +35,11 @@ class Client extends Model
         return $this->hasOne(Subscription::class, 'client_id', 'id')->latestOfMany();
     }
 
+    public function ingresos()
+    {
+        return $this->hasMany(Ingreso::class);
+    }
+
     public function activeSubscription()
     {
         return $this->hasOne(Subscription::class, 'client_id', 'id')

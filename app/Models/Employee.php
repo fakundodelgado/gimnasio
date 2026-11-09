@@ -13,15 +13,23 @@ class Employee extends Model
 
     protected $fillable = ['user_id', 'cuil', 'telefono'];
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function trainer(){
+    public function trainer()
+    {
         return $this->hasOne(Trainer::class);
     }
 
-    public function payments(){
+    public function payments()
+    {
         return $this->hasMany(Payment::class);
+    }
+
+    public function ingresos()
+    {
+        return $this->hasMany(Ingreso::class);
     }
 }

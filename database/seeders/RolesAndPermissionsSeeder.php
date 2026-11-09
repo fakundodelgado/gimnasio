@@ -114,6 +114,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'eliminar usuario',
             'restaurar usuario',
 
+            // Ingresos
+
+            'listar ingresos',
+            'crear ingreso',
 
         ];
 
@@ -184,6 +188,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'editar entrenador',
             'eliminar entrenador',
             'restaurar entrenador',
+
+            'listar ingresos',
+            'crear ingreso',
+
         ]);
 
         // Permisos del cliente
@@ -250,6 +258,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'listar entrenadores',
             'mostrar entrenador',
+
+            'crear ingreso',
 
 
         ]);

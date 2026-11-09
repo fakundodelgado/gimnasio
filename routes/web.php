@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\TrainerController;
+use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,7 @@ Route::middleware(['auth'])->group(function () {
         ->parameters(['suscripciones' => 'suscripcion']);
     Route::resource('pagos', PaymentController::class);
     //->parameters(['pagos' => 'pago']);
+    Route::resource('ingresos', IngresoController::class)->only(['index', 'create', 'store']);
 });
 
 require __DIR__ . '/settings.php';
