@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
@@ -45,7 +45,7 @@ class AdminDashboardController extends Controller
         $pagos = Payment::count();
         $pagosMes = Payment::whereBetween('fecha_pago', [$fechaInicio, $fechaFin])->count();
 
-        return Inertia::render('Admin/Dashboard', [
+        return Inertia::render('Administradores/Dashboard', [
             'clientes' => $clientes,
             'clientesActivos' => $clientesActivos,
             'clientesInactivos' => $clientesInactivos,

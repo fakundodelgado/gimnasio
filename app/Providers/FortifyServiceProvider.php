@@ -43,7 +43,7 @@ class FortifyServiceProvider extends ServiceProvider
 
                     // Dependiendo del rol, lo mandamos a su ruta correspondiente
                     if ($user->hasRole('admin')) {
-                        return redirect()->route('admin.dashboard');
+                        return redirect()->route('administradores.dashboard');
                     }
 
                     return redirect()->route('dashboard');
