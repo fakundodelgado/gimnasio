@@ -29,6 +29,11 @@ class Client extends Model
         return $this->hasMany(Subscription::class);
     }
 
+    public function payments()
+    {
+        return $this->hasManyThrough(Payment::class, Subscription::class);
+    }
+
     // Como no tengo una actualizacion automatica podria pasar que haya pasado la fecha de fin pero que aun no la hayan cambiado a vencida, por eso la doble verificación.
     public function ultimaSuscripcion()
     {
