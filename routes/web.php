@@ -8,11 +8,15 @@ use App\Http\Controllers\TrainerController;
 use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminDashboardController;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    });
     // El mismo problema que tuvimos en clase con profesores, se pluraliza mal las rutas... pero bueno, con eso todo funciona.
     Route::get('/pagos/export', [
         PaymentController::class,
