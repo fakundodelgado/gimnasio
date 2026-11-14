@@ -76,6 +76,7 @@ class ClientController extends Controller
             });
         });
 
+        
         if ($orden === 'nombre') {
             $query->join('users', 'clients.user_id', '=', 'users.id')
                 ->orderBy('users.name', $direccion)

@@ -34,22 +34,41 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureViews();
         $this->configureRateLimiting();
 
+        /*
         // Intento de capturar el login y redireccionar a distintos dashboards
         $this->app->singleton(LoginResponse::class, function () {
+            // Clase anonima que me ayuda a evitar el redireccionamiento por defecto de fortify que es el que se encarga el login 
             return new class implements LoginResponse {
                 public function toResponse($request)
                 {
+
                     $user = $request->user();
 
-                    // Dependiendo del rol, lo mandamos a su ruta correspondiente
+                    // Dependiendo del rol, lo mando a la ruta que corresponda
+
                     if ($user->hasRole('admin')) {
                         return redirect()->route('administradores.dashboard');
                     }
 
+                    if($user->hasRole('employee')) {
+                        return redirect()->route('empleados.dashboard');
+                    }
+
                     return redirect()->route('clientes.dashboard');
+
                 }
             };
         });
+
+        
+        
+            Esto sirve pura y exclusivamente para el login, si yo quiero que, por ejemplo al apretar el icono de laravel me redireccione al dashboard correspondiente del 
+            usuario debo hacer esa redireccion en web.php con, por ejemplo un if para dependiendo de la del rol redireccionar. Quizas usar distintos dashboards no fue tan buena
+            idea que digamos.
+        
+        */
+        
+
     }
 
     /**

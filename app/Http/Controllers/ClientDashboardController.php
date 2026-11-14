@@ -19,7 +19,7 @@ class ClientDashboardController extends Controller
         $fechaFin = now();
 
         // Datos cliente
-        $usuario = Auth::user();
+        $usuario = auth()->user();
 
         // Datos ingresos
         $ingresosMes = Ingreso::where('client_id', $usuario->client->id)->whereBetween('fecha_hora', [$fechaInicio, $fechaFin])->count();

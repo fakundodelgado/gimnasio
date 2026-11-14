@@ -10,14 +10,15 @@ use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ClientDashboardController;
+use App\Http\Controllers\EmployeeDashboardController;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['auth'])->get('/dashboard', function () {
-        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if ($user->hasRole('admin') || $user->hasRole('super')) {
@@ -26,6 +27,10 @@ Route::middleware(['auth'])->group(function () {
 
         if ($user->hasRole('client')) {
             return redirect()->route('clientes.dashboard');
+        }
+
+        if($user->hasRole('employee')) {
+            return redirect()->route('empleados.dashboard');
         }
 
         // Por seguridad, si no tiene ningún rol asignado
@@ -38,6 +43,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['auth', 'role:client'])->group(function () {
         Route::get('/clientes/dashboard', [ClientDashboardController::class, 'index'])->name('clientes.dashboard');
+    });
+
+    Route::middleware(['auth', 'role:employee'])->group(function () {
+        Route::get('/empleados/dashboard', [EmployeeDashboardController::class, 'index'])->name('empleados.dashboard');
     });
 
     // El mismo problema que tuvimos en clase con profesores, se pluraliza mal las rutas... pero bueno, con eso todo funciona.
