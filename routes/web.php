@@ -11,14 +11,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ClientDashboardController;
 use App\Http\Controllers\EmployeeDashboardController;
+use App\Http\Controllers\TrainerDashboardController;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+//use App\Models\User;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['auth'])->get('/dashboard', function () {
+        // Dado que producto de estas redirecciones se produce un "doble direccionamiento" es de vital importancia guardar los mensajes flash ya que solo sobreviven un salto.
+        session()->reflash();
+
         $user = Auth::user();
 
         if ($user->hasRole('admin') || $user->hasRole('super')) {
@@ -29,14 +33,19 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('clientes.dashboard');
         }
 
-        if($user->hasRole('employee')) {
+        if ($user->hasRole('employee')) {
             return redirect()->route('empleados.dashboard');
+        }
+
+        if ($user->hasRole('trainer')) {
+            return redirect()->route('entrenadores.dashboard');
         }
 
         // Por seguridad, si no tiene ningún rol asignado
         return redirect('/');
     })->name('dashboard');
 
+    // Por ahora lo dejare como grupos, pero si al fin del desarrollo no hay nuevas rutas aqui tengo que quitar el group...
     Route::middleware(['auth', 'role:admin|super'])->group(function () {
         Route::get('/administradores/dashboard', [AdminDashboardController::class, 'index'])->name('administradores.dashboard');
     });
@@ -47,6 +56,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['auth', 'role:employee'])->group(function () {
         Route::get('/empleados/dashboard', [EmployeeDashboardController::class, 'index'])->name('empleados.dashboard');
+    });
+
+    Route::middleware(['auth', 'role:trainer'])->group(function () {
+        Route::get('/entrenadores/dashboard', [TrainerDashboardController::class, 'index'])->name('entrenadores.dashboard');
     });
 
     // El mismo problema que tuvimos en clase con profesores, se pluraliza mal las rutas... pero bueno, con eso todo funciona.
