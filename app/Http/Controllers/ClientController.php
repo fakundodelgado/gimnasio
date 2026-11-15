@@ -22,80 +22,129 @@ class ClientController extends Controller
     public function index(Request $request)
     {
 
-        $buscar = trim($request->input('buscar', ''));
+        $user = $request->user();
+
+        $buscarTexto = trim($request->input('buscar_texto', ''));
+        $buscarNumero = trim($request->input('buscar_numero', ''));
+        $buscarEntrenador = $request->input('buscar_entrenador', '');
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
-        $porPagina = (int) $request->input('por_pagina', 5);
         $papelera = $request->input('papelera', 'sin_eliminados');
+        $estado = $request->input('estado', '');
+        $paginas = (int) $request->input('paginas', 5);
 
-        $camposPermitidos = ['id', 'nombre', 'created_at'];
+        $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
+
+        $camposPermitidos = ['nombre', 'id', 'created_at'];
+
         if (!in_array($orden, $camposPermitidos, true)) {
             $orden = 'id';
+        }
+
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
         }
 
         if (!in_array($direccion, ['asc', 'desc'], true)) {
             $direccion = 'asc';
         }
 
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
+        if (!in_array($estado, ['', 'activa', 'pendiente', 'vencida', 'cancelada', 'sin_suscripcion'], true)) {
+            $estado = '';
         }
 
-        $user = $request->user();
-        $esAdmin = $user->hasRole(['admin', 'super']);
-
+        // Anteriormente use otras cadenas para designar estos estados pero estas nuevas me parecen mas descriptivas y las usare para filtro de ahora en adelante.
         if (!$esAdmin) {
-            $papelera = 'sin_eliminados';
+            $papelera = 'sin_eliminados'; // Las posibiliades serian sin_eliminados, con_eliminados, solo_eliminados
         }
 
         $query = Client::with([
-            'user' => fn($q) => $q->withTrashed(),
+            'user' => fn($q) => $q->withTrashed(), // Me sirve para traer los clientes borrados (junto con los user) de ser necesario
             'ultimaSuscripcion.plan',
-            'trainer.employee.user'
+            'trainer.employee.user',
         ]);
 
-        $query->when($esAdmin && $papelera === 'solo_eliminados', function ($q) {
-            $q->onlyTrashed();
-        })
-            ->when($esAdmin && $papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
+        $query->when($papelera === 'con_eliminados', function ($q) {
+            $q->withTrashed();
+        });
 
-        $query->when($buscar !== '', function ($q) use ($buscar) {
-            $q->where(function ($subQ) use ($buscar) {
-                if (is_numeric($buscar)) {
-                    $subQ->where('clients.id', $buscar);
-                }
-                $subQ->orWhereHas('user', function ($userQuery) use ($buscar) {
-                    $userQuery->withTrashed()
-                        ->where(function ($uQ) use ($buscar) {
-                            $uQ->where('name', 'like', "%{$buscar}%")
-                                ->orWhere('email', 'like', "%{$buscar}%");
-                        });
+        // Aqui debe ir si o si function
+        $query->when($papelera === 'solo_eliminados', function ($q) {
+            $q->onlyTrashed();
+        });
+
+        // Busco dentro de los campos de user, para eso debo usar whereHas y para buscar sobre dos campos distintos y usar el orWhere debo de agruparlos dentro de una misma funcion
+        $query->when($buscarTexto !== '', function ($q) use ($buscarTexto) {
+            $q->whereHas('user', function ($userQ) use ($buscarTexto) {
+                $userQ->withTrashed()->where(function ($subQ) use ($buscarTexto) {
+                    $subQ->where('name', 'like', "%{$buscarTexto}%")
+                        ->orWhere('email', 'like', "%{$buscarTexto}%");
                 });
             });
         });
 
-        
+        // Aqui solo accedo a cosas de cliente asi que no tengo necesidad de hacer un whereHas para buscar dentro de otra entidad
+        $query->when($buscarNumero !== '', function ($q) use ($buscarNumero) {
+            $q->where(function ($subQ) use ($buscarNumero) {
+                $subQ->where('clients.telefono', 'like', "%{$buscarNumero}%")
+                    ->orWhere('clients.id', 'like', "%{$buscarNumero}%");
+            });
+        });
+
+        $query->when($estado !== '', function ($q) use ($estado) {
+            if ($estado === 'sin_suscripcion') {
+                $q->whereDoesntHave('ultimaSuscripcion');
+            } else {
+                $q->whereHas('ultimaSuscripcion', function ($subQ) use ($estado) {
+                    $subQ->where('estado', $estado);
+                });
+            }
+        });
+
+        // De ser un entrenador solo debo mostrar sus alumnos (clientes)
+        if ($user->hasRole('trainer')) {
+            $query->where('clients.trainer_id', $user->employee->trainer->id);
+        } else {
+            // Sino buscare todos los alumnos que apunten a dicho entrenador (por el cual estoy buscando, usare el id para ser más rapido)
+            $query->when($buscarEntrenador !== '', function ($q) use ($buscarEntrenador) {
+                if ($buscarEntrenador === 'sin_entrenador') {
+                    $q->whereNull('clients.trainer_id');
+                } else {
+                    $q->where('clients.trainer_id', $buscarEntrenador);
+                }
+            });
+        }
+
         if ($orden === 'nombre') {
             $query->join('users', 'clients.user_id', '=', 'users.id')
-                ->orderBy('users.name', $direccion)
-                ->select('clients.*');
+                ->select('clients.*')
+                ->orderBy('users.name', $direccion);
         } else {
             $query->orderBy("clients.{$orden}", $direccion);
         }
 
-        $clientes = $query->paginate($porPagina)->withQueryString();
+        $query->orderBy('clients.id', 'asc');
+        $clientes = $query->paginate($paginas)->withQueryString();
+
+        // Si el usuario es trainer no traigo los entrenadores, sino obviamente si.
+        $entrenadores = $user->hasRole('trainer')
+            ? []
+            : Trainer::with(['employee.user'])->get();
+
 
         return Inertia::render('Clientes/Index', [
             'clientes' => $clientes,
             'filtros' => [
-                'buscar'     => $buscar,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
+                'buscar_texto' => $buscarTexto,
+                'buscar_numero' => $buscarNumero,
+                'buscar_entrenador' => $buscarEntrenador,
+                'orden' => $orden,
+                'direccion' => $direccion,
+                'papelera' => $papelera,
+                'estado' => $estado,
+                'paginas' => $paginas
             ],
+            'entrenadores' => $entrenadores,
             'esAdmin' => $esAdmin,
         ]);
     }

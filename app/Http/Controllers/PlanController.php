@@ -19,66 +19,88 @@ class PlanController extends Controller
     public function index(Request $request)
     {
 
-        // Parametros de entrada para mis filtros
+        // Entradas para los filtros
+
         $buscar = trim($request->input('buscar', ''));
+        $incluyeEntrenador = $request->input('incluye_entrenador', '');
         $orden = $request->input('orden', 'id');
-        $direccion = $request->input('direccion', 'asc');
-        $porPagina = (int) $request->input('por_pagina', 5);
+        $paginas = (int) $request->input('paginas', 5);
         $papelera = $request->input('papelera', 'sin_eliminados');
+        $direccion = $request->input('direccion', 'asc');
+        // Si pusiera un valor por defecto evitaria que el usaurio pueda ver todos los planes en un principio
+        $duracion = $request->input('duracion', '');
 
-        // Campos o entradas validas
-        $camposPermitidos = ['id', 'nombre', 'precio', 'duracion'];
+        $camposPermitidos = ['duracion', 'nombre', 'precio', 'id'];
 
-        // Establezco valores por defecto ante entradas no validas
-
-        // Si no aprieto nada entonces estara ordenado por id 
         if (!in_array($orden, $camposPermitidos, true)) {
             $orden = 'id';
         }
 
-        // Se manejara con las flechitas al lado de cada columna
         if (!in_array($direccion, ['asc', 'desc'], true)) {
             $direccion = 'asc';
         }
 
-        // En principio seran solo 5 páginas a no ser que modifique dicho valor
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
+        }
+
+        if (!$request->user()->hasAnyRole(['admin', 'super'])) {
+            $papelera = 'sin_eliminados';
         }
 
         $query = Plan::query();
 
-        $query->when($papelera === 'solo_eliminados', function ($q) {
+        // Papelera
+        $query->when($papelera === 'eliminados', function ($q) {
             $q->onlyTrashed();
-        })
-            ->when($papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
-
-        $query->when($buscar !== '', function ($q) use ($buscar) {
-            $q->where(function ($subQ) use ($buscar) {
-
-                if (is_numeric($buscar)) {
-                    $subQ->where('plans.id', $buscar);
-                }
-
-                $subQ->orWhere('plans.nombre', 'like', "%{$buscar}%");
-            });
         });
 
-        $query->orderBy("plans.{$orden}", $direccion);
+        $query->when($papelera === 'todos', function ($q) {
+            $q->withTrashed();
+        });
 
-        $planes = $query->paginate($porPagina)->withQueryString();
+        /* Si papelera es sin_eliminados entonces no hay nada que aplicar, los when se ejecutaran uno a uno */
+
+        // Entrenador
+
+        /*
+            En este caso el verdadero y falso seran 0 y 1, algo como lo que sucede en C. Al parecer esto es más un tema sobre como MySQL define las columnas que laravel trata
+            como boolean si entramos a phpMyAdmin y vemos como esta definido el tipo de dato de esa columna se ve que es tinyint osea (0,1).
+        */
+
+        $query->when(in_array($incluyeEntrenador, ['0', '1'], true), function ($q) use ($incluyeEntrenador) {
+            $q->where('plans.incluye_entrenador', (int) $incluyeEntrenador);
+        });
+
+        // Duracion
+        $query->when($duracion !== '' && is_numeric($duracion), function ($q) use ($duracion) {
+            $q->where('plans.duracion', $duracion);
+        });
+
+
+        $query->when($buscar !== '', function ($q) use ($buscar) {
+            $q->where('plans.nombre', 'like', "%{$buscar}%");
+        });
+
+        $query->orderBy("plans.{$orden}", $direccion)->orderBy('id', 'asc');
+
+        $planes = $query->paginate($paginas)->withQueryString();
+
+        // Necesito las duraciones para un desplegable
+        $duraciones = Plan::select('plans.duracion')->orderBy('duracion')->distinct()->pluck('duracion');
 
         return Inertia::render('Planes/Index', [
             'planes' => $planes,
+            'duraciones' => $duraciones,
             'filtros' => [
-                'buscar'     => $buscar,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
-            ],
+                'buscar' => $buscar,
+                'paginas' => $paginas,
+                'orden' => $orden,
+                'direccion' => $direccion,
+                'papelera' => $papelera,
+                'incluye_entrenador' => $incluyeEntrenador,
+                'duracion' => $duracion
+            ]
         ]);
     }
 

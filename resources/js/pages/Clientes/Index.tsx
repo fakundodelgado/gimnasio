@@ -1,5 +1,6 @@
-import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import React, { useState, FormEvent, useMemo } from "react";
+import { Link, router } from "@inertiajs/react";
+import { SelectBuscador } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
@@ -16,12 +17,13 @@ interface Plan {
 
 interface UltimaSuscripcion {
     id: number;
-    estado: string; // <-- Agregado para que no falle al leer el estado
+    estado: string;
     plan?: Plan;
 }
 
 interface Trainer {
     id: number;
+    especialidad?: string | null;
     employee?: {
         user?: User;
     };
@@ -32,6 +34,7 @@ interface Client {
     user_id: number;
     telefono?: string;
     direccion?: string;
+    created_at?: string;
     deleted_at: string | null;
     user?: User;
     ultima_suscripcion?: UltimaSuscripcion | null;
@@ -51,63 +54,108 @@ interface ClientesPaginados {
 }
 
 interface Filtros {
-    buscar: string;
+    buscar_texto: string;
+    buscar_numero: string;
+    buscar_entrenador: string;
     orden: string;
     direccion: string;
-    por_pagina: number;
     papelera: string;
+    estado: string;
+    paginas: number;
 }
 
-interface PageProps {
+interface Props {
     clientes: ClientesPaginados;
     filtros: Filtros;
+    entrenadores: Trainer[];
     esAdmin: boolean;
-    [key: string]: unknown;
 }
 
 export default function Index({
     clientes,
     filtros,
+    entrenadores,
     esAdmin,
-}: {
-    clientes: ClientesPaginados;
-    filtros: Filtros;
-    esAdmin: boolean;
-}) {
-    const [buscar, setBuscar] = useState(filtros.buscar ?? "");
+}: Props) {
+    const [buscarTexto, setBuscarTexto] = useState(filtros.buscar_texto ?? "");
+    const [buscarNumero, setBuscarNumero] = useState(
+        filtros.buscar_numero ?? "",
+    );
+    const [buscarEntrenador, setBuscarEntrenador] = useState(
+        String(filtros.buscar_entrenador ?? ""),
+    );
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+    const [estado, setEstado] = useState(filtros.estado ?? "");
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
+
+    const opcionesEntrenadores = useMemo(() => {
+        const lista = entrenadores.map((trainer) => {
+            const nombre =
+                trainer.employee?.user?.name ?? `Entrenador #${trainer.id}`;
+            const esp = trainer.especialidad
+                ? ` (${trainer.especialidad})`
+                : "";
+            return {
+                id: String(trainer.id),
+                label: `#${trainer.id} - ${nombre}${esp}`,
+            };
+        });
+
+        return [
+            { id: "", label: "Todos los entrenadores" },
+            { id: "sin_entrenador", label: "Sin entrenador asignado" },
+            ...lista,
+        ];
+    }, [entrenadores]);
+
+    const construirParametros = (overrides: Partial<Filtros> = {}) => ({
+        buscar_texto: buscarTexto,
+        buscar_numero: buscarNumero,
+        buscar_entrenador: buscarEntrenador,
+        orden,
+        direccion,
+        papelera,
+        estado,
+        paginas,
+        ...overrides,
+    });
 
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/clientes", {
-            buscar,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
+        router.get("/clientes", construirParametros(), {
+            preserveState: true,
+            replace: true,
         });
     };
 
+    const limpiarFiltros = () => {
+        setBuscarTexto("");
+        setBuscarNumero("");
+        setBuscarEntrenador("");
+        setOrden("id");
+        setDireccion("asc");
+        setPapelera("sin_eliminados");
+        setEstado("");
+        setPaginas(5);
+
+        router.get("/clientes");
+    };
+
     const ordenarPor = (campo: string) => {
-        let nuevaDireccion = "asc";
-        if (orden === campo && direccion === "asc") {
-            nuevaDireccion = "desc";
-        }
+        const nuevaDireccion =
+            orden === campo && direccion === "asc" ? "desc" : "asc";
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/clientes", {
-            buscar,
-            orden: campo,
-            direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        router.get(
+            "/clientes",
+            construirParametros({ orden: campo, direccion: nuevaDireccion }),
+            { preserveState: true, replace: true },
+        );
     };
 
     const indicadorOrden = (campo: string) => {
@@ -153,11 +201,45 @@ export default function Index({
             >
                 <input
                     type="text"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por cliente, email o N° socio (ID)..."
-                    style={{ padding: "6px 10px", minWidth: "260px" }}
+                    value={buscarTexto}
+                    onChange={(e) => setBuscarTexto(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    style={{ padding: "6px 10px", minWidth: "220px" }}
                 />
+
+                <input
+                    type="text"
+                    value={buscarNumero}
+                    onChange={(e) => setBuscarNumero(e.target.value)}
+                    placeholder="Buscar por ID o teléfono..."
+                    style={{ padding: "6px 10px", minWidth: "180px" }}
+                />
+
+                {/* Filtro por estado de última suscripción */}
+                <select
+                    value={estado}
+                    onChange={(e) => setEstado(e.target.value)}
+                    style={{ padding: "6px 10px" }}
+                >
+                    <option value="">Todos los estados</option>
+                    <option value="activa">Suscripción Activa</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="vencida">Vencida</option>
+                    <option value="cancelada">Cancelada</option>
+                    <option value="sin_suscripcion">Sin suscripción</option>
+                </select>
+
+                {/* SelectBuscador de Entrenadores (solo visible si no es rol trainer) */}
+                {entrenadores.length > 0 && (
+                    <div style={{ minWidth: "240px" }}>
+                        <SelectBuscador
+                            options={opcionesEntrenadores}
+                            value={buscarEntrenador}
+                            onChange={(val) => setBuscarEntrenador(String(val))}
+                            placeholder="Filtrar por entrenador..."
+                        />
+                    </div>
+                )}
 
                 {/* Filtro de Papelera exclusivo para Admin / Super Admin */}
                 {esAdmin && (
@@ -174,7 +256,7 @@ export default function Index({
                             Activos únicamente
                         </option>
                         <option value="solo_eliminados">Solo eliminados</option>
-                        <option value="todos">
+                        <option value="con_eliminados">
                             Todos (Activos y Eliminados)
                         </option>
                     </select>
@@ -183,8 +265,8 @@ export default function Index({
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -195,9 +277,30 @@ export default function Index({
 
                 <button
                     type="submit"
-                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
                 >
                     Buscar
+                </button>
+
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#e5e7eb",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
+                >
+                    Limpiar
                 </button>
             </form>
 
@@ -228,7 +331,13 @@ export default function Index({
                         </th>
                         <th>Email</th>
                         <th>Teléfono</th>
-                        <th>Plan Activo</th>
+                        <th
+                            onClick={() => ordenarPor("created_at")}
+                            style={{ cursor: "pointer" }}
+                        >
+                            Fecha Alta{indicadorOrden("created_at")}
+                        </th>
+                        <th>Última Suscripción</th>
                         <th>Entrenador</th>
                         <th>Acciones</th>
                     </tr>
@@ -266,6 +375,13 @@ export default function Index({
                                     </td>
                                     <td>{cliente.user?.email || "-"}</td>
                                     <td>{cliente.telefono || "-"}</td>
+                                    <td>
+                                        {cliente.created_at
+                                            ? new Date(
+                                                  cliente.created_at,
+                                              ).toLocaleDateString("es-AR")
+                                            : "-"}
+                                    </td>
                                     <td>
                                         {cliente.ultima_suscripcion ? (
                                             <div>
@@ -366,7 +482,7 @@ export default function Index({
                         })
                     ) : (
                         <tr>
-                            <td colSpan={7} style={{ textAlign: "center" }}>
+                            <td colSpan={8} style={{ textAlign: "center" }}>
                                 No hay clientes registrados.
                             </td>
                         </tr>
@@ -390,7 +506,13 @@ export default function Index({
                 <div>
                     {clientes.prev_page_url && (
                         <button
-                            onClick={() => router.get(clientes.prev_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    clientes.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginRight: "10px",
                                 padding: "6px 12px",
@@ -405,7 +527,13 @@ export default function Index({
                     </span>
                     {clientes.next_page_url && (
                         <button
-                            onClick={() => router.get(clientes.next_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    clientes.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginLeft: "10px",
                                 padding: "6px 12px",

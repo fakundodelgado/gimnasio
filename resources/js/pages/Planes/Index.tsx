@@ -6,7 +6,7 @@ interface Plan {
     nombre: string;
     descripcion?: string;
     precio: number;
-    duracion: number; // Duración en días
+    duracion: number;
     incluye_entrenador: boolean;
     deleted_at: string | null;
 }
@@ -27,57 +27,101 @@ interface Filtros {
     buscar: string;
     orden: string;
     direccion: string;
-    por_pagina: number;
+    paginas: number;
     papelera: string;
+    incluye_entrenador: string;
+    duracion: string;
 }
 
-interface PageProps {
-    planes: PlanesPaginados;
-    filtros: Filtros;
-    [key: string]: unknown;
+interface AuthProps {
+    user: {
+        id: number;
+        name: string;
+        roles?: string[];
+    } | null;
+    roles?: string[];
+    permissions?: string[];
 }
 
 export default function Index({
     planes,
+    duraciones,
     filtros,
 }: {
     planes: PlanesPaginados;
+    duraciones: number[];
     filtros: Filtros;
 }) {
+    const { auth } = usePage<{ auth: AuthProps }>().props;
+
+    // Verifica si el usuario tiene rol admin o super para mostrar el filtro de papelera
+    const userRoles = auth?.roles ?? auth?.user?.roles ?? [];
+    const puedeVerPapelera =
+        userRoles.includes("admin") || userRoles.includes("super");
+
     const [buscar, setBuscar] = useState(filtros.buscar ?? "");
-    const [orden, setOrden] = useState(filtros.orden ?? "id");
+    const [incluyeEntrenador, setIncluyeEntrenador] = useState(
+        filtros.incluye_entrenador ?? "",
+    );
+    const [duracion, setDuracion] = useState(
+        filtros.duracion ? String(filtros.duracion) : "",
+    );
+    const [orden, setOrden] = useState(filtros.orden ?? "nombre");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
 
+    const enviarConsulta = (
+        overrides: Record<string, string | number> = {},
+    ) => {
+        router.get(
+            "/planes",
+            {
+                buscar,
+                incluye_entrenador: incluyeEntrenador,
+                duracion,
+                orden,
+                direccion,
+                paginas,
+                papelera,
+                ...overrides,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/planes", {
-            buscar,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        enviarConsulta();
+    };
+
+    const limpiarFiltros = () => {
+        setBuscar("");
+        setIncluyeEntrenador("");
+        setDuracion("");
+        setOrden("nombre");
+        setDireccion("asc");
+        setPaginas(5);
+        setPapelera("sin_eliminados");
+
+        router.get("/planes");
     };
 
     const ordenarPor = (campo: string) => {
-        let nuevaDireccion = "asc";
-        if (orden === campo && direccion === "asc") {
-            nuevaDireccion = "desc";
-        }
+        const nuevaDireccion =
+            orden === campo && direccion === "asc" ? "desc" : "asc";
 
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/planes", {
-            buscar,
+        enviarConsulta({
             orden: campo,
             direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
         });
     };
 
@@ -88,7 +132,7 @@ export default function Index({
 
     const handleDelete = (id: number) => {
         if (confirm("¿Estás seguro de que deseas eliminar este plan?")) {
-            router.delete(`/planes/${id}`);
+            router.delete(`/planes/${id}`, { preserveScroll: true });
         }
     };
 
@@ -126,29 +170,58 @@ export default function Index({
                     type="text"
                     value={buscar}
                     onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por nombre o ID..."
-                    style={{ padding: "6px 10px", minWidth: "250px" }}
+                    placeholder="Buscar por nombre..."
+                    style={{ padding: "6px 10px", minWidth: "220px" }}
                 />
 
                 <select
-                    value={papelera}
-                    onChange={(e) => setPapelera(e.target.value)}
-                    style={{
-                        padding: "6px 10px",
-                        background: "#fffbeb",
-                        borderColor: "#f59e0b",
-                    }}
+                    value={incluyeEntrenador}
+                    onChange={(e) => setIncluyeEntrenador(e.target.value)}
+                    style={{ padding: "6px 10px" }}
                 >
-                    <option value="sin_eliminados">Activos únicamente</option>
-                    <option value="solo_eliminados">Solo eliminados</option>
-                    <option value="todos">Todos (Activos y Eliminados)</option>
+                    <option value="">Modalidad: Todos</option>
+                    <option value="1">Con entrenador</option>
+                    <option value="0">Sin entrenador</option>
                 </select>
+
+                <select
+                    value={duracion}
+                    onChange={(e) => setDuracion(e.target.value)}
+                    style={{ padding: "6px 10px" }}
+                >
+                    <option value="">Duración: Todas</option>
+                    {duraciones.map((dias) => (
+                        <option key={dias} value={String(dias)}>
+                            {dias} {dias === 1 ? "día" : "días"}
+                        </option>
+                    ))}
+                </select>
+
+                {puedeVerPapelera && (
+                    <select
+                        value={papelera}
+                        onChange={(e) => setPapelera(e.target.value)}
+                        style={{
+                            padding: "6px 10px",
+                            background: "#fffbeb",
+                            borderColor: "#f59e0b",
+                        }}
+                    >
+                        <option value="sin_eliminados">
+                            Activos únicamente
+                        </option>
+                        <option value="eliminados">Solo eliminados</option>
+                        <option value="todos">
+                            Todos (Activos y Eliminados)
+                        </option>
+                    </select>
+                )}
 
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -161,7 +234,15 @@ export default function Index({
                     type="submit"
                     style={{ padding: "6px 12px", cursor: "pointer" }}
                 >
-                    Buscar
+                    Filtrar
+                </button>
+
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                >
+                    Limpiar
                 </button>
             </form>
 
@@ -202,12 +283,7 @@ export default function Index({
                         >
                             Duración (Días){indicadorOrden("duracion")}
                         </th>
-                        <th
-                            onClick={() => ordenarPor("incluye_entrenador")}
-                            style={{ cursor: "pointer" }}
-                        >
-                            Entrenador{indicadorOrden("incluye_entrenador")}
-                        </th>
+                        <th>Entrenador</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -294,7 +370,8 @@ export default function Index({
                     ) : (
                         <tr>
                             <td colSpan={6} style={{ textAlign: "center" }}>
-                                No hay planes registrados.
+                                No hay planes registrados con los filtros
+                                actuales.
                             </td>
                         </tr>
                     )}
@@ -317,7 +394,13 @@ export default function Index({
                 <div>
                     {planes.prev_page_url && (
                         <button
-                            onClick={() => router.get(planes.prev_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    planes.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginRight: "10px",
                                 padding: "6px 12px",
@@ -332,7 +415,13 @@ export default function Index({
                     </span>
                     {planes.next_page_url && (
                         <button
-                            onClick={() => router.get(planes.next_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    planes.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginLeft: "10px",
                                 padding: "6px 12px",
