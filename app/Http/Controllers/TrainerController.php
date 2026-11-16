@@ -21,49 +21,43 @@ class TrainerController extends Controller
     #[Middleware('permission:listar entrenadores')]
     public function index(Request $request)
     {
-        $buscar = trim($request->input('buscar', ''));
+        $buscarTexto = trim($request->input('buscar_texto', ''));
+        $buscarNumero = trim($request->input('buscar_numero', ''));
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
-        $porPagina = (int) $request->input('por_pagina', 5);
         $papelera = $request->input('papelera', 'sin_eliminados');
+        $paginas = (int) $request->input('paginas', 5);
 
-        $camposPermitidos = ['id', 'nombre', 'especialidad', 'cuil'];
+        $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
+
+        $camposPermitidos = ['id', 'nombre', 'limite_alumnos', 'clients_count'];
 
         if (!in_array($orden, $camposPermitidos, true)) {
             $orden = 'id';
+        }
+
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
         }
 
         if (!in_array($direccion, ['asc', 'desc'], true)) {
             $direccion = 'asc';
         }
 
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
+        if (!$esAdmin) {
+            $papelera = 'sin_eliminados';
+        }
+
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
         }
 
         $query = Trainer::query()->select('trainers.*');
 
-        if ($orden === 'nombre') {
-            $query->leftJoin('employees', 'trainers.employee_id', '=', 'employees.id')
-                ->leftJoin('users', 'employees.user_id', '=', 'users.id')
-                ->orderBy('users.name', $direccion);
-        } elseif ($orden === 'cuil') {
-            $query->leftJoin('employees', 'trainers.employee_id', '=', 'employees.id')
-                ->orderBy('employees.cuil', $direccion);
-        } else {
-            $query->orderBy("trainers.{$orden}", $direccion);
-        }
-
-        $query->orderBy('trainers.id', 'asc');
-
         $query->with([
-            'employee' => function ($empQuery) {
-                $empQuery->withTrashed()->with([
-                    'user' => function ($userQuery) {
-                        $userQuery->withTrashed();
-                    }
-                ]);
-            }
+            'employee' => fn($empQ) => $empQ->withTrashed()->with([
+                'user' => fn($userQ) => $userQ->withTrashed(),
+            ]),
         ]);
 
         $query->withCount(['clients' => function ($q) {
@@ -72,49 +66,62 @@ class TrainerController extends Controller
             });
         }]);
 
-        $query->when($papelera === 'solo_eliminados', function ($q) {
-            $q->onlyTrashed();
-        })->when($papelera === 'todos', function ($q) {
+        $query->when($papelera === 'con_eliminados', function ($q) {
             $q->withTrashed();
         });
 
-        $query->when($buscar !== '', function ($q) use ($buscar) {
-            $q->where(function ($subQ) use ($buscar) {
-                if (is_numeric($buscar)) {
-                    $subQ->where('trainers.id', $buscar);
-                }
+        $query->when($papelera === 'solo_eliminados', function ($q) {
+            $q->onlyTrashed();
+        });
 
-                $subQ->orWhere('trainers.especialidad', 'like', "%{$buscar}%");
-
-                $subQ->orWhereHas('employee', function ($empQuery) use ($buscar) {
-                    $empQuery->withTrashed()
-                        ->where('cuil', 'like', "%{$buscar}%");
-                });
-
-                $subQ->orWhereHas('employee', function ($empQuery) use ($buscar) {
-                    $empQuery->withTrashed()
-                        ->whereHas('user', function ($uQuery) use ($buscar) {
-                            $uQuery->withTrashed()
-                                ->where(function ($q2) use ($buscar) {
-                                    $q2->where('name', 'like', "%{$buscar}%")
-                                        ->orWhere('email', 'like', "%{$buscar}%");
-                                });
+        $query->when($buscarTexto !== '', function ($q) use ($buscarTexto) {
+            $q->where(function ($subQ) use ($buscarTexto) {
+                $subQ->where('trainers.especialidad', 'like', "%{$buscarTexto}%")
+                    ->orWhereHas('employee', function ($empQ) use ($buscarTexto) {
+                        $empQ->withTrashed()->whereHas('user', function ($userQ) use ($buscarTexto) {
+                            $userQ->withTrashed()->where(function ($uSubQ) use ($buscarTexto) {
+                                $uSubQ->where('name', 'like', "%{$buscarTexto}%")
+                                    ->orWhere('email', 'like', "%{$buscarTexto}%");
+                            });
                         });
+                    });
+            });
+        });
+
+        $query->when($buscarNumero !== '', function ($q) use ($buscarNumero) {
+            $q->whereHas('employee', function ($empQ) use ($buscarNumero) {
+                $empQ->withTrashed()->where(function ($eSubQ) use ($buscarNumero) {
+                    $eSubQ->where('cuil', 'like', "%{$buscarNumero}%")
+                        ->orWhere('telefono', 'like', "%{$buscarNumero}%");
                 });
             });
         });
 
-        $entrenadores = $query->paginate($porPagina)->withQueryString();
+        if ($orden === 'nombre') {
+            $query->leftJoin('employees', 'trainers.employee_id', '=', 'employees.id')
+                ->leftJoin('users', 'employees.user_id', '=', 'users.id')
+                ->orderBy('users.name', $direccion);
+        } elseif ($orden === 'clients_count') {
+            $query->orderBy('clients_count', $direccion);
+        } else {
+            $query->orderBy("trainers.{$orden}", $direccion);
+        }
+
+        $query->orderBy('trainers.id', 'asc');
+
+        $entrenadores = $query->paginate($paginas)->withQueryString();
 
         return Inertia::render('Entrenadores/Index', [
             'entrenadores' => $entrenadores,
             'filtros' => [
-                'buscar'     => $buscar,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
+                'buscar_texto'  => $buscarTexto,
+                'buscar_numero' => $buscarNumero,
+                'orden'         => $orden,
+                'direccion'     => $direccion,
+                'papelera'      => $papelera,
+                'paginas'       => $paginas,
             ],
+            'esAdmin' => $esAdmin,
         ]);
     }
 

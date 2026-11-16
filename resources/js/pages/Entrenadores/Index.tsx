@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 interface User {
     id: number;
@@ -40,43 +40,67 @@ interface EntrenadoresPaginados {
 }
 
 interface Filtros {
-    buscar: string;
+    buscar_texto: string;
+    buscar_numero: string;
     orden: string;
     direccion: string;
-    por_pagina: number;
     papelera: string;
+    paginas: number;
 }
 
-interface PageProps {
+interface IndexProps {
     entrenadores: EntrenadoresPaginados;
     filtros: Filtros;
-    [key: string]: unknown;
+    esAdmin: boolean;
 }
 
-export default function Index({
-    entrenadores,
-    filtros,
-}: {
-    entrenadores: EntrenadoresPaginados;
-    filtros: Filtros;
-}) {
-    const [buscar, setBuscar] = useState(filtros.buscar ?? "");
+export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
+    const [buscarTexto, setBuscarTexto] = useState(filtros.buscar_texto ?? "");
+    const [buscarNumero, setBuscarNumero] = useState(
+        filtros.buscar_numero ?? "",
+    );
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
+
+    const enviarConsulta = (
+        overrides: Record<string, string | number> = {},
+    ) => {
+        router.get(
+            "/entrenadores",
+            {
+                buscar_texto: buscarTexto,
+                buscar_numero: buscarNumero,
+                orden,
+                direccion,
+                papelera,
+                paginas,
+                ...overrides,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/entrenadores", {
-            buscar,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        enviarConsulta();
+    };
+
+    const limpiarFiltros = () => {
+        setBuscarTexto("");
+        setBuscarNumero("");
+        setOrden("id");
+        setDireccion("asc");
+        setPapelera("sin_eliminados");
+        setPaginas(5);
+
+        router.get("/entrenadores");
     };
 
     const ordenarPor = (campo: string) => {
@@ -87,12 +111,9 @@ export default function Index({
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/entrenadores", {
-            buscar,
+        enviarConsulta({
             orden: campo,
             direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
         });
     };
 
@@ -139,31 +160,45 @@ export default function Index({
             >
                 <input
                     type="text"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por nombre, email, CUIL, especialidad o ID..."
-                    style={{ padding: "6px 10px", minWidth: "280px" }}
+                    value={buscarTexto}
+                    onChange={(e) => setBuscarTexto(e.target.value)}
+                    placeholder="Buscar por nombre, email o especialidad..."
+                    style={{ padding: "6px 10px", minWidth: "260px" }}
                 />
 
-                <select
-                    value={papelera}
-                    onChange={(e) => setPapelera(e.target.value)}
-                    style={{
-                        padding: "6px 10px",
-                        background: "#fffbeb",
-                        borderColor: "#f59e0b",
-                    }}
-                >
-                    <option value="sin_eliminados">Activos únicamente</option>
-                    <option value="solo_eliminados">Solo eliminados</option>
-                    <option value="todos">Todos (Activos y Eliminados)</option>
-                </select>
+                <input
+                    type="text"
+                    value={buscarNumero}
+                    onChange={(e) => setBuscarNumero(e.target.value)}
+                    placeholder="Buscar por CUIL o teléfono..."
+                    style={{ padding: "6px 10px", minWidth: "220px" }}
+                />
+
+                {esAdmin && (
+                    <select
+                        value={papelera}
+                        onChange={(e) => setPapelera(e.target.value)}
+                        style={{
+                            padding: "6px 10px",
+                            background: "#fffbeb",
+                            borderColor: "#f59e0b",
+                        }}
+                    >
+                        <option value="sin_eliminados">
+                            Activos únicamente
+                        </option>
+                        <option value="solo_eliminados">Solo eliminados</option>
+                        <option value="con_eliminados">
+                            Todos (Activos y Eliminados)
+                        </option>
+                    </select>
+                )}
 
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -177,6 +212,14 @@ export default function Index({
                     style={{ padding: "6px 12px", cursor: "pointer" }}
                 >
                     Buscar
+                </button>
+
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                >
+                    Limpiar
                 </button>
             </form>
 
@@ -205,19 +248,21 @@ export default function Index({
                         >
                             Nombre{indicadorOrden("nombre")}
                         </th>
+                        <th>CUIL</th>
+                        <th>Teléfono</th>
+                        <th>Especialidad</th>
                         <th
-                            onClick={() => ordenarPor("cuil")}
+                            onClick={() => ordenarPor("clients_count")}
                             style={{ cursor: "pointer" }}
                         >
-                            CUIL{indicadorOrden("cuil")}
+                            Alumnos Activos{indicadorOrden("clients_count")}
                         </th>
                         <th
-                            onClick={() => ordenarPor("especialidad")}
+                            onClick={() => ordenarPor("limite_alumnos")}
                             style={{ cursor: "pointer" }}
                         >
-                            Especialidad{indicadorOrden("especialidad")}
+                            Límite{indicadorOrden("limite_alumnos")}
                         </th>
-                        <th>Cupo de Alumnos</th>
                         <th>Email</th>
                         <th>Acciones</th>
                     </tr>
@@ -250,11 +295,10 @@ export default function Index({
                                     )}
                                 </td>
                                 <td>{tr.employee?.cuil || "-"}</td>
+                                <td>{tr.employee?.telefono || "-"}</td>
                                 <td>{tr.especialidad || "-"}</td>
-                                <td>
-                                    {tr.clients_count ?? 0} /{" "}
-                                    {tr.limite_alumnos}
-                                </td>
+                                <td>{tr.clients_count ?? 0}</td>
+                                <td>{tr.limite_alumnos}</td>
                                 <td>{tr.employee?.user?.email || "-"}</td>
                                 <td>
                                     {!tr.deleted_at && (
@@ -289,7 +333,7 @@ export default function Index({
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={6} style={{ textAlign: "center" }}>
+                            <td colSpan={9} style={{ textAlign: "center" }}>
                                 No hay entrenadores registrados.
                             </td>
                         </tr>
@@ -314,7 +358,11 @@ export default function Index({
                     {entrenadores.prev_page_url && (
                         <button
                             onClick={() =>
-                                router.get(entrenadores.prev_page_url!)
+                                router.get(
+                                    entrenadores.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
                             }
                             style={{
                                 marginRight: "10px",
@@ -332,7 +380,11 @@ export default function Index({
                     {entrenadores.next_page_url && (
                         <button
                             onClick={() =>
-                                router.get(entrenadores.next_page_url!)
+                                router.get(
+                                    entrenadores.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
                             }
                             style={{
                                 marginLeft: "10px",
