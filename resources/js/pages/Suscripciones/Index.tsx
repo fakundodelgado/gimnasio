@@ -1,13 +1,16 @@
 import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
+import { SelectBuscador } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
     name: string;
+    email?: string;
 }
 
 interface Client {
     id: number;
+    telefono?: string;
     user?: User;
 }
 
@@ -42,49 +45,94 @@ interface SuscripcionesPaginadas {
 }
 
 interface Filtros {
-    buscar: string;
-    estado: string;
+    datos: string;
+    id: string;
     orden: string;
-    direccion: string;
-    por_pagina: number;
     papelera: string;
+    direccion: string;
+    paginas: number;
+    desde: string;
+    hasta: string;
+    plan: string;
+    estado: string;
 }
 
-interface PageProps {
+interface IndexProps {
     suscripciones: SuscripcionesPaginadas;
+    planes: Plan[];
     filtros: Filtros;
     esAdmin: boolean;
-    [key: string]: unknown;
+    esCliente: boolean;
 }
 
 export default function Index({
     suscripciones,
+    planes,
     filtros,
     esAdmin,
-}: {
-    suscripciones: SuscripcionesPaginadas;
-    filtros: Filtros;
-    esAdmin: boolean;
-}) {
-    const [buscar, setBuscar] = useState(filtros.buscar ?? "");
+    esCliente,
+}: IndexProps) {
+    const [datos, setDatos] = useState(filtros.datos ?? "");
+    const [id, setId] = useState(filtros.id ?? "");
+    const [plan, setPlan] = useState(filtros.plan ?? "");
     const [estado, setEstado] = useState(filtros.estado ?? "");
+    const [desde, setDesde] = useState(filtros.desde ?? "");
+    const [hasta, setHasta] = useState(filtros.hasta ?? "");
     const [orden, setOrden] = useState(filtros.orden ?? "fecha_inicio");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "desc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
 
+    const opcionesPlanes = planes.map((p) => ({
+        id: String(p.id),
+        label: `#${p.id} - ${p.nombre}`,
+    }));
+
+    const enviarConsulta = (
+        overrides: Record<string, string | number> = {},
+    ) => {
+        router.get(
+            "/suscripciones",
+            {
+                datos,
+                id,
+                plan,
+                estado,
+                desde,
+                hasta,
+                orden,
+                direccion,
+                paginas,
+                papelera,
+                ...overrides,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/suscripciones", {
-            buscar,
-            estado,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        enviarConsulta();
+    };
+
+    const limpiarFiltros = () => {
+        setDatos("");
+        setId("");
+        setPlan("");
+        setEstado("");
+        setDesde("");
+        setHasta("");
+        setOrden("fecha_inicio");
+        setDireccion("desc");
+        setPaginas(5);
+        setPapelera("sin_eliminados");
+
+        router.get("/suscripciones");
     };
 
     const ordenarPor = (campo: string) => {
@@ -95,13 +143,9 @@ export default function Index({
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/suscripciones", {
-            buscar,
-            estado,
+        enviarConsulta({
             orden: campo,
             direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
         });
     };
 
@@ -110,9 +154,9 @@ export default function Index({
         return direccion === "asc" ? " ↑" : " ↓";
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (subId: number) => {
         if (confirm("¿Estás seguro de que deseas eliminar esta suscripción?")) {
-            router.delete(`/suscripciones/${id}`);
+            router.delete(`/suscripciones/${subId}`);
         }
     };
 
@@ -120,20 +164,22 @@ export default function Index({
         <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
             <h2>Listado de Suscripciones</h2>
 
-            <Link
-                href="/suscripciones/create"
-                style={{
-                    display: "inline-block",
-                    marginBottom: "15px",
-                    padding: "8px 12px",
-                    background: "#2563eb",
-                    color: "#fff",
-                    borderRadius: "4px",
-                    textDecoration: "none",
-                }}
-            >
-                + Nueva Suscripción
-            </Link>
+            {!esCliente && (
+                <Link
+                    href="/suscripciones/create"
+                    style={{
+                        display: "inline-block",
+                        marginBottom: "15px",
+                        padding: "8px 12px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        borderRadius: "4px",
+                        textDecoration: "none",
+                    }}
+                >
+                    + Nueva Suscripción
+                </Link>
+            )}
 
             {/* Formulario de Búsqueda y Filtros */}
             <form
@@ -146,13 +192,32 @@ export default function Index({
                     flexWrap: "wrap",
                 }}
             >
+                {!esCliente && (
+                    <input
+                        type="text"
+                        value={datos}
+                        onChange={(e) => setDatos(e.target.value)}
+                        placeholder="Cliente: nombre, email o teléfono..."
+                        style={{ padding: "6px 10px", minWidth: "240px" }}
+                    />
+                )}
+
                 <input
                     type="text"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por cliente o N° boleta (ID)..."
-                    style={{ padding: "6px 10px", minWidth: "240px" }}
+                    value={id}
+                    onChange={(e) => setId(e.target.value)}
+                    placeholder="N° Suscripción (ID)..."
+                    style={{ padding: "6px 10px", width: "165px" }}
                 />
+
+                <div style={{ minWidth: "220px" }}>
+                    <SelectBuscador
+                        options={opcionesPlanes}
+                        value={plan}
+                        onChange={(val) => setPlan(String(val))}
+                        placeholder="Todos los planes..."
+                    />
+                </div>
 
                 <select
                     value={estado}
@@ -166,7 +231,26 @@ export default function Index({
                     <option value="cancelada">Cancelada</option>
                 </select>
 
-                {/* Filtro de Papelera exclusivo para Admin / Super Admin */}
+                <label style={{ fontSize: "14px" }}>
+                    Desde:
+                    <input
+                        type="date"
+                        value={desde}
+                        onChange={(e) => setDesde(e.target.value)}
+                        style={{ marginLeft: "5px", padding: "5px 8px" }}
+                    />
+                </label>
+
+                <label style={{ fontSize: "14px" }}>
+                    Hasta:
+                    <input
+                        type="date"
+                        value={hasta}
+                        onChange={(e) => setHasta(e.target.value)}
+                        style={{ marginLeft: "5px", padding: "5px 8px" }}
+                    />
+                </label>
+
                 {esAdmin && (
                     <select
                         value={papelera}
@@ -181,7 +265,7 @@ export default function Index({
                             Activos únicamente
                         </option>
                         <option value="solo_eliminados">Solo eliminados</option>
-                        <option value="todos">
+                        <option value="con_eliminados">
                             Todos (Activos y Eliminados)
                         </option>
                     </select>
@@ -190,8 +274,8 @@ export default function Index({
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -205,6 +289,14 @@ export default function Index({
                     style={{ padding: "6px 12px", cursor: "pointer" }}
                 >
                     Buscar
+                </button>
+
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                >
+                    Limpiar
                 </button>
             </form>
 
@@ -228,6 +320,8 @@ export default function Index({
                             ID / Boleta{indicadorOrden("id")}
                         </th>
                         <th>Cliente</th>
+                        {!esCliente && <th>Teléfono</th>}
+                        {!esCliente && <th>Email</th>}
                         <th>Plan</th>
                         <th
                             onClick={() => ordenarPor("precio")}
@@ -247,12 +341,7 @@ export default function Index({
                         >
                             Fin{indicadorOrden("fecha_fin")}
                         </th>
-                        <th
-                            onClick={() => ordenarPor("estado")}
-                            style={{ cursor: "pointer" }}
-                        >
-                            Estado{indicadorOrden("estado")}
-                        </th>
+                        <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -272,6 +361,12 @@ export default function Index({
                                     {sub.client?.user?.name ||
                                         `Cliente #${sub.client_id}`}
                                 </td>
+                                {!esCliente && (
+                                    <td>{sub.client?.telefono || "—"}</td>
+                                )}
+                                {!esCliente && (
+                                    <td>{sub.client?.user?.email || "—"}</td>
+                                )}
                                 <td>
                                     {sub.plan?.nombre || `Plan #${sub.plan_id}`}
                                 </td>
@@ -304,23 +399,29 @@ export default function Index({
                                             >
                                                 Ver
                                             </Link>
-                                            <Link
-                                                href={`/suscripciones/${sub.id}/edit`}
-                                                style={{ marginRight: "8px" }}
-                                            >
-                                                Editar
-                                            </Link>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(sub.id)
-                                                }
-                                                style={{
-                                                    color: "red",
-                                                    cursor: "pointer",
-                                                }}
-                                            >
-                                                Eliminar
-                                            </button>
+                                            {!esCliente && (
+                                                <>
+                                                    <Link
+                                                        href={`/suscripciones/${sub.id}/edit`}
+                                                        style={{
+                                                            marginRight: "8px",
+                                                        }}
+                                                    >
+                                                        Editar
+                                                    </Link>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDelete(sub.id)
+                                                        }
+                                                        style={{
+                                                            color: "red",
+                                                            cursor: "pointer",
+                                                        }}
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                </>
+                                            )}
                                         </>
                                     )}
                                 </td>
@@ -328,7 +429,10 @@ export default function Index({
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={8} style={{ textAlign: "center" }}>
+                            <td
+                                colSpan={esCliente ? 8 : 10}
+                                style={{ textAlign: "center" }}
+                            >
                                 No hay suscripciones registradas.
                             </td>
                         </tr>
@@ -353,7 +457,11 @@ export default function Index({
                     {suscripciones.prev_page_url && (
                         <button
                             onClick={() =>
-                                router.get(suscripciones.prev_page_url!)
+                                router.get(
+                                    suscripciones.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
                             }
                             style={{
                                 marginRight: "10px",
@@ -371,7 +479,11 @@ export default function Index({
                     {suscripciones.next_page_url && (
                         <button
                             onClick={() =>
-                                router.get(suscripciones.next_page_url!)
+                                router.get(
+                                    suscripciones.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
                             }
                             style={{
                                 marginLeft: "10px",

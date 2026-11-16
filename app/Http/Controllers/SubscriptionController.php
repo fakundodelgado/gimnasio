@@ -22,16 +22,26 @@ class SubscriptionController extends Controller
     #[Middleware('permission:listar suscripciones')]
     public function index(Request $request)
     {
-        // Parametros por lo cuales voy a filtrar
-        $buscar = trim($request->input('buscar', ''));
-        $estado = $request->input('estado', '');
-        $orden = $request->input('orden', 'fecha_inicio');
-        $direccion = $request->input('direccion', 'desc');
-        $porPagina = (int) $request->input('por_pagina', 5);
-        $papelera = $request->input('papelera', 'sin_eliminados');
 
-        // Compruebo que los valores sean validos
-        $camposPermitidos = ['id', 'fecha_inicio', 'fecha_fin', 'precio', 'estado'];
+        $usuario = $request->user();
+        $esAdmin = $usuario->hasAnyRole(['admin', 'super']);
+        $esCliente = $usuario->hasRole('client');
+
+        // Nombre, mail y telefono
+        $datos = trim($request->input('datos', '')); // Este campo buscara sobre datos personales
+        // Id
+        $id = trim($request->input('id', ''));  // Este solo por id, si lo mesclo con otros campos con numero me termina devolviendo muchas filas innecesarias
+        $orden = $request->input('orden', '');
+        $papelera = $request->input('papelera', '');
+        $direccion = $request->input('direccion', '');
+        $paginas = (int) $request->input('paginas', 5);
+        $desde = trim($request->input('desde', ''));
+        $hasta = trim($request->input('hasta', ''));
+        $plan = trim($request->input('plan', ''));
+        $estado = trim($request->input('estado', ''));
+
+        $camposPermitidos = ['id', 'fecha_inicio', 'fecha_fin', 'precio'];
+
         if (!in_array($orden, $camposPermitidos, true)) {
             $orden = 'fecha_inicio';
         }
@@ -40,63 +50,105 @@ class SubscriptionController extends Controller
             $direccion = 'desc';
         }
 
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
         }
 
-        // Lo que fue borrado de forma logica solo estara disponible para el admin o super(administrador)
-        $user = $request->user();
+        if ($id !== '' && !ctype_digit($id)) {
+            $id = '';
+        }
 
-        $esAdmin = $user->hasRole(['admin', 'super']); // Ve todo incluso las que sufrieron un softdelete
-        $esCliente = $user->hasRole('client'); // Solo ve sus suscripciones
+        if ($plan !== '' && !ctype_digit($plan)) {
+            $plan = '';
+        }
+
+        if (!in_array($estado, ['', 'activa', 'pendiente', 'vencida', 'cancelada'], true)) {
+            $estado = '';
+        }
 
         if (!$esAdmin) {
             $papelera = 'sin_eliminados';
         }
 
-        $suscripciones = Subscription::with(['client.user', 'plan'])
-            // Papelera 
-            ->when($esAdmin && $papelera === 'solo_eliminados', function ($query) {
-                $query->onlyTrashed();
-            })
-            ->when($esAdmin && $papelera === 'todos', function ($query) {
-                $query->withTrashed();
-            })
-            // Si es cliente, solo ve sus propias suscripciones
-            ->when($esCliente && $user->client, function ($query) use ($user) {
-                $query->where('client_id', $user->client->id);
-            })
-            // Búsqueda por Nombre de Cliente o N° Suscripción (ID)
-            ->when($buscar !== '', function ($query) use ($buscar) {
-                $query->where(function ($q) use ($buscar) {
-                    if (is_numeric($buscar)) {
-                        $q->where('id', $buscar);
-                    }
-                    $q->orWhereHas('client.user', function ($userQuery) use ($buscar) {
-                        $userQuery->where('name', 'like', "%{$buscar}%");
-                    });
-                });
-            })
-            // Filtro por Estado
-            ->when($request->filled('estado'), function ($query) use ($estado) {
-                $query->where('estado', $estado);
-            })
-            ->orderBy($orden, $direccion)
-            ->paginate($porPagina)
-            ->withQueryString();
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
+        }
 
-        // Le paso el resultado de la consulta y todos los filtros
+        if ($desde !== '' && !\DateTime::createFromFormat('Y-m-d', $desde)) {
+            $desde = '';
+        }
+
+        if ($hasta !== '' && !\DateTime::createFromFormat('Y-m-d', $hasta)) {
+            $hasta = '';
+        }
+
+        $query = Subscription::with([
+            'client' => fn($q) => $q->withTrashed()->with((['user' => fn($q) => $q->withTrashed()])),
+            'plan' => fn($q) => $q->withTrashed(),
+            'payments' => fn($q) => $q->with(['employee' => fn($q2) => $q2->withTrashed()->with((['user' => fn($q3) => $q3->withTrashed()]))]),
+        ]);
+
+        $query->when($papelera === 'con_eliminados', function ($q) {
+            $q->withTrashed();
+        });
+
+        // Recien ahora se me ocurre usar funciones flecha
+        $query->when($papelera === 'solo_eliminados', fn($q) => $q->onlyTrashed());
+
+        $query->when($desde !== '', function ($q) use ($desde) {
+            $q->whereDate('fecha_inicio', '>=', $desde);
+        });
+
+        $query->when($hasta !== '', function ($q) use ($hasta) {
+            $q->whereDate('fecha_inicio', '<=', $hasta);
+        });
+
+        $query->when(!$esCliente && $datos !== '', function ($q) use ($datos) {
+            $q->whereHas('client', function ($clientQ) use ($datos) {
+                $clientQ->withTrashed()->where(function ($subQ) use ($datos) {
+                    $subQ->where('clients.telefono', 'like', "%{$datos}%")
+                        ->orWhereHas('user', function ($userQ) use ($datos) {
+                            $userQ->withTrashed()->where(function ($uSubQ) use ($datos) {
+                                $uSubQ->where('users.name', 'like', "%{$datos}%")
+                                    ->orWhere('users.email', 'like', "%{$datos}%");
+                            });
+                        });
+                });
+            });
+        });
+
+        $query->when($id !== '', fn($q) => $q->where('subscriptions.id', $id));
+
+        $query->when($esCliente, fn($q) => $q->where('subscriptions.client_id', $usuario->client?->id));
+
+        $query->when($plan !== '', fn($q) => $q->where('subscriptions.plan_id', $plan));
+
+        $query->when($estado !== '', fn($q) => $q->where('subscriptions.estado', $estado));
+
+        $query->orderBy("subscriptions.{$orden}", $direccion)
+            ->orderBy('subscriptions.id', 'desc');
+
+        $suscripciones = $query->paginate($paginas)->withQueryString();
+
+        $planes = Plan::withTrashed()->get(['id', 'nombre']);
+
         return Inertia::render('Suscripciones/Index', [
             'suscripciones' => $suscripciones,
-            'filtros' => [
-                'buscar'     => $buscar,
-                'estado'     => $estado,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
+            'planes'        => $planes,
+            'filtros'       => [
+                'datos'     => $datos,
+                'id'        => $id,
+                'orden'     => $orden,
+                'papelera'  => $papelera,
+                'direccion' => $direccion,
+                'paginas'   => $paginas,
+                'desde'     => $desde,
+                'hasta'     => $hasta,
+                'plan'      => $plan,
+                'estado'    => $estado,
             ],
-            'esAdmin' => $esAdmin,
+            'esAdmin'   => $esAdmin,
+            'esCliente' => $esCliente,
         ]);
     }
 
