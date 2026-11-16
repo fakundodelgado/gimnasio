@@ -16,12 +16,84 @@ class IngresoController extends Controller
     #[Middleware('permission:listar ingresos')]
     public function index(Request $request)
     {
-        $ingresos = Ingreso::with(['employee.user', 'client.user'])
-            ->latest('fecha_hora')
-            ->get();
+
+        // Buscan por ID o Nombre
+        $cliente = trim($request->input('cliente', ''));
+        $empleado = trim($request->input('empleado', ''));
+
+        $direccion = $request->input('direccion', 'desc');
+        $paginas = (int) $request->input('paginas', 5);
+
+        // Para filtrar entre dos fechas
+        $desde = trim($request->input('desde', ''));
+        $hasta = trim($request->input('hasta', ''));
+
+        if (!in_array($direccion, ['asc', 'desc'], true)) {
+            $direccion = 'desc';
+        }
+
+        if (!in_array($paginas, [5, 10, 25], true)) {
+            $paginas = 5;
+        }
+
+        // Esta es la forma de validar las fechas 
+        if ($desde !== '' && !\DateTime::createFromFormat('Y-m-d', $desde)) {
+            $desde = '';
+        }
+
+        if ($hasta !== '' && !\DateTime::createFromFormat('Y-m-d', $hasta)) {
+            $hasta = '';
+        }
+
+        $query = Ingreso::with([
+            'employee' => fn($q) => $q->withTrashed()->with(['user' => fn($uq) => $uq->withTrashed()]),
+            'client'   => fn($q) => $q->withTrashed()->with(['user' => fn($uq) => $uq->withTrashed()]),
+        ]);
+
+        $query->when($desde !== '', function ($q) use ($desde) {
+            $q->whereDate('created_at', '>=', $desde);
+        });
+
+        $query->when($hasta !== '', function ($q) use ($hasta) {
+            $q->whereDate('created_at', '<=', $hasta);
+        });
+
+        $query->when($cliente !== '', function ($q) use ($cliente) {
+            $q->whereHas('client', function ($clientQ) use ($cliente) {
+                $clientQ->withTrashed()->whereHas('user', function ($userQ) use ($cliente) {
+                    $userQ->withTrashed()->where(function ($subQ) use ($cliente) {
+                        $subQ->where('users.name', 'like', "%{$cliente}%")
+                            ->orWhere('clients.id', 'like', "%{$cliente}%");
+                    });
+                });
+            });
+        });
+
+        $query->when($empleado !== '', function ($q) use ($empleado) {
+            $q->whereHas('employee', function ($employeeQ) use ($empleado) {
+                $employeeQ->withTrashed()->whereHas('user', function ($userQ) use ($empleado) {
+                    $userQ->withTrashed()->where(function ($subQ) use ($empleado) {
+                        $subQ->where('users.name', 'like', "%{$empleado}%")
+                            ->orWhere('employees.id', 'like', "%{$empleado}%");
+                    });
+                });
+            });
+        });
+
+        $query->orderBy('created_at', $direccion)->orderBy('id', 'desc');
+
+        $ingresos = $query->paginate($paginas)->withQueryString();
 
         return Inertia::render('Ingresos/Index', [
             'ingresos' => $ingresos,
+            'filtros' => [
+                'cliente' => $cliente,
+                'empleado' => $empleado,
+                'desde' => $desde,
+                'hasta' => $hasta,
+                'direccion' => $direccion,
+                'paginas' => $paginas,
+            ],
         ]);
     }
 
