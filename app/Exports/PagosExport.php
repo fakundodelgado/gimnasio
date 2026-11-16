@@ -2,123 +2,116 @@
 
 namespace App\Exports;
 
-use App\Models\Payment;
-//use App\Models\User;
-//use GuzzleHttp\Psr7\Query;
 use Illuminate\Database\Eloquent\Builder;
-//use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class PagosExport implements FromQuery, WithHeadings, WithMapping
+class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     use Exportable;
-    protected $filters;
-    // Recibimos los filtros validados desde el controlador
-    public function __construct(array $filters)
+
+    protected Builder $query;
+    protected bool $esAdmin;
+
+    public function __construct(Builder $query, bool $esAdmin)
     {
-        $this->filters = $filters;
+        $this->query = $query;
+        $this->esAdmin = $esAdmin;
     }
 
     public function query(): Builder
     {
-        $papelera = $this->filters['papelera'];
-        $orden = $this->filters['orden'];
-        $direccion = $this->filters['direccion'];
-        $buscar = $this->filters['buscar'];
-
-        $query = Payment::with([
-            'subscription.client' => function ($clientQuery) {
-                $clientQuery->withTrashed()->with([
-                    'user' => function ($uQ) {
-                        $uQ->withTrashed();
-                    }
-                ]);
-            },
-            'subscription.plan',
-            'employee' => function ($empQuery) {
-                $empQuery->withTrashed()->with([
-                    'user' => function ($uQ) {
-                        $uQ->withTrashed();
-                    }
-                ]);
-            }
-        ]);
-
-        $query->when($papelera === 'solo_eliminados', function ($q) {
-            $q->onlyTrashed();
-        })
-            ->when($papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
-
-        $query->when($buscar !== '', function ($q) use ($buscar, $papelera) {
-            $q->where(function ($subQ) use ($buscar, $papelera) {
-
-                if (is_numeric($buscar)) {
-                    $subQ->where('payments.id', $buscar)
-                        ->orWhere('payments.subscription_id', $buscar);
-                }
-
-                $subQ->orWhereHas('subscription.client', function ($clientQuery) use ($buscar, $papelera) {
-                    if ($papelera !== 'sin_eliminados') {
-                        $clientQuery->withTrashed();
-                    }
-                    $clientQuery->whereHas('user', function ($uQuery) use ($buscar, $papelera) {
-                        if ($papelera !== 'sin_eliminados') {
-                            $uQuery->withTrashed();
-                        }
-                        $uQuery->where('name', 'like', "%{$buscar}%");
-                    });
-                });
-
-                $subQ->orWhereHas('employee', function ($empQuery) use ($buscar, $papelera) {
-                    if ($papelera !== 'sin_eliminados') {
-                        $empQuery->withTrashed();
-                    }
-                    $empQuery->whereHas('user', function ($uQuery) use ($buscar, $papelera) {
-                        if ($papelera !== 'sin_eliminados') {
-                            $uQuery->withTrashed();
-                        }
-                        $uQuery->where('name', 'like', "%{$buscar}%");
-                    });
-                });
-            });
-        });
-
-        $query->orderBy("payments.{$orden}", $direccion)->orderBy('id', 'desc');
-
-        return $query;
+        return $this->query;
     }
 
-
-    // Definimos las columnas que tendrá el Excel
     public function headings(): array
     {
-        return [
-            'Numero',
+        $columnas = [
+            'N° Pago',
+            'N° Suscripción',
             'Cliente',
+            'Email',
+            'Teléfono',
             'Plan',
+            'Método',
             'Monto',
             'Fecha',
-            'Empleado',
         ];
+
+        if ($this->esAdmin) {
+            $columnas[] = 'Empleado';
+        }
+
+        return $columnas;
     }
 
-    // Mapeamos los datos de cada Carrera.
-    // $carrera ya trae cargadas sus materias gracias al Eager Loading (with)
     public function map($pago): array
     {
-        // Transformamos la colección de materias a un string separado por comas
-        return [
+        $fila = [
             $pago->id,
-            $pago->subscription->client->user->name,
-            $pago->subscription->plan->nombre,
+            $pago->subscription_id,
+            $pago->subscription?->client?->user?->name ?? '—',
+            $pago->subscription?->client?->user?->email ?? '—',
+            $pago->subscription?->client?->telefono ?? '—',
+            $pago->subscription?->plan?->nombre ?? '—',
+            ucfirst($pago->metodo_pago),
             $pago->monto,
-            $pago->fecha_pago,
-            $pago->employee->user->name,
+            $pago->fecha_pago?->format('d/m/Y') ?? $pago->fecha_pago,
         ];
+
+        if ($this->esAdmin) {
+            $fila[] = $pago->employee?->user?->name ?? 'Administración';
+        }
+
+        return $fila;
+    }
+
+    // En esto me ayude con inteligencia artificial (en principio no tenia ni idea de que hacia cada cosa)
+    public function styles(Worksheet $sheet): array
+    {
+        $ultimaColumna = $sheet->getHighestColumn();
+        $ultimaFila = $sheet->getHighestRow();
+
+        // Encabezados en negrita, centrados y con fondo gris claro
+        $sheet->getStyle("A1:{$ultimaColumna}1")->applyFromArray([
+            'font' => [
+                'bold' => true,
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E5E7EB'],
+            ],
+        ]);
+
+        // Bordes finos en toda la tabla resultante
+        $sheet->getStyle("A1:{$ultimaColumna}{$ultimaFila}")->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+        ]);
+
+        // Formato moneda en la columna H (Monto)
+        if ($ultimaFila >= 2) {
+            $sheet->getStyle("H2:H{$ultimaFila}")
+                ->getNumberFormat()
+                ->setFormatCode('"$"#,##0.00');
+        }
+
+        return [];
     }
 }

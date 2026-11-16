@@ -27,116 +27,13 @@ class PaymentController extends Controller
     #[Middleware('permission:listar pagos')]
     public function index(Request $request)
     {
-        $buscar = trim($request->input('buscar', ''));
-        $orden = $request->input('orden', 'id');
-        $direccion = $request->input('direccion', 'asc');
-        $porPagina = (int) $request->input('por_pagina', 5);
-        $papelera = $request->input('papelera', 'sin_eliminados');
-
-        $camposPermitidos = ['id', 'fecha_pago', 'monto', 'metodo_pago'];
-
-        if (!in_array($orden, $camposPermitidos, true)) {
-            $orden = 'id';
-        }
-
-        if (!in_array($direccion, ['asc', 'desc'], true)) {
-            $direccion = 'asc';
-        }
-
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
-        }
-
-        $user = $request->user();
-        $esAdmin = $user->hasRole(['admin', 'super']);
-        $esCliente = $user->hasRole('client');
-
-        if (!$esAdmin) {
-            $papelera = 'sin_eliminados';
-        }
-
-        $query = Payment::with([
-            'subscription.client' => function ($clientQuery) {
-                $clientQuery->withTrashed()->with([
-                    'user' => function ($uQ) {
-                        $uQ->withTrashed();
-                    }
-                ]);
-            },
-            'subscription.plan',
-            'employee' => function ($empQuery) {
-                $empQuery->withTrashed()->with([
-                    'user' => function ($uQ) {
-                        $uQ->withTrashed();
-                    }
-                ]);
-            }
-        ]);
-
-        // Filtro de Papelera (Exclusivo Admin)
-        $query->when($esAdmin && $papelera === 'solo_eliminados', function ($q) {
-            $q->onlyTrashed();
-        })
-            ->when($esAdmin && $papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
-
-        $query->when($esCliente && $user->client, function ($q) use ($user) {
-            $q->whereHas('subscription', function ($subQ) use ($user) {
-                $subQ->where('client_id', $user->client->id);
-            });
-        });
-
-        $query->when($buscar !== '', function ($q) use ($buscar, $papelera) {
-            $q->where(function ($subQ) use ($buscar, $papelera) {
-
-                if (is_numeric($buscar)) {
-                    $subQ->where('payments.id', $buscar)
-                        ->orWhere('payments.subscription_id', $buscar);
-                }
-
-                $subQ->orWhereHas('subscription.client', function ($clientQuery) use ($buscar, $papelera) {
-                    if ($papelera !== 'sin_eliminados') {
-                        $clientQuery->withTrashed();
-                    }
-                    $clientQuery->whereHas('user', function ($uQuery) use ($buscar, $papelera) {
-                        if ($papelera !== 'sin_eliminados') {
-                            $uQuery->withTrashed();
-                        }
-                        $uQuery->where('name', 'like', "%{$buscar}%");
-                    });
-                });
-
-                $subQ->orWhereHas('employee', function ($empQuery) use ($buscar, $papelera) {
-                    if ($papelera !== 'sin_eliminados') {
-                        $empQuery->withTrashed();
-                    }
-                    $empQuery->whereHas('user', function ($uQuery) use ($buscar, $papelera) {
-                        if ($papelera !== 'sin_eliminados') {
-                            $uQuery->withTrashed();
-                        }
-                        $uQuery->where('name', 'like', "%{$buscar}%");
-                    });
-                });
-            });
-        });
-
-        // Ordenamiento dinámico seguro
-        $query->orderBy("payments.{$orden}", $direccion)->orderBy('id', 'desc');
-
-        // Paginación limpia
-        $pagos = $query->paginate($porPagina)->withQueryString();
+        [$query, $filtros, $esAdmin, $esCliente] = $this->filtrarPagos($request);
 
         return Inertia::render('Pagos/Index', [
-            'pagos' => $pagos,
-            'filtros' => [
-                'buscar'     => $buscar,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
-            ],
-            'esAdmin' => $esAdmin,
+            'pagos'     => $query->paginate($filtros['paginas'])->withQueryString(),
+            'filtros'   => $filtros,
+            'esAdmin'   => $esAdmin,
+            'esCliente' => $esCliente,
         ]);
     }
 
@@ -300,42 +197,152 @@ class PaymentController extends Controller
 
     // Dado que los datos son generados puede que las fechas y los IDs no sean demasiado coherentes, por ejemplo
     // puede suceder que el primer pago sea de hace un dia y el ultimo de hace un mes, lo que en teoria carece de sentido.
-    public function pdf()
+    public function pdf(Request $request)
     {
-        $pagos = Payment::with(['subscription.client.user', 'subscription.plan', 'employee.user'])->orderBy('id')->get();
+        [$query, $filtros, $esAdmin] = $this->filtrarPagos($request);
 
-        $pdf = Pdf::loadView('pdfs.pagos.pagos', ['pagos' => $pagos]);
+        $pdf = Pdf::loadView('pdfs.pagos.pagos', [
+            'pagos'   => $query->get(),
+            'filtros' => $filtros,
+            'esAdmin' => $esAdmin,
+        ]);
+
         return $pdf->download('resumen_pagos.pdf');
     }
 
     public function export(Request $request)
     {
+        [$query,, $esAdmin] = $this->filtrarPagos($request);
 
-        $buscar = trim($request->input('buscar', ''));
-        $orden = $request->input('orden', 'id');
-        $direccion = $request->input('direccion', 'asc');
-        $papelera = $request->input('papelera', 'sin_eliminados');
+        return Excel::download(
+            new PagosExport($query, $esAdmin),
+            'reporte_pagos.xlsx'
+        );
+    }
+
+    private function filtrarPagos(Request $request): array
+    {
+        $usuario = $request->user();
+        $esAdmin = $usuario->hasAnyRole(['admin', 'super']);
+        $esCliente = $usuario->hasRole('client');
+
+        $datos = trim($request->input('datos', ''));
+        $empleado = trim($request->input('empleado', ''));
+        $id = trim($request->input('id', ''));
+        $suscripcion = trim($request->input('suscripcion', ''));
+        $metodo = trim($request->input('metodo', ''));
+        $desde = trim($request->input('desde', ''));
+        $hasta = trim($request->input('hasta', ''));
+        $orden = $request->input('orden', '');
+        $papelera = $request->input('papelera', '');
+        $direccion = $request->input('direccion', '');
+        $paginas = (int) $request->input('paginas', 5);
 
         $camposPermitidos = ['id', 'fecha_pago', 'monto', 'metodo_pago'];
 
         if (!in_array($orden, $camposPermitidos, true)) {
-            $orden = 'id';
+            $orden = 'fecha_pago';
+        }
+        if (!in_array($direccion, ['asc', 'desc'], true)) {
+            $direccion = 'desc';
+        }
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
+        }
+        if ($id !== '' && !ctype_digit($id)) {
+            $id = '';
+        }
+        if ($suscripcion !== '' && !ctype_digit($suscripcion)) {
+            $suscripcion = '';
+        }
+        if (!in_array($metodo, ['', 'efectivo', 'transferencia', 'tarjeta'], true)) {
+            $metodo = '';
+        }
+        if (!$esAdmin) {
+            $papelera = 'sin_eliminados';
+            $empleado = '';
+        }
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
+        }
+        if ($desde !== '' && !\DateTime::createFromFormat('Y-m-d', $desde)) {
+            $desde = '';
+        }
+        if ($hasta !== '' && !\DateTime::createFromFormat('Y-m-d', $hasta)) {
+            $hasta = '';
         }
 
-        if (!in_array($direccion, ['asc', 'desc'], true)) {
-            $direccion = 'asc';
-        }
+        $query = Payment::with([
+            'subscription' => fn($q) => $q->withTrashed()->with([
+                'client' => fn($cq) => $cq->withTrashed()->with([
+                    'user' => fn($uq) => $uq->withTrashed(),
+                ]),
+                'plan' => fn($pq) => $pq->withTrashed(),
+            ]),
+            'employee' => fn($q) => $q->withTrashed()->with([
+                'user' => fn($uq) => $uq->withTrashed(),
+            ]),
+        ]);
+
+        $query->when($papelera === 'con_eliminados', fn($q) => $q->withTrashed());
+        $query->when($papelera === 'solo_eliminados', fn($q) => $q->onlyTrashed());
+        $query->when($desde !== '', fn($q) => $q->whereDate('payments.fecha_pago', '>=', $desde));
+        $query->when($hasta !== '', fn($q) => $q->whereDate('payments.fecha_pago', '<=', $hasta));
+
+        $query->when(!$esCliente && $datos !== '', function ($q) use ($datos) {
+            $q->whereHas('subscription', function ($subQ) use ($datos) {
+                $subQ->withTrashed()->whereHas('client', function ($clientQ) use ($datos) {
+                    $clientQ->withTrashed()->where(function ($cSubQ) use ($datos) {
+                        $cSubQ->where('clients.telefono', 'like', "%{$datos}%")
+                            ->orWhereHas('user', function ($userQ) use ($datos) {
+                                $userQ->withTrashed()->where(function ($uSubQ) use ($datos) {
+                                    $uSubQ->where('users.name', 'like', "%{$datos}%")
+                                        ->orWhere('users.email', 'like', "%{$datos}%");
+                                });
+                            });
+                    });
+                });
+            });
+        });
+
+        $query->when($esAdmin && $empleado !== '', function ($q) use ($empleado) {
+            $q->whereHas('employee', function ($empQ) use ($empleado) {
+                $empQ->withTrashed()->where(function ($eSubQ) use ($empleado) {
+                    $eSubQ->where('employees.cuil', 'like', "%{$empleado}%")
+                        ->orWhereHas('user', function ($userQ) use ($empleado) {
+                            $userQ->withTrashed()->where('users.name', 'like', "%{$empleado}%");
+                        });
+                });
+            });
+        });
+
+        $query->when($id !== '', fn($q) => $q->where('payments.id', $id));
+        $query->when($suscripcion !== '', fn($q) => $q->where('payments.subscription_id', $suscripcion));
+        $query->when($metodo !== '', fn($q) => $q->where('payments.metodo_pago', $metodo));
+
+        $query->when($esCliente, function ($q) use ($usuario) {
+            $q->whereHas('subscription', function ($subQ) use ($usuario) {
+                $subQ->withTrashed()->where('subscriptions.client_id', $usuario->client?->id);
+            });
+        });
+
+        $query->orderBy("payments.{$orden}", $direccion)
+            ->orderBy('payments.id', 'desc');
 
         $filtros = [
-            'buscar' => $buscar,
-            'papelera' => $papelera,
-            'orden' => $orden,
-            'direccion' => $direccion,
+            'datos'       => $datos,
+            'empleado'    => $empleado,
+            'id'          => $id,
+            'suscripcion' => $suscripcion,
+            'metodo'      => $metodo,
+            'desde'       => $desde,
+            'hasta'       => $hasta,
+            'orden'       => $orden,
+            'papelera'    => $papelera,
+            'direccion'   => $direccion,
+            'paginas'     => $paginas,
         ];
 
-        return Excel::download(
-            new PagosExport($filtros),
-            'reporte_pagos.xlsx'
-        );
+        return [$query, $filtros, $esAdmin, $esCliente];
     }
 }

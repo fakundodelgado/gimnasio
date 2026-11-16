@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 interface User {
     id: number;
@@ -11,6 +11,7 @@ interface User {
 interface Client {
     id: number;
     user_id: number;
+    telefono?: string;
     deleted_at?: string | null;
     user?: User;
 }
@@ -32,6 +33,7 @@ interface Subscription {
 interface Employee {
     id: number;
     user_id: number;
+    cuil?: string;
     deleted_at?: string | null;
     user?: User;
 }
@@ -61,46 +63,91 @@ interface PagosPaginados {
 }
 
 interface Filtros {
-    buscar: string;
+    datos: string;
+    empleado: string;
+    id: string;
+    suscripcion: string;
+    metodo: string;
+    desde: string;
+    hasta: string;
     orden: string;
-    direccion: string;
-    por_pagina: number;
     papelera: string;
+    direccion: string;
+    paginas: number;
 }
 
-interface PageProps {
+interface IndexProps {
     pagos: PagosPaginados;
     filtros: Filtros;
     esAdmin: boolean;
-    [key: string]: unknown;
+    esCliente: boolean;
 }
 
 export default function Index({
     pagos,
     filtros,
     esAdmin,
-}: {
-    pagos: PagosPaginados;
-    filtros: Filtros;
-    esAdmin: boolean;
-}) {
-    const [buscar, setBuscar] = useState(filtros.buscar ?? "");
-    const [orden, setOrden] = useState(filtros.orden ?? "id");
-    const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
+    esCliente,
+}: IndexProps) {
+    const [datos, setDatos] = useState(filtros.datos ?? "");
+    const [empleado, setEmpleado] = useState(filtros.empleado ?? "");
+    const [id, setId] = useState(filtros.id ?? "");
+    const [suscripcion, setSuscripcion] = useState(filtros.suscripcion ?? "");
+    const [metodo, setMetodo] = useState(filtros.metodo ?? "");
+    const [desde, setDesde] = useState(filtros.desde ?? "");
+    const [hasta, setHasta] = useState(filtros.hasta ?? "");
+    const [orden, setOrden] = useState(filtros.orden ?? "fecha_pago");
+    const [direccion, setDireccion] = useState(filtros.direccion ?? "desc");
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
 
+    const enviarConsulta = (
+        overrides: Record<string, string | number> = {},
+    ) => {
+        router.get(
+            "/pagos",
+            {
+                datos,
+                empleado,
+                id,
+                suscripcion,
+                metodo,
+                desde,
+                hasta,
+                orden,
+                direccion,
+                paginas,
+                papelera,
+                ...overrides,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/pagos", {
-            buscar,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        enviarConsulta();
+    };
+
+    const limpiarFiltros = () => {
+        setDatos("");
+        setEmpleado("");
+        setId("");
+        setSuscripcion("");
+        setMetodo("");
+        setDesde("");
+        setHasta("");
+        setOrden("fecha_pago");
+        setDireccion("desc");
+        setPaginas(5);
+        setPapelera("sin_eliminados");
+
+        router.get("/pagos");
     };
 
     const ordenarPor = (campo: string) => {
@@ -111,12 +158,9 @@ export default function Index({
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/pagos", {
-            buscar,
+        enviarConsulta({
             orden: campo,
             direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
         });
     };
 
@@ -125,30 +169,46 @@ export default function Index({
         return direccion === "asc" ? " ↑" : " ↓";
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (pagoId: number) => {
         if (confirm("¿Estás seguro de que deseas anular/eliminar este pago?")) {
-            router.delete(`/pagos/${id}`);
+            router.delete(`/pagos/${pagoId}`);
         }
     };
+
+    // Query string exacta para que PDF y Excel apliquen los mismos filtros
+    const queryExportacion = new URLSearchParams({
+        datos,
+        empleado,
+        id,
+        suscripcion,
+        metodo,
+        desde,
+        hasta,
+        orden,
+        direccion,
+        papelera,
+    }).toString();
 
     return (
         <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
             <h2>Historial de Pagos y Caja</h2>
 
-            <Link
-                href="/pagos/create"
-                style={{
-                    display: "inline-block",
-                    marginBottom: "15px",
-                    padding: "8px 12px",
-                    background: "#2563eb",
-                    color: "#fff",
-                    borderRadius: "4px",
-                    textDecoration: "none",
-                }}
-            >
-                + Registrar Nuevo Pago
-            </Link>
+            {!esCliente && (
+                <Link
+                    href="/pagos/create"
+                    style={{
+                        display: "inline-block",
+                        marginBottom: "15px",
+                        padding: "8px 12px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        borderRadius: "4px",
+                        textDecoration: "none",
+                    }}
+                >
+                    + Registrar Nuevo Pago
+                </Link>
+            )}
 
             {/* Formulario de Búsqueda y Filtros */}
             <form
@@ -161,15 +221,73 @@ export default function Index({
                     flexWrap: "wrap",
                 }}
             >
+                {!esCliente && (
+                    <input
+                        type="text"
+                        value={datos}
+                        onChange={(e) => setDatos(e.target.value)}
+                        placeholder="Cliente: nombre, email o teléfono..."
+                        style={{ padding: "6px 10px", minWidth: "230px" }}
+                    />
+                )}
+
+                {esAdmin && (
+                    <input
+                        type="text"
+                        value={empleado}
+                        onChange={(e) => setEmpleado(e.target.value)}
+                        placeholder="Empleado: nombre o CUIL..."
+                        style={{ padding: "6px 10px", minWidth: "200px" }}
+                    />
+                )}
+
                 <input
                     type="text"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por cliente, empleado, ID pago o ID suscripción..."
-                    style={{ padding: "6px 10px", minWidth: "320px" }}
+                    value={id}
+                    onChange={(e) => setId(e.target.value)}
+                    placeholder="N° Pago (ID)..."
+                    style={{ padding: "6px 10px", width: "130px" }}
                 />
 
-                {/* Solo se muestra el selector de papelera si el usuario es Admin/Super */}
+                <input
+                    type="text"
+                    value={suscripcion}
+                    onChange={(e) => setSuscripcion(e.target.value)}
+                    placeholder="N° Suscripción..."
+                    style={{ padding: "6px 10px", width: "140px" }}
+                />
+
+                <select
+                    value={metodo}
+                    onChange={(e) => setMetodo(e.target.value)}
+                    style={{ padding: "6px 10px" }}
+                >
+                    <option value="">Todos los métodos</option>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                </select>
+
+                <label style={{ fontSize: "14px" }}>
+                    Desde:
+                    <input
+                        type="date"
+                        value={desde}
+                        onChange={(e) => setDesde(e.target.value)}
+                        style={{ marginLeft: "5px", padding: "5px 8px" }}
+                    />
+                </label>
+
+                <label style={{ fontSize: "14px" }}>
+                    Hasta:
+                    <input
+                        type="date"
+                        value={hasta}
+                        onChange={(e) => setHasta(e.target.value)}
+                        style={{ marginLeft: "5px", padding: "5px 8px" }}
+                    />
+                </label>
+
                 {esAdmin && (
                     <select
                         value={papelera}
@@ -180,12 +298,12 @@ export default function Index({
                             borderColor: "#f59e0b",
                         }}
                     >
-                        <option value="sin_eliminados">Pagos activos</option>
+                        <option value="sin_eliminados">No eliminados</option>
                         <option value="solo_eliminados">
-                            Solo anulados/eliminados
+                            Solo eliminados (Papelera)
                         </option>
-                        <option value="todos">
-                            Todos (Activos y Anulados)
+                        <option value="con_eliminados">
+                            Todos (Incl. eliminados)
                         </option>
                     </select>
                 )}
@@ -193,8 +311,8 @@ export default function Index({
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -210,14 +328,32 @@ export default function Index({
                     Buscar
                 </button>
 
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                >
+                    Limpiar
+                </button>
+
                 {esAdmin && (
-                    <a
-                        href="/pagos/pdf"
-                        target="_blank"
-                        className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition inline-flex items-center gap-2"
-                    >
-                        Descargar PDF
-                    </a>
+                    <>
+                        <a
+                            href={`/pagos/pdf?${queryExportacion}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 transition inline-flex items-center gap-2"
+                        >
+                            Descargar PDF
+                        </a>
+
+                        <a
+                            href={`/pagos/export?${queryExportacion}`}
+                            className="px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg shadow hover:bg-emerald-700 transition inline-flex items-center gap-2"
+                        >
+                            Descargar Excel
+                        </a>
+                    </>
                 )}
             </form>
 
@@ -241,6 +377,8 @@ export default function Index({
                             Comprobante #{indicadorOrden("id")}
                         </th>
                         <th>Cliente</th>
+                        {!esCliente && <th>Teléfono</th>}
+                        {!esCliente && <th>Email</th>}
                         <th>Plan</th>
                         <th
                             onClick={() => ordenarPor("monto")}
@@ -293,6 +431,18 @@ export default function Index({
                                         </span>
                                     )}
                                 </td>
+                                {!esCliente && (
+                                    <td>
+                                        {pago.subscription?.client?.telefono ||
+                                            "—"}
+                                    </td>
+                                )}
+                                {!esCliente && (
+                                    <td>
+                                        {pago.subscription?.client?.user
+                                            ?.email || "—"}
+                                    </td>
+                                )}
                                 <td>
                                     {pago.subscription?.plan?.nombre ??
                                         "Plan N/A"}
@@ -315,8 +465,20 @@ export default function Index({
                                 <td>{pago.fecha_pago}</td>
                                 {esAdmin && (
                                     <td>
-                                        {pago.employee?.user?.name ??
-                                            "Sistema / Admin"}
+                                        <div>
+                                            {pago.employee?.user?.name ??
+                                                "Sistema / Admin"}
+                                        </div>
+                                        {pago.employee?.cuil && (
+                                            <div
+                                                style={{
+                                                    fontSize: "12px",
+                                                    color: "#6b7280",
+                                                }}
+                                            >
+                                                CUIL: {pago.employee.cuil}
+                                            </div>
+                                        )}
                                     </td>
                                 )}
                                 <td>
@@ -359,7 +521,7 @@ export default function Index({
                     ) : (
                         <tr>
                             <td
-                                colSpan={esAdmin ? 8 : 7}
+                                colSpan={esAdmin ? 10 : esCliente ? 7 : 9}
                                 style={{ textAlign: "center" }}
                             >
                                 No hay registros de pagos.
@@ -385,7 +547,13 @@ export default function Index({
                 <div>
                     {pagos.prev_page_url && (
                         <button
-                            onClick={() => router.get(pagos.prev_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    pagos.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginRight: "10px",
                                 padding: "6px 12px",
@@ -400,7 +568,13 @@ export default function Index({
                     </span>
                     {pagos.next_page_url && (
                         <button
-                            onClick={() => router.get(pagos.next_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    pagos.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginLeft: "10px",
                                 padding: "6px 12px",
