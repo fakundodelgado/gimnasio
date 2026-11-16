@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 interface Plan {
     id: number;
@@ -33,32 +33,14 @@ interface Filtros {
     duracion: string;
 }
 
-interface AuthProps {
-    user: {
-        id: number;
-        name: string;
-        roles?: string[];
-    } | null;
-    roles?: string[];
-    permissions?: string[];
-}
-
-export default function Index({
-    planes,
-    duraciones,
-    filtros,
-}: {
+interface Props {
     planes: PlanesPaginados;
     duraciones: number[];
     filtros: Filtros;
-}) {
-    const { auth } = usePage<{ auth: AuthProps }>().props;
+    esAdmin: boolean;
+}
 
-    // Verifica si el usuario tiene rol admin o super para mostrar el filtro de papelera
-    const userRoles = auth?.roles ?? auth?.user?.roles ?? [];
-    const puedeVerPapelera =
-        userRoles.includes("admin") || userRoles.includes("super");
-
+export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
     const [buscar, setBuscar] = useState(filtros.buscar ?? "");
     const [incluyeEntrenador, setIncluyeEntrenador] = useState(
         filtros.incluye_entrenador ?? "",
@@ -197,7 +179,7 @@ export default function Index({
                     ))}
                 </select>
 
-                {puedeVerPapelera && (
+                {esAdmin && (
                     <select
                         value={papelera}
                         onChange={(e) => setPapelera(e.target.value)}
@@ -210,8 +192,8 @@ export default function Index({
                         <option value="sin_eliminados">
                             Activos únicamente
                         </option>
-                        <option value="eliminados">Solo eliminados</option>
-                        <option value="todos">
+                        <option value="solo_eliminados">Solo eliminados</option>
+                        <option value="con_eliminados">
                             Todos (Activos y Eliminados)
                         </option>
                     </select>
@@ -232,15 +214,28 @@ export default function Index({
 
                 <button
                     type="submit"
-                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
                 >
-                    Filtrar
+                    Buscar
                 </button>
 
                 <button
                     type="button"
                     onClick={limpiarFiltros}
-                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#e5e7eb",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
                 >
                     Limpiar
                 </button>

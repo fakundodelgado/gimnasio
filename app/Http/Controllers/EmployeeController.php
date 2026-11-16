@@ -22,76 +22,107 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
 
-        $buscar = trim($request->input('buscar', ''));
-        $orden = $request->input('orden', 'id');
-        $direccion = $request->input('direccion', 'asc');
-        $porPagina = (int) $request->input('por_pagina', 5);
-        $papelera = $request->input('papelera', 'sin_eliminados');
+        $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
 
-        $camposPermitidos = ['id', 'nombre', 'cuil', 'created_at'];
+        $buscarTexto = trim($request->input('buscar_texto', ''));
+        $buscarNumero = trim($request->input('buscar_numero', ''));
+        $orden = $request->input('orden', 'id');
+        $papelera = $request->input('papelera', 'sin_eliminados');
+        $direccion = $request->input('direccion', 'asc');
+        $tipo = $request->input('tipo', '');
+        $paginas = (int) $request->input('paginas', 5);
+
+        $camposPermitidos = ['nombre', 'id', 'cuil', 'created_at'];
 
         if (!in_array($orden, $camposPermitidos, true)) {
             $orden = 'id';
+        }
+
+        if (!in_array($paginas, [5, 10, 20], true)) {
+            $paginas = 5;
         }
 
         if (!in_array($direccion, ['asc', 'desc'], true)) {
             $direccion = 'asc';
         }
 
-        if (!in_array($porPagina, [5, 10, 20], true)) {
-            $porPagina = 5;
+        // Ahora que lo piendo es al pedo esta comprobación, digo, solo los admin tiene acceso a esta pestaña... luego habra que sacarlo
+        if (!$esAdmin) {
+            $papelera = 'sin_eliminados';
         }
 
-        $query = Employee::with(['user' => function ($q) {
-            $q->withTrashed(); // Carga la relación user incluso si sufrió Soft Delete
-        }]);
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
+        }
 
-        $query->when($papelera === 'solo_eliminados', function ($q) {
+        if (!in_array($tipo, ['', 'entrenador', 'administrativo'], true)) {
+            $tipo = '';
+        }
+
+        $query = Employee::with(['user' => fn($q) => $q->withTrashed(), 'trainer']);
+
+        // Podrian ir en un solo when, aunque mepa que ni hacen falta...
+        $query->when($papelera === 'solo_eliminados', function ($q) use ($papelera) {
             $q->onlyTrashed();
-        })
-            ->when($papelera === 'todos', function ($q) {
-                $q->withTrashed();
-            });
+        });
 
-        // Busca por ID o por Nombre, Email (Tengo que modificarlo, no funciona adecuadamente)
-        $query->when($buscar !== '', function ($q) use ($buscar) {
-            $q->where(function ($subQ) use ($buscar) {
-                if (is_numeric($buscar)) {
-                    $subQ->where('employees.id', $buscar);
-                }
+        $query->when($papelera === 'con_eliminados', function ($q) use ($papelera) {
+            $q->withTrashed();
+        });
 
-                $subQ->orWhere('employees.cuil', 'like', "%{$buscar}%");
-
-                $subQ->orWhereHas('user', function ($userQuery) use ($buscar) {
-                    $userQuery->withTrashed()
-                        ->where(function ($uQ) use ($buscar) {
-                            $uQ->where('name', 'like', "%{$buscar}%")
-                                ->orWhere('email', 'like', "%{$buscar}%");
-                        });
+        $query->when($buscarTexto !== '', function ($q) use ($buscarTexto) {
+            // Es como una especie de subconsulta donde veo si tengo user
+            $q->whereHas('user', function ($userQ) use ($buscarTexto) {
+                // Esto con lo de arriba forman un and (además no me debo olvidar de los posibles users con softdelete)
+                $userQ->withTrashed()->where(function ($subQ) use ($buscarTexto) {
+                    // Estos dos son un OR
+                    $subQ->where('name', 'like', "%{$buscarTexto}%")
+                        ->orWhere('email', 'like', "%{$buscarTexto}%");
                 });
             });
         });
 
+        $query->when($buscarNumero !== '', function ($q) use ($buscarNumero) {
+            // AND
+            $q->where(function ($subQ) use ($buscarNumero) {
+                // OR (en realidad primero tengo un and pero es como si fuera algo como ($buscarNumero !== and (condicion o condicion o condicion)))
+                $subQ->where('employees.cuil', 'like', "%{$buscarNumero}%")
+                    ->orWhere('employees.telefono', 'like', "%{$buscarNumero}%");
+            });
+        });
+
+        $query->when($tipo !== '', function ($q) use ($tipo) {
+            if ($tipo === 'entrenador') {
+                $q->whereHas('trainer');
+            } elseif ($tipo === 'administrativo') {
+                $q->whereDoesntHave('trainer');
+            }
+        });
+
         if ($orden === 'nombre') {
             $query->join('users', 'employees.user_id', '=', 'users.id')
-                ->orderBy('users.name', $direccion)
-                ->select('employees.*'); // Retorna solo los datos del empleado pero usa el name de user para ordenar
+                ->select('employees.*')
+                ->orderBy('users.name', $direccion);
         } else {
-            $query->orderBy("employees.{$orden}", $direccion)
-                ->select('employees.*');
+            $query->orderBy("employees.{$orden}", $direccion);
         }
 
-        $empleados = $query->paginate($porPagina)->withQueryString();
+        $query->orderBy('employees.id', 'asc');
+
+        $empleados = $query->paginate($paginas)->withQueryString();
 
         return Inertia::render('Empleados/Index', [
             'empleados' => $empleados,
             'filtros' => [
-                'buscar'     => $buscar,
-                'orden'      => $orden,
-                'direccion'  => $direccion,
-                'por_pagina' => $porPagina,
-                'papelera'   => $papelera,
+                'buscar_texto' => $buscarTexto,
+                'buscar_numero' => $buscarNumero,
+                'orden' => $orden,
+                'papelera' => $papelera,
+                'direccion' => $direccion,
+                'tipo' => $tipo,
+                'paginas' => $paginas
             ],
+            'esAdmin' => $esAdmin
         ]);
     }
 

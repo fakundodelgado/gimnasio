@@ -58,6 +58,10 @@ class ClientController extends Controller
             $papelera = 'sin_eliminados'; // Las posibiliades serian sin_eliminados, con_eliminados, solo_eliminados
         }
 
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
+        }
+
         $query = Client::with([
             'user' => fn($q) => $q->withTrashed(), // Me sirve para traer los clientes borrados (junto con los user) de ser necesario
             'ultimaSuscripcion.plan',

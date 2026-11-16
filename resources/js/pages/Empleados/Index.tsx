@@ -1,5 +1,5 @@
 import React, { useState, FormEvent } from "react";
-import { Link, usePage, router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 
 interface User {
     id: number;
@@ -8,13 +8,21 @@ interface User {
     deleted_at?: string | null;
 }
 
+interface Trainer {
+    id: number;
+    especialidad?: string | null;
+    deleted_at?: string | null;
+}
+
 interface Employee {
     id: number;
     user_id: number;
     cuil: string;
     telefono?: string;
+    created_at?: string;
     deleted_at: string | null;
     user?: User;
+    trainer?: Trainer | null;
 }
 
 interface EmpleadosPaginados {
@@ -30,60 +38,76 @@ interface EmpleadosPaginados {
 }
 
 interface Filtros {
-    buscar: string;
+    buscar_texto: string;
+    buscar_numero: string;
     orden: string;
     direccion: string;
-    por_pagina: number;
     papelera: string;
+    tipo: string;
+    paginas: number;
 }
 
-interface PageProps {
+interface Props {
     empleados: EmpleadosPaginados;
     filtros: Filtros;
-    [key: string]: unknown;
+    esAdmin: boolean;
 }
 
-export default function Index({
-    empleados,
-    filtros,
-}: {
-    empleados: EmpleadosPaginados;
-    filtros: Filtros;
-}) {
-    const [buscar, setBuscar] = useState(filtros.buscar ?? "");
+export default function Index({ empleados, filtros, esAdmin }: Props) {
+    const [buscarTexto, setBuscarTexto] = useState(filtros.buscar_texto ?? "");
+    const [buscarNumero, setBuscarNumero] = useState(
+        filtros.buscar_numero ?? "",
+    );
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
-    const [porPagina, setPorPagina] = useState(filtros.por_pagina ?? 5);
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+    const [tipo, setTipo] = useState(filtros.tipo ?? "");
+    const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
+
+    const construirParametros = (overrides: Partial<Filtros> = {}) => ({
+        buscar_texto: buscarTexto,
+        buscar_numero: buscarNumero,
+        orden,
+        direccion,
+        papelera,
+        tipo,
+        paginas,
+        ...overrides,
+    });
 
     const aplicarFiltros = (e: FormEvent) => {
         e.preventDefault();
-        router.get("/empleados", {
-            buscar,
-            orden,
-            direccion,
-            por_pagina: porPagina,
-            papelera,
+        router.get("/empleados", construirParametros(), {
+            preserveState: true,
+            replace: true,
         });
     };
 
+    const limpiarFiltros = () => {
+        setBuscarTexto("");
+        setBuscarNumero("");
+        setOrden("id");
+        setDireccion("asc");
+        setPapelera("sin_eliminados");
+        setTipo("");
+        setPaginas(5);
+
+        router.get("/empleados");
+    };
+
     const ordenarPor = (campo: string) => {
-        let nuevaDireccion = "asc";
-        if (orden === campo && direccion === "asc") {
-            nuevaDireccion = "desc";
-        }
+        const nuevaDireccion =
+            orden === campo && direccion === "asc" ? "desc" : "asc";
         setOrden(campo);
         setDireccion(nuevaDireccion);
 
-        router.get("/empleados", {
-            buscar,
-            orden: campo,
-            direccion: nuevaDireccion,
-            por_pagina: porPagina,
-            papelera,
-        });
+        router.get(
+            "/empleados",
+            construirParametros({ orden: campo, direccion: nuevaDireccion }),
+            { preserveState: true, replace: true },
+        );
     };
 
     const indicadorOrden = (campo: string) => {
@@ -129,32 +153,59 @@ export default function Index({
             >
                 <input
                     type="text"
-                    value={buscar}
-                    onChange={(e) => setBuscar(e.target.value)}
-                    placeholder="Buscar por nombre, email, CUIL o N° Legajo..."
-                    style={{ padding: "6px 10px", minWidth: "280px" }}
+                    value={buscarTexto}
+                    onChange={(e) => setBuscarTexto(e.target.value)}
+                    placeholder="Buscar por nombre o email..."
+                    style={{ padding: "6px 10px", minWidth: "220px" }}
                 />
 
-                {/* Papelera directa (Acceso exclusivo de Admin / Super Admin) */}
+                <input
+                    type="text"
+                    value={buscarNumero}
+                    onChange={(e) => setBuscarNumero(e.target.value)}
+                    placeholder="Buscar por ID, CUIL o teléfono..."
+                    style={{ padding: "6px 10px", minWidth: "210px" }}
+                />
+
+                {/* Filtro por tipo de empleado */}
                 <select
-                    value={papelera}
-                    onChange={(e) => setPapelera(e.target.value)}
-                    style={{
-                        padding: "6px 10px",
-                        background: "#fffbeb",
-                        borderColor: "#f59e0b",
-                    }}
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value)}
+                    style={{ padding: "6px 10px" }}
                 >
-                    <option value="sin_eliminados">Activos únicamente</option>
-                    <option value="solo_eliminados">Solo eliminados</option>
-                    <option value="todos">Todos (Activos y Eliminados)</option>
+                    <option value="">Todos los perfiles</option>
+                    <option value="entrenador">Con perfil de entrenador</option>
+                    <option value="administrativo">
+                        Administrativo (sin entrenador)
+                    </option>
                 </select>
+
+                {/* Filtro de Papelera exclusivo para Admin / Super Admin */}
+                {esAdmin && (
+                    <select
+                        value={papelera}
+                        onChange={(e) => setPapelera(e.target.value)}
+                        style={{
+                            padding: "6px 10px",
+                            background: "#fffbeb",
+                            borderColor: "#f59e0b",
+                        }}
+                    >
+                        <option value="sin_eliminados">
+                            Activos únicamente
+                        </option>
+                        <option value="solo_eliminados">Solo eliminados</option>
+                        <option value="con_eliminados">
+                            Todos (Activos y Eliminados)
+                        </option>
+                    </select>
+                )}
 
                 <label style={{ fontSize: "14px" }}>
                     Mostrar:
                     <select
-                        value={porPagina}
-                        onChange={(e) => setPorPagina(Number(e.target.value))}
+                        value={paginas}
+                        onChange={(e) => setPaginas(Number(e.target.value))}
                         style={{ marginLeft: "5px", padding: "6px" }}
                     >
                         <option value={5}>5</option>
@@ -165,9 +216,30 @@ export default function Index({
 
                 <button
                     type="submit"
-                    style={{ padding: "6px 12px", cursor: "pointer" }}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
                 >
                     Buscar
+                </button>
+
+                <button
+                    type="button"
+                    onClick={limpiarFiltros}
+                    style={{
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        background: "#e5e7eb",
+                        border: "none",
+                        borderRadius: "4px",
+                    }}
+                >
+                    Limpiar
                 </button>
             </form>
 
@@ -204,6 +276,13 @@ export default function Index({
                         </th>
                         <th>Email</th>
                         <th>Teléfono</th>
+                        <th>Perfil</th>
+                        <th
+                            onClick={() => ordenarPor("created_at")}
+                            style={{ cursor: "pointer" }}
+                        >
+                            Fecha Alta{indicadorOrden("created_at")}
+                        </th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -237,6 +316,47 @@ export default function Index({
                                 <td>{emp.user?.email || "-"}</td>
                                 <td>{emp.telefono || "-"}</td>
                                 <td>
+                                    {emp.trainer ? (
+                                        <div>
+                                            <span
+                                                style={{
+                                                    fontWeight: "bold",
+                                                    color: "#2563eb",
+                                                }}
+                                            >
+                                                Entrenador
+                                            </span>
+                                            {emp.trainer.especialidad && (
+                                                <span
+                                                    style={{
+                                                        fontSize: "12px",
+                                                        color: "#6b7280",
+                                                        display: "block",
+                                                    }}
+                                                >
+                                                    ({emp.trainer.especialidad})
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <span
+                                            style={{
+                                                color: "#6b7280",
+                                                fontStyle: "italic",
+                                            }}
+                                        >
+                                            Administrativo
+                                        </span>
+                                    )}
+                                </td>
+                                <td>
+                                    {emp.created_at
+                                        ? new Date(
+                                              emp.created_at,
+                                          ).toLocaleDateString("es-AR")
+                                        : "-"}
+                                </td>
+                                <td>
                                     {!emp.deleted_at && (
                                         <>
                                             <Link
@@ -269,7 +389,7 @@ export default function Index({
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={6} style={{ textAlign: "center" }}>
+                            <td colSpan={8} style={{ textAlign: "center" }}>
                                 No hay empleados registrados.
                             </td>
                         </tr>
@@ -293,7 +413,13 @@ export default function Index({
                 <div>
                     {empleados.prev_page_url && (
                         <button
-                            onClick={() => router.get(empleados.prev_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    empleados.prev_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginRight: "10px",
                                 padding: "6px 12px",
@@ -308,7 +434,13 @@ export default function Index({
                     </span>
                     {empleados.next_page_url && (
                         <button
-                            onClick={() => router.get(empleados.next_page_url!)}
+                            onClick={() =>
+                                router.get(
+                                    empleados.next_page_url!,
+                                    {},
+                                    { preserveState: true },
+                                )
+                            }
                             style={{
                                 marginLeft: "10px",
                                 padding: "6px 12px",

@@ -20,6 +20,7 @@ class PlanController extends Controller
     {
 
         // Entradas para los filtros
+        $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
 
         $buscar = trim($request->input('buscar', ''));
         $incluyeEntrenador = $request->input('incluye_entrenador', '');
@@ -48,14 +49,18 @@ class PlanController extends Controller
             $papelera = 'sin_eliminados';
         }
 
+        if (!in_array($papelera, ['sin_eliminados', 'solo_eliminados', 'con_eliminados'], true)) {
+            $papelera = 'sin_eliminados';
+        }
+
         $query = Plan::query();
 
         // Papelera
-        $query->when($papelera === 'eliminados', function ($q) {
+        $query->when($papelera === 'solo_eliminados', function ($q) {
             $q->onlyTrashed();
         });
 
-        $query->when($papelera === 'todos', function ($q) {
+        $query->when($papelera === 'con_eliminados', function ($q) {
             $q->withTrashed();
         });
 
@@ -100,7 +105,8 @@ class PlanController extends Controller
                 'papelera' => $papelera,
                 'incluye_entrenador' => $incluyeEntrenador,
                 'duracion' => $duracion
-            ]
+            ],
+            'esAdmin' => $esAdmin
         ]);
     }
 
