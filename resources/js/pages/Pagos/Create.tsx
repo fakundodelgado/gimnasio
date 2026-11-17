@@ -1,6 +1,6 @@
 import React, { FormEvent, ChangeEvent } from "react";
 import { useForm, Link } from "@inertiajs/react";
-import { SelectBuscador, SelectOption } from "@/components/SelectBuscador";
+import { SelectBuscador } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
@@ -10,6 +10,7 @@ interface User {
 interface Plan {
     id: number;
     nombre: string;
+    precio: number | string;
 }
 
 interface Client {
@@ -21,6 +22,7 @@ interface Subscription {
     id: number;
     plan?: Plan;
     client?: Client;
+    payments_sum_monto?: number | string | null;
 }
 
 interface Props {
@@ -30,12 +32,10 @@ interface Props {
 
 export default function Create({ fecha, suscripciones }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        monto: "",
         subscription_id: "",
         metodo_pago: "efectivo",
     });
 
-    // Mapeo para el SelectBuscador
     const opcionesSuscripciones = suscripciones.map((s) => {
         const clientName =
             s.client?.user?.name || `Cliente #${s.client?.id || s.id}`;
@@ -46,6 +46,18 @@ export default function Create({ fecha, suscripciones }: Props) {
             label: `#${s.id} - ${clientName} (${planName})`,
         };
     });
+
+    const suscripcionSeleccionada = suscripciones.find(
+        (s) => String(s.id) === String(data.subscription_id),
+    );
+
+    const saldoPendiente = suscripcionSeleccionada?.plan
+        ? Math.max(
+              0,
+              Number(suscripcionSeleccionada.plan.precio) -
+                  Number(suscripcionSeleccionada.payments_sum_monto || 0),
+          )
+        : null;
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -91,25 +103,29 @@ export default function Create({ fecha, suscripciones }: Props) {
                 </div>
 
                 <div>
-                    <label>Monto:</label>
+                    <label style={{ display: "block", marginBottom: "5px" }}>
+                        Monto a Abonar (Saldo Pendiente Automático):
+                    </label>
                     <input
-                        type="number"
-                        step="0.01"
-                        value={data.monto}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setData("monto", e.target.value)
-                        }
+                        type="text"
+                        disabled
+                        readOnly
                         style={{
                             width: "100%",
                             padding: "8px",
-                            marginTop: "5px",
+                            backgroundColor: "#f3f4f6",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "4px",
+                            color: "#111827",
+                            fontWeight: "bold",
+                            cursor: "not-allowed",
                         }}
+                        value={
+                            saldoPendiente !== null
+                                ? `$${saldoPendiente.toFixed(2)}`
+                                : "Seleccione una suscripción pendiente..."
+                        }
                     />
-                    {errors.monto && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.monto}
-                        </div>
-                    )}
                 </div>
 
                 <div>

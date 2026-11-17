@@ -30,17 +30,17 @@ class SubscriptionController extends Controller
         $esCliente = $usuario->hasRole('client');
 
         // Nombre, mail y telefono
-        $datos = trim($request->input('datos', '')); // Este campo buscara sobre datos personales
+        $datos = trim((string) $request->input('datos', '')); // Este campo buscara sobre datos personales
         // Id
-        $id = trim($request->input('id', ''));  // Este solo por id, si lo mesclo con otros campos con numero me termina devolviendo muchas filas innecesarias
-        $orden = $request->input('orden', '');
-        $papelera = $request->input('papelera', '');
-        $direccion = $request->input('direccion', '');
+        $id = trim((string)$request->input('id', ''));  // Este solo por id, si lo mesclo con otros campos con numero me termina devolviendo muchas filas innecesarias
+        $orden = $request->input('orden', 'id');
+        $papelera = $request->input('papelera', 'sin_eliminados');
+        $direccion = $request->input('direccion', 'asc');
         $paginas = (int) $request->input('paginas', 5);
-        $desde = trim($request->input('desde', ''));
-        $hasta = trim($request->input('hasta', ''));
-        $plan = trim($request->input('plan', ''));
-        $estado = trim($request->input('estado', ''));
+        $desde = trim((string) $request->input('desde', ''));
+        $hasta = trim((string) $request->input('hasta', ''));
+        $plan = trim((string) $request->input('plan', ''));
+        $estado = trim((string) $request->input('estado', ''));
 
         $camposPermitidos = ['id', 'fecha_inicio', 'fecha_fin', 'precio'];
 
@@ -228,9 +228,11 @@ class SubscriptionController extends Controller
 
             //$suscripcion->update(['estado' => 'vencida', 'fecha_fin' => Carbon::today()]);
 
+            $datos['precio'] = $datos['estado'] === 'activa' ? $plan->precio : round($plan->precio / 2, 2);
+
             $nueva = Subscription::create($datos);
 
-            $monto = $nueva->estado === 'activa' ? $plan->precio : round($plan->precio / 2, 2);
+            $monto = $nueva->precio;
 
             if (auth()->user()->hasAnyRole(['admin', 'super'])) {
                 $empleado = Employee::where('cuil', '27389998889')->firstOrFail();
@@ -351,18 +353,18 @@ class SubscriptionController extends Controller
     {
 
         DB::transaction(function () use ($suscripcion) {
-            $client = $suscripcion->client;
+            $cliente = $suscripcion->client;
 
-            // 1. Eliminar (o soft delete) la suscripción
-            $suscripcion->delete();
-
-            // 2. Verificar si al eliminarla le queda alguna OTRA suscripción activa vigente
-            $planActivo = $client->fresh()->activeSubscription?->plan;
-
-            // Si ya no tiene plan activo o el que tiene no incluye entrenador, limpiamos
-            if (!$planActivo || !$planActivo->incluye_entrenador) {
-                $client->update(['trainer_id' => null]);
+            if ($cliente && $cliente->trainer_id !== null && in_array($suscripcion->estado, ['activa', 'pendiente'])) {
+                $cliente->update(['trainer_id' => null]);
             }
+
+            $suscripcion->update([
+                'estado'    => 'cancelada',
+                'fecha_fin' => Carbon::today(),
+            ]);
+
+            $suscripcion->delete();
         });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion eliminada correctamente.');

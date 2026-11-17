@@ -1,6 +1,6 @@
 import React, { FormEvent, ChangeEvent } from "react";
 import { useForm, Link } from "@inertiajs/react";
-import { SelectBuscador, SelectOption } from "@/components/SelectBuscador";
+import { SelectBuscador } from "@/components/SelectBuscador";
 
 interface User {
     id: number;
@@ -15,6 +15,7 @@ interface Employee {
 interface Plan {
     id: number;
     nombre: string;
+    precio?: number | string;
 }
 
 interface Client {
@@ -36,6 +37,7 @@ interface Payment {
     employee_id: number;
     metodo_pago: string;
     employee?: Employee;
+    subscription?: Subscription;
 }
 
 interface Props {
@@ -45,12 +47,14 @@ interface Props {
 
 export default function Edit({ pago, suscripciones }: Props) {
     const { data, setData, put, processing, errors } = useForm({
-        monto: String(pago.monto || ""),
         subscription_id: String(pago.subscription_id || ""),
         metodo_pago: pago.metodo_pago || "efectivo",
     });
 
-    // Mapeo exacto respetando la interfaz SelectOption (id, label)
+    const precioPlanActual = Number(pago.subscription?.plan?.precio || 0);
+    const esPagoCompleto =
+        precioPlanActual > 0 && Number(pago.monto) >= precioPlanActual;
+
     const opcionesSuscripciones = suscripciones.map((s) => {
         const clientName =
             s.client?.user?.name || `Cliente #${s.client?.id || s.id}`;
@@ -60,6 +64,14 @@ export default function Edit({ pago, suscripciones }: Props) {
             label: `#${s.id} - ${clientName} (${planName})`,
         };
     });
+
+    const suscripcionActualLabel =
+        opcionesSuscripciones.find(
+            (op) => String(op.id) === String(pago.subscription_id),
+        )?.label || `#${pago.subscription_id}`;
+
+    const cambioSuscripcion =
+        String(data.subscription_id) !== String(pago.subscription_id);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -132,43 +144,76 @@ export default function Edit({ pago, suscripciones }: Props) {
                     />
                 </div>
 
-                {/* Buscador de Suscripción */}
+                {/* Buscador de Suscripción (bloqueado si es pago por el 100% del plan) */}
                 <div>
                     <label style={{ display: "block", marginBottom: "5px" }}>
                         Suscripción:
                     </label>
-                    <SelectBuscador
-                        options={opcionesSuscripciones}
-                        value={data.subscription_id}
-                        onChange={(id) =>
-                            setData("subscription_id", String(id))
-                        }
-                        placeholder="Buscar por boleta o cliente..."
-                        error={errors.subscription_id}
-                    />
+                    {esPagoCompleto ? (
+                        <>
+                            <input
+                                type="text"
+                                disabled
+                                readOnly
+                                style={{
+                                    width: "100%",
+                                    padding: "8px",
+                                    backgroundColor: "#f3f4f6",
+                                    border: "1px solid #d1d5db",
+                                    borderRadius: "4px",
+                                    color: "#4b5563",
+                                    cursor: "not-allowed",
+                                }}
+                                value={suscripcionActualLabel}
+                            />
+                            <small
+                                style={{
+                                    color: "#6b7280",
+                                    display: "block",
+                                    marginTop: "4px",
+                                }}
+                            >
+                                Este pago cubre el 100% del plan y no puede
+                                reasignarse a otra suscripción.
+                            </small>
+                        </>
+                    ) : (
+                        <SelectBuscador
+                            options={opcionesSuscripciones}
+                            value={data.subscription_id}
+                            onChange={(id) =>
+                                setData("subscription_id", String(id))
+                            }
+                            placeholder="Buscar por boleta o cliente..."
+                            error={errors.subscription_id}
+                        />
+                    )}
                 </div>
 
-                {/* Monto */}
+                {/* Monto (Solo Lectura) */}
                 <div>
-                    <label>Monto:</label>
+                    <label style={{ display: "block", marginBottom: "5px" }}>
+                        Monto:
+                    </label>
                     <input
-                        type="number"
-                        step="0.01"
-                        value={data.monto}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setData("monto", e.target.value)
-                        }
+                        type="text"
+                        disabled
+                        readOnly
                         style={{
                             width: "100%",
                             padding: "8px",
-                            marginTop: "5px",
+                            backgroundColor: "#f3f4f6",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "4px",
+                            color: "#4b5563",
+                            cursor: "not-allowed",
                         }}
+                        value={
+                            cambioSuscripcion
+                                ? "Se recalculará automáticamente según el saldo de la nueva suscripción"
+                                : `$${Number(pago.monto).toFixed(2)}`
+                        }
                     />
-                    {errors.monto && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.monto}
-                        </div>
-                    )}
                 </div>
 
                 {/* Método de Pago */}

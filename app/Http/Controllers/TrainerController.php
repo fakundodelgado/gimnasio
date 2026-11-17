@@ -21,8 +21,8 @@ class TrainerController extends Controller
     #[Middleware('permission:listar entrenadores')]
     public function index(Request $request)
     {
-        $buscarTexto = trim($request->input('buscar_texto', ''));
-        $buscarNumero = trim($request->input('buscar_numero', ''));
+        $buscarTexto = trim((string) $request->input('buscar_texto', ''));
+        $buscarNumero = trim((string) $request->input('buscar_numero', ''));
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
         $papelera = $request->input('papelera', 'sin_eliminados');

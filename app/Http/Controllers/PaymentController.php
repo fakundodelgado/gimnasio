@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\PagosExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 
 class PaymentController extends Controller
@@ -46,6 +47,7 @@ class PaymentController extends Controller
 
         $suscripciones = Subscription::with(['client.user', 'plan'])
             ->where('estado', 'pendiente')
+            ->withSum('payments', 'monto')
             ->get();
 
         $fecha = Carbon::today()->toDateString();
@@ -63,15 +65,20 @@ class PaymentController extends Controller
         $datos = $request->validated();
         $datos['fecha_pago'] = Carbon::today()->toDateString();
         $user = $request->user();
-        $suscripcion = Subscription::with('client.user', 'plan')->findOrFail($datos['subscription_id']);
-        $totalPagadoPrevio = Payment::where('subscription_id', $suscripcion->id)->sum('monto');
-        $saldoPendiente = $suscripcion->precio - $totalPagadoPrevio;
 
-        if ($datos['monto'] > $saldoPendiente) {
+        $suscripcion = Subscription::with(['client.user', 'plan' => fn($q) => $q->withTrashed()])->findOrFail($datos['subscription_id']);
+
+        $totalPagadoPrevio = (float) Payment::where('subscription_id', $suscripcion->id)->sum('monto');
+        $saldoPendiente = round((float) $suscripcion->plan->precio - $totalPagadoPrevio, 2);
+
+        // Este es un caso medio fino, pero puede evitar problemas por pagos medio simultaneos al mismo cliente
+        if ($suscripcion->estado !== 'pendiente') {
             return back()->withErrors([
-                'monto' => "El monto ingresado ($" . number_format($datos['monto'], 2) . ") supera el saldo pendiente de la suscripción ($" . number_format($saldoPendiente, 2) . ")."
+                'subscription_id' => 'Solo se pueden registrar pagos en suscripciones pendientes.'
             ]);
         }
+
+        $datos['monto'] = $saldoPendiente;
 
         if ($user && $user->employee) {
             $datos['employee_id'] = $user->employee->id;
@@ -80,14 +87,14 @@ class PaymentController extends Controller
             $datos['employee_id'] = $adminEmpleado->employee->id;
         }
 
-        Payment::create($datos);
-
-        if (($totalPagadoPrevio + $datos['monto']) >= $suscripcion->precio) {
+        DB::transaction(function () use ($datos, $suscripcion) {
+            Payment::create($datos);
             $suscripcion->update(['estado' => 'activa']);
-        }
+        });
+
+
 
         $cliente = $suscripcion->client->user;
-
         $nombre = $cliente->name;
         $correo = $cliente->email;
 
@@ -131,7 +138,10 @@ class PaymentController extends Controller
             ->orWhere('id', $pago->subscription_id)
             ->get();
 
-        $pago->load(['subscription.plan', 'employee.user']);
+        $pago->load([
+            'subscription' => fn($q) => $q->withTrashed()->with(['plan' => fn($pq) => $pq->withTrashed()]),
+            'employee.user',
+        ]);
 
         return Inertia::render('Pagos/Edit', ['pago' => $pago, 'suscripciones' => $suscripciones]);
     }
@@ -144,39 +154,43 @@ class PaymentController extends Controller
     public function update(UpdatePaymentRequest $request, Payment $pago)
     {
         $datos = $request->validated();
-        $suscripcionAnteriorId = $pago->subscription_id;
-        $nuevaSuscripcion = Subscription::findOrFail($datos['subscription_id']);
+        $suscripcionAnteriorId = (int)$pago->subscription_id;
+        $nuevaSuscripcionId = (int) $datos['subscription_id'];
 
-        $otrosPagos = Payment::where('subscription_id', $nuevaSuscripcion->id)
-            ->where('id', '!=', $pago->id)
-            ->sum('monto');
+        if ($suscripcionAnteriorId === $nuevaSuscripcionId) {
+            $pago->update(['metodo_pago' => $datos['metodo_pago']]);
 
-        $saldoPendiente = $nuevaSuscripcion->precio - $otrosPagos;
+            return redirect()->route('pagos.index')->with('success', 'Pago actualizado correctamente');
+        }
 
-        if ($datos['monto'] > $saldoPendiente) {
+        $subActual = $pago->subscription()->with(['plan' => fn($q) => $q->withTrashed()])->first();
+        if ($subActual && round((float) $pago->monto, 2) >= round((float) $subActual->plan->precio, 2)) {
             return back()->withErrors([
-                'monto' => "El monto ($" . number_format($datos['monto'], 2) . ") supera el saldo restante de la suscripción ($" . number_format($saldoPendiente, 2) . ")."
+                'subscription_id' => 'Un pago por el total del plan no puede reasignarse a otra suscripción.'
             ]);
         }
 
-        $pago->update($datos);
+        $nuevaSuscripcion = Subscription::with(['plan' => fn($q) => $q->withTrashed()])
+            ->findOrFail($nuevaSuscripcionId);
 
-        if ($suscripcionAnteriorId !== $pago->subscription_id) {
-            $subAnterior = Subscription::find($suscripcionAnteriorId);
-            if ($subAnterior) {
-                $pagadoAnterior = Payment::where('subscription_id', $subAnterior->id)->sum('monto');
-                if ($pagadoAnterior < $subAnterior->precio) {
-                    $subAnterior->update(['estado' => 'pendiente']);
-                }
+        if ($nuevaSuscripcion->estado !== 'pendiente') {
+            return back()->withErrors([
+                'subscription_id' => 'Solo se puede reasignar el pago a una suscripción pendiente.'
+            ]);
+        }
+
+        $pagadoEnNueva = (float) Payment::where('subscription_id', $nuevaSuscripcion->id)->sum('monto');
+        $datos['monto'] = round((float) $nuevaSuscripcion->plan->precio - $pagadoEnNueva, 2);
+
+        DB::transaction(function () use ($pago, $datos, $subActual, $nuevaSuscripcion) {
+            $pago->update($datos);
+
+            $this->recalcularEstadoSuscripcion($nuevaSuscripcion);
+
+            if ($subActual) {
+                $this->recalcularEstadoSuscripcion($subActual);
             }
-        }
-
-        $totalPagadoActual = $otrosPagos + $datos['monto'];
-        if ($totalPagadoActual >= $nuevaSuscripcion->precio) {
-            $nuevaSuscripcion->update(['estado' => 'activa']);
-        } else {
-            $nuevaSuscripcion->update(['estado' => 'pendiente']);
-        }
+        });
 
         return redirect()->route('pagos.index')->with('success', 'Pago actualizado correctamente');
     }
@@ -188,7 +202,16 @@ class PaymentController extends Controller
     #[Middleware('permission:eliminar pago')]
     public function destroy(Payment $pago)
     {
-        $pago->delete();
+
+        DB::transaction(function () use ($pago) {
+            $suscripcion = $pago->subscription()->with(['plan' => fn($q) => $q->withTrashed()])->first();
+
+            $pago->delete();
+
+            if ($suscripcion) {
+                $this->recalcularEstadoSuscripcion($suscripcion);
+            }
+        });
 
         return redirect()->route('pagos.index')->with('success', 'Pago eliminado correctamente');
     }
@@ -226,16 +249,16 @@ class PaymentController extends Controller
         $esAdmin = $usuario->hasAnyRole(['admin', 'super']);
         $esCliente = $usuario->hasRole('client');
 
-        $datos = trim($request->input('datos', ''));
-        $empleado = trim($request->input('empleado', ''));
-        $id = trim($request->input('id', ''));
-        $suscripcion = trim($request->input('suscripcion', ''));
-        $metodo = trim($request->input('metodo', ''));
-        $desde = trim($request->input('desde', ''));
-        $hasta = trim($request->input('hasta', ''));
-        $orden = $request->input('orden', '');
-        $papelera = $request->input('papelera', '');
-        $direccion = $request->input('direccion', '');
+        $datos = trim((string)$request->input('datos', ''));
+        $empleado = trim((string)$request->input('empleado', ''));
+        $id = trim((string)$request->input('id', ''));
+        $suscripcion = trim((string)$request->input('suscripcion', ''));
+        $metodo = trim((string)$request->input('metodo', ''));
+        $desde = trim((string)$request->input('desde', ''));
+        $hasta = trim((string)$request->input('hasta', ''));
+        $orden = $request->input('orden', 'id');
+        $papelera = $request->input('papelera', 'sin_eliminados');
+        $direccion = $request->input('direccion', 'asc');
         $paginas = (int) $request->input('paginas', 5);
 
         $camposPermitidos = ['id', 'fecha_pago', 'monto', 'metodo_pago'];
@@ -344,5 +367,30 @@ class PaymentController extends Controller
         ];
 
         return [$query, $filtros, $esAdmin, $esCliente];
+    }
+
+    private function recalcularEstadoSuscripcion(Subscription $suscripcion): void
+    {
+        if (!in_array($suscripcion->estado, ['activa', 'pendiente'], true)) {
+            return;
+        }
+
+        $totalPagado = round((float) $suscripcion->payments()->sum('monto'), 2);
+        $precioPlan = round((float) $suscripcion->plan->precio, 2);
+
+        if ($totalPagado <= 0) {
+            $suscripcion->update([
+                'estado'    => 'cancelada',
+                'fecha_fin' => Carbon::today(),
+            ]);
+        } elseif ($totalPagado >= $precioPlan) {
+            $suscripcion->update([
+                'estado' => 'activa',
+            ]);
+        } else {
+            $suscripcion->update([
+                'estado' => 'pendiente',
+            ]);
+        }
     }
 }

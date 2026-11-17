@@ -40,10 +40,12 @@ interface Subscription {
     client_id: number;
     trainer_id?: number | null;
     plan_id: number;
-    precio: number | string;
+    precio?: number | string;
     fecha_inicio: string;
     fecha_fin: string;
     estado: string;
+    client?: Client;
+    plan?: Plan;
 }
 
 interface Props {
@@ -59,28 +61,21 @@ export default function Edit({
     planes,
     entrenadores,
 }: Props) {
-    console.log("DATOS SUSCRIPCION:", suscripcion);
-    console.log("DATOS CLIENTES:", clientes);
-    // 1. Inicializamos useForm manteniendo los tipos number para los IDs
     const { data, setData, put, processing, errors } = useForm<{
-        client_id: number | string;
         trainer_id?: number | string;
-        plan_id: number | string;
-        precio: number | string;
-        fecha_inicio: string;
-        fecha_fin: string;
         estado: string;
     }>({
-        client_id: suscripcion?.client_id ?? "",
         trainer_id: suscripcion?.trainer_id ?? "",
-        plan_id: suscripcion?.plan_id ?? "",
-        precio: suscripcion?.precio ?? "",
-        fecha_inicio: suscripcion?.fecha_inicio ?? "",
-        fecha_fin: suscripcion?.fecha_fin ?? "",
         estado: suscripcion?.estado ?? "activa",
     });
 
-    // 2. Mapeo de opciones asegurando IDs numéricos o convertidos
+    const clienteActual = clientes.find(
+        (c) => Number(c.id) === Number(suscripcion?.client_id),
+    );
+    const planActual = planes.find(
+        (p) => Number(p.id) === Number(suscripcion?.plan_id),
+    );
+
     const opcionesEntrenadores: SelectOption[] = entrenadores.map((tr) => {
         const esSuEntrenadorActual =
             Number(tr.id) === Number(suscripcion?.trainer_id);
@@ -100,57 +95,25 @@ export default function Edit({
         };
     });
 
-    const opcionesClientes: SelectOption[] = clientes.map((c) => ({
-        id: c.id,
-        label: `#${c.id} - ${c.user?.name || "Sin nombre"}`,
-        sublabel: c.user?.email || undefined,
-    }));
+    const esVigente =
+        suscripcion.estado === "activa" || suscripcion.estado === "pendiente";
 
-    // 3. Plan seleccionado (usando comparación estricta con Number)
-    const planSeleccionado = planes.find(
-        (p) => Number(p.id) === Number(data.plan_id),
-    );
-
-    const handlePlanChange = (e: ChangeEvent<HTMLSelectElement>) => {
-        const selectedPlanId = Number(e.target.value);
-        const plan = planes.find((p) => Number(p.id) === selectedPlanId);
-
-        let nuevaFechaFin = data.fecha_fin;
-        if (plan && data.fecha_inicio) {
-            const fecha = new Date(data.fecha_inicio);
-            fecha.setDate(fecha.getDate() + plan.duracion);
-            nuevaFechaFin = fecha.toISOString().split("T")[0];
-        }
-
-        setData((prev) => ({
-            ...prev,
-            plan_id: selectedPlanId,
-            precio: plan ? String(plan.precio) : "",
-            fecha_fin: nuevaFechaFin,
-            trainer_id: plan?.incluye_entrenador ? prev.trainer_id : "",
-        }));
-    };
-
-    const handleFechaInicioChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const nuevaFechaInicio = e.target.value;
-        let nuevaFechaFin = data.fecha_fin;
-
-        if (planSeleccionado && nuevaFechaInicio) {
-            const fecha = new Date(nuevaFechaInicio);
-            fecha.setDate(fecha.getDate() + planSeleccionado.duracion);
-            nuevaFechaFin = fecha.toISOString().split("T")[0];
-        }
-
-        setData((prev) => ({
-            ...prev,
-            fecha_inicio: nuevaFechaInicio,
-            fecha_fin: nuevaFechaFin,
-        }));
-    };
+    const hoy = new Date().toISOString().split("T")[0];
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         put(`/suscripciones/${suscripcion.id}`);
+    };
+
+    const readOnlyStyle: React.CSSProperties = {
+        width: "100%",
+        padding: "8px",
+        backgroundColor: "#f3f4f6",
+        border: "1px solid #d1d5db",
+        borderRadius: "4px",
+        color: "#4b5563",
+        cursor: "not-allowed",
+        marginTop: "5px",
     };
 
     return (
@@ -171,48 +134,42 @@ export default function Edit({
                     gap: "15px",
                 }}
             >
+                {/* Cliente (Solo Lectura) */}
                 <div>
                     <label>Cliente:</label>
-                    <div className="mb-4">
-                        <SelectBuscador
-                            label="Cliente"
-                            options={opcionesClientes}
-                            value={data.client_id}
-                            onChange={(id) => setData("client_id", id)}
-                            placeholder="Buscar cliente por número o nombre..."
-                            error={errors.client_id}
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        disabled
+                        readOnly
+                        style={readOnlyStyle}
+                        value={
+                            clienteActual
+                                ? `#${clienteActual.id} - ${clienteActual.user?.name || "Sin nombre"}`
+                                : `#${suscripcion.client_id}`
+                        }
+                    />
                 </div>
 
+                {/* Plan (Solo Lectura) */}
                 <div>
-                    <label>Plan:</label>
-                    <select
-                        value={data.plan_id}
-                        onChange={handlePlanChange}
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    >
-                        <option value="">-- Seleccionar Plan --</option>
-                        {planes.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.nombre} (${p.precio})
-                            </option>
-                        ))}
-                    </select>
-                    {errors.plan_id && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.plan_id}
-                        </div>
-                    )}
+                    <label>Plan Contratado:</label>
+                    <input
+                        type="text"
+                        disabled
+                        readOnly
+                        style={readOnlyStyle}
+                        value={
+                            planActual
+                                ? `${planActual.nombre} ($${planActual.precio})`
+                                : `Plan #${suscripcion.plan_id}`
+                        }
+                    />
                 </div>
 
+                {/* Entrenador (Editable solo si el plan lo incluye y no está cancelando) */}
                 <div>
                     <label>Entrenador:</label>
-                    {planSeleccionado?.incluye_entrenador ? (
+                    {planActual?.incluye_entrenador ? (
                         <div className="mb-4">
                             <SelectBuscador
                                 label="Entrenador Asignado"
@@ -225,42 +182,41 @@ export default function Edit({
                         </div>
                     ) : (
                         <p className="text-sm text-gray-500 italic py-2">
-                            {data.plan_id
-                                ? "El plan seleccionado no requiere ni incluye entrenador."
-                                : "Selecciona un plan para asignar entrenador."}
+                            Este plan no incluye entrenador.
                         </p>
                     )}
                 </div>
 
-                <div>
-                    <label>Precio:</label>
-                    <p>{data.precio || "Seleccionar un plan"}</p>
-                </div>
-
+                {/* Fecha de Inicio (Solo Lectura) */}
                 <div>
                     <label>Fecha de Inicio:</label>
                     <input
-                        type="date"
-                        value={data.fecha_inicio}
-                        onChange={handleFechaInicioChange}
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
+                        type="text"
+                        disabled
+                        readOnly
+                        style={readOnlyStyle}
+                        value={suscripcion.fecha_inicio}
                     />
-                    {errors.fecha_inicio && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.fecha_inicio}
-                        </div>
-                    )}
                 </div>
 
+                {/* Fecha de Fin / Vencimiento */}
                 <div>
                     <label>Fecha de Fin / Vencimiento:</label>
-                    <p>{data.fecha_fin || "Seleccionar un plan"}</p>
+                    <input
+                        type="text"
+                        disabled
+                        readOnly
+                        style={readOnlyStyle}
+                        value={
+                            data.estado === "cancelada" &&
+                            suscripcion.estado !== "cancelada"
+                                ? `${hoy} (se cortará hoy al cancelar)`
+                                : suscripcion.fecha_fin
+                        }
+                    />
                 </div>
 
+                {/* Estado (Solo permite mantener estado actual o cancelar si estaba vigente) */}
                 <div>
                     <label>Estado:</label>
                     <select
@@ -274,11 +230,27 @@ export default function Edit({
                             marginTop: "5px",
                         }}
                     >
-                        <option value="activa">Activa</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="vencida">Vencida</option>
-                        <option value="cancelada">Cancelada</option>
+                        <option value={suscripcion.estado}>
+                            {suscripcion.estado.charAt(0).toUpperCase() +
+                                suscripcion.estado.slice(1)}{" "}
+                            (Estado actual)
+                        </option>
+                        {esVigente && (
+                            <option value="cancelada">
+                                Cancelar suscripción
+                            </option>
+                        )}
                     </select>
+                    <small
+                        style={{
+                            color: "#6b7280",
+                            display: "block",
+                            marginTop: "4px",
+                        }}
+                    >
+                        Los cambios entre Pendiente y Activa se gestionan
+                        automáticamente desde el módulo de Pagos.
+                    </small>
                     {errors.estado && (
                         <div style={{ color: "red", fontSize: "13px" }}>
                             {errors.estado}

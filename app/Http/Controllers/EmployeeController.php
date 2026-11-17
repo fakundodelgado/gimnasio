@@ -24,12 +24,12 @@ class EmployeeController extends Controller
 
         $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
 
-        $buscarTexto = trim($request->input('buscar_texto', ''));
-        $buscarNumero = trim($request->input('buscar_numero', ''));
+        $buscarTexto = trim((string)$request->input('buscar_texto', ''));
+        $buscarNumero = trim((string)$request->input('buscar_numero', ''));
         $orden = $request->input('orden', 'id');
         $papelera = $request->input('papelera', 'sin_eliminados');
         $direccion = $request->input('direccion', 'asc');
-        $tipo = $request->input('tipo', '');
+        $tipo = trim((string)$request->input('tipo', ''));
         $paginas = (int) $request->input('paginas', 5);
 
         $camposPermitidos = ['nombre', 'id', 'cuil', 'created_at'];

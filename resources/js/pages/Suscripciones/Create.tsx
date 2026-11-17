@@ -52,14 +52,14 @@ export default function Create({
         client_id: number | string;
         trainer_id?: number | string;
         plan_id: number | string;
-        precio: number | string;
         estado: string;
+        metodo_pago: string;
     }>({
         client_id: "",
         trainer_id: "",
         plan_id: "",
-        precio: "",
         estado: "activa",
+        metodo_pago: "efectivo",
     });
 
     const opcionesEntrenadores: SelectOption[] = entrenadores.map((tr) => {
@@ -83,7 +83,6 @@ export default function Create({
         sublabel: c.user?.email || undefined,
     }));
 
-    // Encuentro el plan seleccionado
     const planSeleccionado = planes.find((p) => p.id === Number(data.plan_id));
 
     const fechaFin = () => {
@@ -93,16 +92,13 @@ export default function Create({
 
         const fecha = new Date(inicio);
         fecha.setDate(fecha.getDate() + planSeleccionado.duracion);
-        // Para que tenga el mismo formato que el otro...
         return fecha.toISOString().split("T")[0];
     };
 
-    const precioPlan = () => {
-        if (!planSeleccionado) {
-            return "Seleccionar un plan";
-        }
-
-        return planSeleccionado.precio;
+    const montoInicial = () => {
+        if (!planSeleccionado) return null;
+        const precio = Number(planSeleccionado.precio);
+        return data.estado === "pendiente" ? precio / 2 : precio;
     };
 
     const handlePlanChange = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -112,7 +108,6 @@ export default function Create({
         setData((prev) => ({
             ...prev,
             plan_id: selectedPlanId,
-            precio: plan ? String(plan.precio) : "",
             trainer_id: plan?.incluye_entrenador ? prev.trainer_id : "",
         }));
     };
@@ -121,6 +116,8 @@ export default function Create({
         e.preventDefault();
         post("/suscripciones");
     };
+
+    const montoACobrar = montoInicial();
 
     return (
         <div
@@ -207,22 +204,26 @@ export default function Create({
                 </div>
 
                 <div>
-                    <label>Precio:</label>
-                    <p>{precioPlan()}</p>
+                    <label>Precio Total del Plan:</label>
+                    <p style={{ margin: "4px 0", fontWeight: "bold" }}>
+                        {planSeleccionado
+                            ? `$${Number(planSeleccionado.precio).toFixed(2)}`
+                            : "Seleccionar un plan"}
+                    </p>
                 </div>
 
                 <div>
                     <label>Fecha de Inicio:</label>
-                    <p>{inicio}</p>
+                    <p style={{ margin: "4px 0" }}>{inicio}</p>
                 </div>
 
                 <div>
                     <label>Fecha de Vencimiento:</label>
-                    <p>{fechaFin()}</p>
+                    <p style={{ margin: "4px 0" }}>{fechaFin()}</p>
                 </div>
 
                 <div>
-                    <label>Estado:</label>
+                    <label>Modalidad / Estado Inicial:</label>
                     <select
                         value={data.estado}
                         onChange={(e: ChangeEvent<HTMLSelectElement>) =>
@@ -234,10 +235,12 @@ export default function Create({
                             marginTop: "5px",
                         }}
                     >
-                        <option value="activa">Activa</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="vencida">Vencida</option>
-                        <option value="cancelada">Cancelada</option>
+                        <option value="activa">
+                            Activa (Pago completo 100%)
+                        </option>
+                        <option value="pendiente">
+                            Pendiente (Pago inicial 50%)
+                        </option>
                     </select>
                     {errors.estado && (
                         <div style={{ color: "red", fontSize: "13px" }}>
@@ -245,6 +248,46 @@ export default function Create({
                         </div>
                     )}
                 </div>
+
+                <div>
+                    <label>Método de Pago Inicial:</label>
+                    <select
+                        value={data.metodo_pago}
+                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                            setData("metodo_pago", e.target.value)
+                        }
+                        style={{
+                            width: "100%",
+                            padding: "8px",
+                            marginTop: "5px",
+                        }}
+                    >
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                    {errors.metodo_pago && (
+                        <div style={{ color: "red", fontSize: "13px" }}>
+                            {errors.metodo_pago}
+                        </div>
+                    )}
+                </div>
+
+                {montoACobrar !== null && (
+                    <div
+                        style={{
+                            padding: "10px",
+                            backgroundColor: "#ecfdf5",
+                            border: "1px solid #a7f3d0",
+                            borderRadius: "4px",
+                            color: "#065f46",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        Se registrará automáticamente un pago inicial de $
+                        {montoACobrar.toFixed(2)}
+                    </div>
+                )}
 
                 <div style={{ marginTop: "10px" }}>
                     <button

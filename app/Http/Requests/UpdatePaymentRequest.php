@@ -24,7 +24,8 @@ class UpdatePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'monto' => ['required', 'numeric', 'min:5000', 'max:100000'],
+            // Ahora monto se calcula solo
+            //'monto' => ['required', 'numeric', 'min:5000', 'max:100000'],
             'subscription_id' => ['required', 'exists:subscriptions,id'],
             'metodo_pago' => ['required', 'in:tarjeta,efectivo,transferencia']
         ];

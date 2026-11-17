@@ -24,7 +24,8 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'monto' => ['required', 'numeric', 'min:5000', 'max:100000'],
+            // Se calculara automaticamente dependiendo del pago pendiente existente
+            //'monto' => ['required', 'numeric', 'min:5000', 'max:100000'],
 
             /*
 

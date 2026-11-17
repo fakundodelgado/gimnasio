@@ -18,15 +18,15 @@ class IngresoController extends Controller
     {
 
         // Buscan por ID o Nombre
-        $cliente = trim($request->input('cliente', ''));
-        $empleado = trim($request->input('empleado', ''));
+        $cliente = trim((string)$request->input('cliente', ''));
+        $empleado = trim((string)$request->input('empleado', ''));
 
         $direccion = $request->input('direccion', 'desc');
         $paginas = (int) $request->input('paginas', 5);
 
         // Para filtrar entre dos fechas
-        $desde = trim($request->input('desde', ''));
-        $hasta = trim($request->input('hasta', ''));
+        $desde = trim((string)$request->input('desde', ''));
+        $hasta = trim((string)$request->input('hasta', ''));
 
         if (!in_array($direccion, ['asc', 'desc'], true)) {
             $direccion = 'desc';

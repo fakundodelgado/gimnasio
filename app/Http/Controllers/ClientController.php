@@ -24,13 +24,13 @@ class ClientController extends Controller
 
         $user = $request->user();
 
-        $buscarTexto = trim($request->input('buscar_texto', ''));
-        $buscarNumero = trim($request->input('buscar_numero', ''));
-        $buscarEntrenador = $request->input('buscar_entrenador', '');
+        $buscarTexto = trim((string) $request->input('buscar_texto', ''));
+        $buscarNumero = trim((string)$request->input('buscar_numero', ''));
+        $buscarEntrenador = trim((string) $request->input('buscar_entrenador', ''));
         $orden = $request->input('orden', 'id');
         $direccion = $request->input('direccion', 'asc');
         $papelera = $request->input('papelera', 'sin_eliminados');
-        $estado = $request->input('estado', '');
+        $estado = trim((string) $request->input('estado', ''));
         $paginas = (int) $request->input('paginas', 5);
 
         $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);

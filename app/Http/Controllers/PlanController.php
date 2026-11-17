@@ -22,14 +22,14 @@ class PlanController extends Controller
         // Entradas para los filtros
         $esAdmin = $request->user()->hasAnyRole(['admin', 'super']);
 
-        $buscar = trim($request->input('buscar', ''));
-        $incluyeEntrenador = $request->input('incluye_entrenador', '');
+        $buscar = trim((string) $request->input('buscar', ''));
+        $incluyeEntrenador = trim((string) $request->input('incluye_entrenador', ''));
         $orden = $request->input('orden', 'id');
         $paginas = (int) $request->input('paginas', 5);
         $papelera = $request->input('papelera', 'sin_eliminados');
         $direccion = $request->input('direccion', 'asc');
         // Si pusiera un valor por defecto evitaria que el usaurio pueda ver todos los planes en un principio
-        $duracion = $request->input('duracion', '');
+        $duracion = trim((string)$request->input('duracion', ''));
 
         $camposPermitidos = ['duracion', 'nombre', 'precio', 'id'];
 

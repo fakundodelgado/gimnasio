@@ -27,7 +27,7 @@ class StoreSubscriptionRequest extends FormRequest
         return [
             'client_id' => ['required', 'exists:clients,id'],
             'plan_id' => ['required', 'exists:plans,id'],
-            'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
+            // 'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
 
             /*
 
