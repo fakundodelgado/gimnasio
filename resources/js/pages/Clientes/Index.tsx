@@ -445,7 +445,33 @@ export default function Index({
                                         )}
                                     </td>
                                     <td>
-                                        {!cliente.deleted_at && (
+                                        {cliente.deleted_at ? (
+                                            /* Si está eliminado, mostramos el botón de Restaurar */
+                                            <button
+                                                onClick={() => {
+                                                    if (
+                                                        confirm(
+                                                            "¿Estás seguro de que deseas restaurar este cliente?",
+                                                        )
+                                                    ) {
+                                                        router.patch(
+                                                            `/clientes/${cliente.id}/restore`,
+                                                        );
+                                                    }
+                                                }}
+                                                style={{
+                                                    color: "green",
+                                                    fontWeight: "bold",
+                                                    cursor: "pointer",
+                                                    background: "none",
+                                                    border: "none",
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                Restaurar
+                                            </button>
+                                        ) : (
+                                            /* Si está activo, mostramos las acciones normales */
                                             <>
                                                 <Link
                                                     href={`/clientes/${cliente.id}`}
@@ -470,6 +496,9 @@ export default function Index({
                                                     style={{
                                                         color: "red",
                                                         cursor: "pointer",
+                                                        background: "none",
+                                                        border: "none",
+                                                        padding: 0,
                                                     }}
                                                 >
                                                     Eliminar

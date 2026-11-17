@@ -177,5 +177,10 @@ class PlanController extends Controller
         return redirect()->route('planes.index')->with('success', 'plan "eliminado" correctamente.');
     }
 
-    // !!! De ser necesario habria que incluir el restore
+    #[Middleware('permission:restaurar plan')]
+    public function restore(Plan $plan)
+    {
+        $plan->restore();
+        return redirect()->route('planes.index')->with('success', 'Plan restaurado correctamente.');
+    }
 }

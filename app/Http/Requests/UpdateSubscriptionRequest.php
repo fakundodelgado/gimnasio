@@ -31,11 +31,11 @@ class UpdateSubscriptionRequest extends FormRequest
         $suscripcion = $this->route('suscripcion');
 
         return [
-            'client_id' => ['required', 'exists:clients,id'],
-            'plan_id' => ['required', 'exists:plans,id'],
-            'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
-            'fecha_inicio' => ['required', 'date'],
-            'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            //'client_id' => ['required', 'exists:clients,id'],
+            //'plan_id' => ['required', 'exists:plans,id'],
+            //'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
+            //'fecha_inicio' => ['required', 'date'],
+            //'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
             'estado' => ['required', Rule::in([$suscripcion->estado, 'vencida', 'cancelada'])], // Si quiero actualizar otra cosa deberia permitir cual sea el estado inicial
             'trainer_id' => ['nullable', 'exists:trainers,id'],
         ];

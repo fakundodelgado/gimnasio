@@ -482,7 +482,33 @@ export default function Index({
                                     </td>
                                 )}
                                 <td>
-                                    {!pago.deleted_at ? (
+                                    {pago.deleted_at ? (
+                                        /* Si el pago está eliminado (anulado), mostramos el botón de Restaurar */
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    confirm(
+                                                        "¿Estás seguro de que deseas restaurar este pago?",
+                                                    )
+                                                ) {
+                                                    router.patch(
+                                                        `/pagos/${pago.id}/restore`,
+                                                    );
+                                                }
+                                            }}
+                                            style={{
+                                                color: "green",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Restaurar
+                                        </button>
+                                    ) : (
+                                        /* Si está activo, mostramos las acciones normales (Ver, Editar, Eliminar) */
                                         <>
                                             <Link
                                                 href={`/pagos/${pago.id}`}
@@ -490,40 +516,27 @@ export default function Index({
                                             >
                                                 Ver
                                             </Link>
-
                                             <Link
                                                 href={`/pagos/${pago.id}/edit`}
-                                                style={{
-                                                    marginRight: "8px",
-                                                }}
+                                                style={{ marginRight: "8px" }}
                                             >
                                                 Editar
                                             </Link>
-
-                                            {esAdmin && (
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(pago.id)
-                                                    }
-                                                    style={{
-                                                        color: "red",
-                                                        cursor: "pointer",
-                                                    }}
-                                                >
-                                                    Anular
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(pago.id)
+                                                }
+                                                style={{
+                                                    color: "red",
+                                                    cursor: "pointer",
+                                                    background: "none",
+                                                    border: "none",
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                Eliminar
+                                            </button>
                                         </>
-                                    ) : (
-                                        <span
-                                            style={{
-                                                color: "red",
-                                                fontSize: "12px",
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            ANULADO
-                                        </span>
                                     )}
                                 </td>
                             </tr>

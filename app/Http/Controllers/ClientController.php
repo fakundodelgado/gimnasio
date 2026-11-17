@@ -275,7 +275,19 @@ class ClientController extends Controller
         return redirect()->route('clientes.index')->with('success', 'Cliente "eliminado" correctamente.');
     }
 
-    // !!! Falta incluir la opción de restaurar un cliente...
+    #[Middleware('permission:restaurar cliente')]
+    public function restore(Client $cliente, UserService $userService)
+    {
+        DB::transaction(function () use ($cliente, $userService) {
 
+            $cliente->restore();
 
+            $user = $cliente->user()->withTrashed()->first();
+            if ($user) {
+                $userService->restoreUser($user);
+            }
+        });
+
+        return redirect()->route('clientes.index')->with('success', 'Cliente restaurado correctamente.');
+    }
 }

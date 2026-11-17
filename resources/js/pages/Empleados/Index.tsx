@@ -357,7 +357,33 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                         : "-"}
                                 </td>
                                 <td>
-                                    {!emp.deleted_at && (
+                                    {emp.deleted_at ? (
+                                        /* Si el empleado está eliminado, mostramos el botón de Restaurar */
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    confirm(
+                                                        "¿Estás seguro de que deseas restaurar este empleado?",
+                                                    )
+                                                ) {
+                                                    router.patch(
+                                                        `/empleados/${emp.id}/restore`,
+                                                    );
+                                                }
+                                            }}
+                                            style={{
+                                                color: "green",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Restaurar
+                                        </button>
+                                    ) : (
+                                        /* Si está activo, mostramos las acciones normales */
                                         <>
                                             <Link
                                                 href={`/empleados/${emp.id}`}
@@ -378,6 +404,9 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                                 style={{
                                                     color: "red",
                                                     cursor: "pointer",
+                                                    background: "none",
+                                                    border: "none",
+                                                    padding: 0,
                                                 }}
                                             >
                                                 Eliminar

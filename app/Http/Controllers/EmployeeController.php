@@ -218,4 +218,19 @@ class EmployeeController extends Controller
 
         return redirect()->route('empleados.index')->with('success', 'Empleado eliminado correctamente.');
     }
+
+    #[Middleware('permission:restaurar empleado')]
+    public function restore(Employee $empleado, UserService $userService, EmployeeService $employeeService)
+    {
+        DB::transaction(function () use ($empleado, $userService, $employeeService) {
+            $employeeService->restoreEmployee($empleado);
+
+            $user = $empleado->user()->withTrashed()->first();
+            if ($user) {
+                $userService->restoreUser($user);
+            }
+        });
+
+        return redirect()->route('empleados.index')->with('success', 'Empleado restaurado correctamente.');
+    }
 }

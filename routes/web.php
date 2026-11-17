@@ -72,18 +72,36 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('planes', PlanController::class)
         ->parameters(['planes' => 'plan']);
+    Route::patch('/planes/{plan}/restore', [PlanController::class, 'restore'])
+        ->name('planes.restore')
+        ->withTrashed();
 
     Route::resource('clientes', ClientController::class);
+    Route::patch('/clientes/{cliente}/restore', [ClientController::class, 'restore'])
+        ->name('clientes.restore')
+        ->withTrashed();
 
     Route::resource('empleados', EmployeeController::class);
+    Route::patch('/empleados/{empleado}/restore', [EmployeeController::class, 'restore'])
+        ->name('empleados.restore')
+        ->withTrashed();
 
     Route::resource('entrenadores', TrainerController::class)
         ->parameters(['entrenadores' => 'entrenador']);
+    Route::patch('/entrenadores/{entrenador}/restore', [TrainerController::class, 'restore'])
+        ->name('entrenadores.restore')
+        ->withTrashed();
 
     Route::resource('suscripciones', SubscriptionController::class)
         ->parameters(['suscripciones' => 'suscripcion']);
+    Route::patch('/suscripciones/{suscripcion}/restore', [SubscriptionController::class, 'restore'])
+        ->name('suscripciones.restore')
+        ->withTrashed();
 
     Route::resource('pagos', PaymentController::class);
+    Route::patch('/pagos/{pago}/restore', [PaymentController::class, 'restore'])
+        ->name('pagos.restore')
+        ->withTrashed();
     //->parameters(['pagos' => 'pago']);
     Route::resource('ingresos', IngresoController::class)->only(['index', 'create', 'store']);
 });

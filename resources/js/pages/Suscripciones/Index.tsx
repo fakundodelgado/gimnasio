@@ -391,7 +391,33 @@ export default function Index({
                                     )}
                                 </td>
                                 <td>
-                                    {!sub.deleted_at && (
+                                    {sub.deleted_at ? (
+                                        /* Si la suscripción está eliminada, mostramos el botón de Restaurar */
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    confirm(
+                                                        "¿Estás seguro de que deseas restaurar esta suscripción?",
+                                                    )
+                                                ) {
+                                                    router.patch(
+                                                        `/suscripciones/${sub.id}/restore`,
+                                                    );
+                                                }
+                                            }}
+                                            style={{
+                                                color: "green",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Restaurar
+                                        </button>
+                                    ) : (
+                                        /* Si está activa, mostramos las acciones normales */
                                         <>
                                             <Link
                                                 href={`/suscripciones/${sub.id}`}
@@ -399,29 +425,26 @@ export default function Index({
                                             >
                                                 Ver
                                             </Link>
-                                            {!esCliente && (
-                                                <>
-                                                    <Link
-                                                        href={`/suscripciones/${sub.id}/edit`}
-                                                        style={{
-                                                            marginRight: "8px",
-                                                        }}
-                                                    >
-                                                        Editar
-                                                    </Link>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDelete(sub.id)
-                                                        }
-                                                        style={{
-                                                            color: "red",
-                                                            cursor: "pointer",
-                                                        }}
-                                                    >
-                                                        Eliminar
-                                                    </button>
-                                                </>
-                                            )}
+                                            <Link
+                                                href={`/suscripciones/${sub.id}/edit`}
+                                                style={{ marginRight: "8px" }}
+                                            >
+                                                Editar
+                                            </Link>
+                                            <button
+                                                onClick={() =>
+                                                    handleDelete(sub.id)
+                                                }
+                                                style={{
+                                                    color: "red",
+                                                    cursor: "pointer",
+                                                    background: "none",
+                                                    border: "none",
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                Eliminar
+                                            </button>
                                         </>
                                     )}
                                 </td>

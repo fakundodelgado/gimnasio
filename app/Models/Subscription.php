@@ -25,7 +25,7 @@ class Subscription extends Model
 
     public function plan()
     {
-        return $this->belongsTo(Plan::class);
+        return $this->belongsTo(Plan::class)->withTrashed();
     }
 
     public function payments()
@@ -36,5 +36,28 @@ class Subscription extends Model
     protected function serializeDate(\DateTimeInterface $date): string
     {
         return $date->format('Y-m-d');
+    }
+
+    public function recalcularEstado(): void
+    {
+        // Para probar
+        if (!in_array($this->estado, ['activa', 'pendiente', 'cancelada'], true)) {
+            return;
+        }
+
+        $totalPagado = round((float) $this->payments()->sum('monto'), 2);
+        $precioSuscripcion = round((float) $this->precio, 2);
+
+        if ($totalPagado <= 0) {
+            $this->estado = 'cancelada';
+            $this->fecha_fin = \Carbon\Carbon::today();
+            $this->save();
+        } elseif ($totalPagado >= $precioSuscripcion) {
+            $this->estado = 'activa';
+            $this->save();
+        } else {
+            $this->estado = 'pendiente';
+            $this->save();
+        }
     }
 }

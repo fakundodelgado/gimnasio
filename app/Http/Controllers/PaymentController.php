@@ -185,10 +185,10 @@ class PaymentController extends Controller
         DB::transaction(function () use ($pago, $datos, $subActual, $nuevaSuscripcion) {
             $pago->update($datos);
 
-            $this->recalcularEstadoSuscripcion($nuevaSuscripcion);
+            $nuevaSuscripcion->recalcularEstado();
 
             if ($subActual) {
-                $this->recalcularEstadoSuscripcion($subActual);
+                $subActual->recalcularEstado();
             }
         });
 
@@ -209,11 +209,38 @@ class PaymentController extends Controller
             $pago->delete();
 
             if ($suscripcion) {
-                $this->recalcularEstadoSuscripcion($suscripcion);
+                $suscripcion->recalcularEstado();
             }
         });
 
         return redirect()->route('pagos.index')->with('success', 'Pago eliminado correctamente');
+    }
+
+    #[Middleware('permission:restaurar pago')]
+    public function restore(Payment $pago)
+    {
+
+        $suscripcion = $pago->subscription()->withTrashed()->first();
+
+        if ($suscripcion) {
+            $totalPagadoActual = (float) $suscripcion->payments()->sum('monto');
+            $precioSuscripcion = (float) $suscripcion->precio;
+
+            if (($totalPagadoActual + (float) $pago->monto) > $precioSuscripcion) {
+                return back()->with('error', 'No se puede restaurar el pago: la suscripción ya se encuentra totalmente pagada.');
+            }
+        }
+
+        DB::transaction(function () use ($pago) {
+            $pago->restore();
+
+            $suscripcion = $pago->subscription()->with('plan')->first();
+            if ($suscripcion) {
+                $suscripcion->recalcularEstado();
+            }
+        });
+
+        return redirect()->route('pagos.index')->with('success', 'Pago restaurado correctamente.');
     }
 
     // !!! Faltaria la opcion de restaurar si el modelo de negocios asi lo permitiera
@@ -367,30 +394,5 @@ class PaymentController extends Controller
         ];
 
         return [$query, $filtros, $esAdmin, $esCliente];
-    }
-
-    private function recalcularEstadoSuscripcion(Subscription $suscripcion): void
-    {
-        if (!in_array($suscripcion->estado, ['activa', 'pendiente'], true)) {
-            return;
-        }
-
-        $totalPagado = round((float) $suscripcion->payments()->sum('monto'), 2);
-        $precioPlan = round((float) $suscripcion->precio, 2);
-
-        if ($totalPagado <= 0) {
-            $suscripcion->update([
-                'estado'    => 'cancelada',
-                'fecha_fin' => Carbon::today(),
-            ]);
-        } elseif ($totalPagado >= $precioPlan) {
-            $suscripcion->update([
-                'estado' => 'activa',
-            ]);
-        } else {
-            $suscripcion->update([
-                'estado' => 'pendiente',
-            ]);
-        }
     }
 }

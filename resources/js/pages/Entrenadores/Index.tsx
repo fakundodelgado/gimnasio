@@ -301,7 +301,33 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                                 <td>{tr.limite_alumnos}</td>
                                 <td>{tr.employee?.user?.email || "-"}</td>
                                 <td>
-                                    {!tr.deleted_at && (
+                                    {tr.deleted_at ? (
+                                        /* Si el entrenador está eliminado, mostramos el botón de Restaurar */
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    confirm(
+                                                        "¿Estás seguro de que deseas restaurar este entrenador?",
+                                                    )
+                                                ) {
+                                                    router.patch(
+                                                        `/entrenadores/${tr.id}/restore`,
+                                                    );
+                                                }
+                                            }}
+                                            style={{
+                                                color: "green",
+                                                fontWeight: "bold",
+                                                cursor: "pointer",
+                                                background: "none",
+                                                border: "none",
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Restaurar
+                                        </button>
+                                    ) : (
+                                        /* Si está activo, mostramos las acciones normales */
                                         <>
                                             <Link
                                                 href={`/entrenadores/${tr.id}`}
@@ -322,6 +348,9 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                                                 style={{
                                                     color: "red",
                                                     cursor: "pointer",
+                                                    background: "none",
+                                                    border: "none",
+                                                    padding: 0,
                                                 }}
                                             >
                                                 Eliminar

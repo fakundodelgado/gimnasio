@@ -149,6 +149,7 @@ class TrainerController extends Controller
 
             $employee->trainer()->create([
                 'especialidad' => $request->especialidad,
+                'limite_alumnos' => $request->limite_alumnos,
             ]);
         });
 
@@ -220,5 +221,25 @@ class TrainerController extends Controller
         });
 
         return redirect()->route('entrenadores.index')->with('success', 'Entrenador eliminado correctamente.');
+    }
+
+    #[Middleware('permission:restaurar entrenador')]
+    public function restore(Trainer $entrenador, UserService $userService, EmployeeService $employeeService)
+    {
+        DB::transaction(function () use ($entrenador, $userService, $employeeService) {
+            $entrenador->restore();
+
+            $empleado = $entrenador->employee()->withTrashed()->first();
+            if ($empleado) {
+                $employeeService->restoreEmployee($empleado);
+
+                $user = $empleado->user()->withTrashed()->first();
+                if ($user) {
+                    $userService->restoreUser($user);
+                }
+            }
+        });
+
+        return redirect()->route('entrenadores.index')->with('success', 'Entrenador restaurado correctamente.');
     }
 }

@@ -365,6 +365,9 @@ class SubscriptionController extends Controller
                 $cliente->update(['trainer_id' => null]);
             }
 
+            // Borramos también los pagos asociados a esta suscripción errónea
+            $suscripcion->payments()->delete();
+
             $suscripcion->update([
                 'estado'    => 'cancelada',
                 'fecha_fin' => Carbon::today(),
@@ -376,5 +379,20 @@ class SubscriptionController extends Controller
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion eliminada correctamente.');
     }
 
-    // !!! Restore...
+    #[Middleware('permission:restaurar suscripcion')] // o el permiso que uses
+    public function restore(Subscription $suscripcion)
+    {
+        DB::transaction(function () use ($suscripcion) {
+            $suscripcion->restore();
+            // Restauramos los pagos que se habían borrado con ella
+            $suscripcion->payments()->withTrashed()->restore();
+
+            $suscripcion->load('payments');
+
+            // Recalculamos si debe volver a quedar activa, pendiente o vencida según la fecha actual
+            $suscripcion->recalcularEstado();
+        });
+
+        return redirect()->route('suscripciones.index')->with('success', 'Suscripción restaurada correctamente.');
+    }
 }
