@@ -69,7 +69,7 @@ class PaymentController extends Controller
         $suscripcion = Subscription::with(['client.user', 'plan' => fn($q) => $q->withTrashed()])->findOrFail($datos['subscription_id']);
 
         $totalPagadoPrevio = (float) Payment::where('subscription_id', $suscripcion->id)->sum('monto');
-        $saldoPendiente = round((float) $suscripcion->plan->precio - $totalPagadoPrevio, 2);
+        $saldoPendiente = round((float) $suscripcion->precio - $totalPagadoPrevio, 2);
 
         // Este es un caso medio fino, pero puede evitar problemas por pagos medio simultaneos al mismo cliente
         if ($suscripcion->estado !== 'pendiente') {
@@ -164,7 +164,7 @@ class PaymentController extends Controller
         }
 
         $subActual = $pago->subscription()->with(['plan' => fn($q) => $q->withTrashed()])->first();
-        if ($subActual && round((float) $pago->monto, 2) >= round((float) $subActual->plan->precio, 2)) {
+        if ($subActual && round((float) $pago->monto, 2) >= round((float) $subActual->precio, 2)) {
             return back()->withErrors([
                 'subscription_id' => 'Un pago por el total del plan no puede reasignarse a otra suscripción.'
             ]);
@@ -180,7 +180,7 @@ class PaymentController extends Controller
         }
 
         $pagadoEnNueva = (float) Payment::where('subscription_id', $nuevaSuscripcion->id)->sum('monto');
-        $datos['monto'] = round((float) $nuevaSuscripcion->plan->precio - $pagadoEnNueva, 2);
+        $datos['monto'] = round((float) $nuevaSuscripcion->precio - $pagadoEnNueva, 2);
 
         DB::transaction(function () use ($pago, $datos, $subActual, $nuevaSuscripcion) {
             $pago->update($datos);
@@ -376,7 +376,7 @@ class PaymentController extends Controller
         }
 
         $totalPagado = round((float) $suscripcion->payments()->sum('monto'), 2);
-        $precioPlan = round((float) $suscripcion->plan->precio, 2);
+        $precioPlan = round((float) $suscripcion->precio, 2);
 
         if ($totalPagado <= 0) {
             $suscripcion->update([

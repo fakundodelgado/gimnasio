@@ -228,11 +228,11 @@ class SubscriptionController extends Controller
 
             //$suscripcion->update(['estado' => 'vencida', 'fecha_fin' => Carbon::today()]);
 
-            $datos['precio'] = $datos['estado'] === 'activa' ? $plan->precio : round($plan->precio / 2, 2);
+            $datos['precio'] = $plan->precio;
 
             $nueva = Subscription::create($datos);
 
-            $monto = $nueva->precio;
+            $monto = $datos['estado'] === 'activa' ? $plan->precio : round($plan->precio / 2, 2);
 
             if (auth()->user()->hasAnyRole(['admin', 'super'])) {
                 $empleado = Employee::where('cuil', '27389998889')->firstOrFail();
@@ -303,6 +303,12 @@ class SubscriptionController extends Controller
 
         $datos = $request->validated();
 
+        if ((int) $datos['plan_id'] !== (int) $suscripcion->plan_id && $suscripcion->payments()->exists()) {
+            return back()->withErrors([
+                'plan_id' => 'No se puede cambiar el plan de una suscripción que ya tiene pagos registrados. Creá una nueva suscripción para reemplazarla.'
+            ]);
+        }
+
         $plan = Plan::findOrFail($datos['plan_id']);
 
         if (!$plan->incluye_entrenador) {
@@ -311,7 +317,7 @@ class SubscriptionController extends Controller
 
         if (!empty($datos['trainer_id'])) {
 
-            if ((int) $datos['trainer_id'] !== (int) $suscripcion->trainer_id) {
+            if ((int) $datos['trainer_id'] !== (int) $suscripcion->client?->trainer_id) {
                 $entrenador = Trainer::withCount(['clients' => function ($q) {
                     $q->whereHas('subscriptions', fn($sub) => $sub->where('estado', 'activa'));
                 }])->findOrFail($datos['trainer_id']);
