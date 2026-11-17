@@ -6,6 +6,8 @@ use App\Models\Subscription;
 use App\Models\Plan;
 use App\Models\Client;
 use App\Models\Trainer;
+use App\Models\Employee;
+use App\Models\Payment;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Http\Requests\UpdateSubscriptionRequest;
 use Inertia\Inertia;
@@ -211,14 +213,37 @@ class SubscriptionController extends Controller
 
         DB::transaction(function () use ($datos, $plan) {
 
-            Subscription::create($datos);
+            $cliente = Client::findOrFail($datos['client_id']);
 
-            $client = Client::findOrFail($datos['client_id']);
+            $ultima = $cliente->ultimaSuscripcion()->first();
+
+            // Compruebo el estado de la ultima suscripcion, solo puede haber una activa o pendiente, dependiendo del estado inicial puedo cambiarla o no
+            if ($ultima && in_array($ultima->estado, ['activa', 'pendiente'], true)) {
+                if ($ultima->fecha_fin < Carbon::today()) {
+                    $ultima->update(['estado' => 'vencida']);
+                } else {
+                    $ultima->update(['estado' => 'cancelada', 'fecha_fin' => Carbon::today()]);
+                }
+            }
+
+            //$suscripcion->update(['estado' => 'vencida', 'fecha_fin' => Carbon::today()]);
+
+            $nueva = Subscription::create($datos);
+
+            $monto = $nueva->estado === 'activa' ? $plan->precio : round($plan->precio / 2, 2);
+
+            if (auth()->user()->hasAnyRole(['admin', 'super'])) {
+                $empleado = Employee::where('cuil', '27389998889')->firstOrFail();
+            } else {
+                $empleado = auth()->user()->employee()->first();
+            }
+
+            Payment::create(['employee_id' => $empleado->id, 'monto' => $monto, 'fecha_pago' => Carbon::today(), 'subscription_id' => $nueva->id, 'metodo_pago' => $datos['metodo_pago']]);
 
             if (!$plan->incluye_entrenador) {
-                $client->update(['trainer_id' => null]);
+                $cliente->update(['trainer_id' => null]);
             } else {
-                $client->update(['trainer_id' => $datos['trainer_id']]);
+                $cliente->update(['trainer_id' => $datos['trainer_id']]);
             }
         });
 

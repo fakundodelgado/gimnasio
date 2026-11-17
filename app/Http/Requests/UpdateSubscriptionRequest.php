@@ -4,7 +4,9 @@ namespace App\Http\Requests;
 
 //use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Override;
+
 
 // En este caso en particular son identicos y solo lo replico para continuar con la estructura que ya vengo usando para los otros modelos, pero esta clase en 
 // particular es totalmente prescindible, o en su defecto, la otra.
@@ -26,13 +28,15 @@ class UpdateSubscriptionRequest extends FormRequest
     public function rules(): array
     {
 
+        $suscripcion = $this->route('suscripcion');
+
         return [
             'client_id' => ['required', 'exists:clients,id'],
             'plan_id' => ['required', 'exists:plans,id'],
             'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
             'fecha_inicio' => ['required', 'date'],
             'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
-            'estado' => ['required', 'string', 'in:activa,vencida,pendiente,cancelada'],
+            'estado' => ['required', Rule::in([$suscripcion->estado, 'vencida', 'cancelada'])], // Si quiero actualizar otra cosa deberia permitir cual sea el estado inicial
             'trainer_id' => ['nullable', 'exists:trainers,id'],
         ];
     }

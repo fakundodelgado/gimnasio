@@ -39,8 +39,9 @@ class StoreSubscriptionRequest extends FormRequest
 
             */
 
-            'estado' => ['required', 'string', 'in:activa,vencida,pendiente,cancelada'],
+            'estado' => ['required', 'string', 'in:activa,pendiente'],
             'trainer_id' => ['nullable', 'exists:trainers,id'], // Para que tambien me llegue por el request ahora que el formulario acepta esa opcion
+            'metodo_pago' => ['required', 'in:tarjeta,efectivo,transferencia']
         ];
     }
 
