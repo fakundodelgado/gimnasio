@@ -490,6 +490,16 @@ export default function Index({
                                             >
                                                 Ver
                                             </Link>
+
+                                            <Link
+                                                href={`/pagos/${pago.id}/edit`}
+                                                style={{
+                                                    marginRight: "8px",
+                                                }}
+                                            >
+                                                Editar
+                                            </Link>
+
                                             {esAdmin && (
                                                 <button
                                                     onClick={() =>
