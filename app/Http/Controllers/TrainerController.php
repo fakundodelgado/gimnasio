@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Trainer;
+use App\Models\Client;
 use App\Http\Requests\StoreTrainerRequest;
 use App\Http\Requests\UpdateTrainerRequest;
 use App\Services\EmployeeService;
@@ -163,8 +164,9 @@ class TrainerController extends Controller
     public function show(Trainer $entrenador)
     {
         $entrenador->load('employee.user');
+        $alumnos = Client::where('trainer_id', $entrenador->id)->count();
 
-        return Inertia::render('Entrenadores/Show', ['entrenador' => $entrenador]);
+        return Inertia::render('Entrenadores/Show', ['entrenador' => $entrenador, 'alumnos' => $alumnos]);
     }
 
     /**

@@ -259,6 +259,8 @@ class SubscriptionController extends Controller
     public function show(Subscription $suscripcion)
     {
 
+        // Podria pasarle info sobre los pagos asociados a la suscripción, pero por ahora no, centrarse en lo elemental.
+
         $suscripcion->load(['client.user', 'plan']);
 
         return Inertia::render('Suscripciones/Show', ['suscripcion' => $suscripcion]);

@@ -139,7 +139,13 @@ class PlanController extends Controller
     #[Middleware('permission:mostrar plan')]
     public function show(Plan $plan)
     {
-        $plan->loadCount('subscriptions');
+
+        // Cuenta solo las suscripciones activas
+        $plan->loadCount([
+            'subscriptions' => function ($query) {
+                $query->where('estado', 'activa');
+            },
+        ]);
 
         return Inertia::render('Planes/Show', ['plan' => $plan]);
     }
