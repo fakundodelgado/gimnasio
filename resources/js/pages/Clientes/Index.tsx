@@ -1,6 +1,16 @@
 import React, { useState, FormEvent, useMemo } from "react";
-import { Link, router } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import { SelectBuscador } from "@/components/SelectBuscador";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import {
+    Plus,
+    ChevronDown,
+    Search,
+    RotateCcw,
+    ArrowUp,
+    ArrowDown,
+} from "lucide-react";
 
 interface User {
     id: number;
@@ -159,8 +169,12 @@ export default function Index({
     };
 
     const indicadorOrden = (campo: string) => {
-        if (orden !== campo) return "";
-        return direccion === "asc" ? " ↑" : " ↓";
+        if (orden !== campo) return null;
+        return direccion === "asc" ? (
+            <ArrowUp className="w-3.5 h-3.5 inline-block ml-1 text-indigo-600" />
+        ) : (
+            <ArrowDown className="w-3.5 h-3.5 inline-block ml-1 text-indigo-600" />
+        );
     };
 
     const handleDelete = (id: number) => {
@@ -169,411 +183,523 @@ export default function Index({
         }
     };
 
+    const getEstadoSuscripcionClass = (estadoValor: string) => {
+        switch (estadoValor.toLowerCase()) {
+            case "activa":
+                return "text-emerald-700 font-semibold";
+            case "vencida":
+                return "text-red-600 font-semibold";
+            case "pendiente":
+                return "text-amber-700 font-semibold";
+            default:
+                return "text-gray-700 font-medium";
+        }
+    };
+
+    const inputBaseClass =
+        "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+
+    const selectBaseClass =
+        "w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+
     return (
-        <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-            <h2>Listado de Clientes</h2>
+        <>
+            <Head title="Listado de Clientes" />
 
-            <Link
-                href="/clientes/create"
-                style={{
-                    display: "inline-block",
-                    marginBottom: "15px",
-                    padding: "8px 12px",
-                    background: "#2563eb",
-                    color: "#fff",
-                    borderRadius: "4px",
-                    textDecoration: "none",
-                }}
-            >
-                + Nuevo Cliente
-            </Link>
+            <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
+                <div className="max-w-8xl mx-auto">
+                    {/* Encabezado */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Listado de Clientes
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Gestioná los socios registrados, su estado de
+                                suscripción y entrenadores asignados.
+                            </p>
+                        </div>
 
-            {/* Formulario de Búsqueda y Filtros */}
-            <form
-                onSubmit={aplicarFiltros}
-                style={{
-                    display: "flex",
-                    gap: "10px",
-                    marginBottom: "20px",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                }}
-            >
-                <input
-                    type="text"
-                    value={buscarTexto}
-                    onChange={(e) => setBuscarTexto(e.target.value)}
-                    placeholder="Buscar por nombre o email..."
-                    style={{ padding: "6px 10px", minWidth: "220px" }}
-                />
-
-                <input
-                    type="text"
-                    value={buscarNumero}
-                    onChange={(e) => setBuscarNumero(e.target.value)}
-                    placeholder="Buscar por ID o teléfono..."
-                    style={{ padding: "6px 10px", minWidth: "180px" }}
-                />
-
-                {/* Filtro por estado de última suscripción */}
-                <select
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
-                    style={{ padding: "6px 10px" }}
-                >
-                    <option value="">Todos los estados</option>
-                    <option value="activa">Suscripción Activa</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="vencida">Vencida</option>
-                    <option value="cancelada">Cancelada</option>
-                    <option value="sin_suscripcion">Sin suscripción</option>
-                </select>
-
-                {/* SelectBuscador de Entrenadores (solo visible si no es rol trainer) */}
-                {entrenadores.length > 0 && (
-                    <div style={{ minWidth: "240px" }}>
-                        <SelectBuscador
-                            options={opcionesEntrenadores}
-                            value={buscarEntrenador}
-                            onChange={(val) => setBuscarEntrenador(String(val))}
-                            placeholder="Filtrar por entrenador..."
-                        />
+                        <Button
+                            asChild
+                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            <Link href="/clientes/create">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Cliente
+                            </Link>
+                        </Button>
                     </div>
-                )}
 
-                {/* Filtro de Papelera exclusivo para Admin / Super Admin */}
-                {esAdmin && (
-                    <select
-                        value={papelera}
-                        onChange={(e) => setPapelera(e.target.value)}
-                        style={{
-                            padding: "6px 10px",
-                            background: "#fffbeb",
-                            borderColor: "#f59e0b",
-                        }}
-                    >
-                        <option value="sin_eliminados">
-                            Activos únicamente
-                        </option>
-                        <option value="solo_eliminados">Solo eliminados</option>
-                        <option value="con_eliminados">
-                            Todos (Activos y Eliminados)
-                        </option>
-                    </select>
-                )}
+                    {/* Filtros */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white mb-6">
+                        <CardContent className="p-4 sm:p-5 bg-white">
+                            <form
+                                onSubmit={aplicarFiltros}
+                                className="space-y-4"
+                            >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Nombre o Email
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={buscarTexto}
+                                            onChange={(e) =>
+                                                setBuscarTexto(e.target.value)
+                                            }
+                                            placeholder="Buscar por nombre o email..."
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
 
-                <label style={{ fontSize: "14px" }}>
-                    Mostrar:
-                    <select
-                        value={paginas}
-                        onChange={(e) => setPaginas(Number(e.target.value))}
-                        style={{ marginLeft: "5px", padding: "6px" }}
-                    >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                    </select>
-                </label>
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            N° Socio o Teléfono
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={buscarNumero}
+                                            onChange={(e) =>
+                                                setBuscarNumero(e.target.value)
+                                            }
+                                            placeholder="Buscar por ID o teléfono..."
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
 
-                <button
-                    type="submit"
-                    style={{
-                        padding: "6px 12px",
-                        cursor: "pointer",
-                        background: "#2563eb",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                    }}
-                >
-                    Buscar
-                </button>
-
-                <button
-                    type="button"
-                    onClick={limpiarFiltros}
-                    style={{
-                        padding: "6px 12px",
-                        cursor: "pointer",
-                        background: "#e5e7eb",
-                        border: "none",
-                        borderRadius: "4px",
-                    }}
-                >
-                    Limpiar
-                </button>
-            </form>
-
-            {/* Tabla */}
-            <table
-                border={1}
-                cellPadding="10"
-                cellSpacing="0"
-                style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    textAlign: "left",
-                }}
-            >
-                <thead>
-                    <tr style={{ background: "#f3f4f6" }}>
-                        <th
-                            onClick={() => ordenarPor("id")}
-                            style={{ cursor: "pointer" }}
-                        >
-                            N° Socio (ID){indicadorOrden("id")}
-                        </th>
-                        <th
-                            onClick={() => ordenarPor("nombre")}
-                            style={{ cursor: "pointer" }}
-                        >
-                            Nombre{indicadorOrden("nombre")}
-                        </th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th
-                            onClick={() => ordenarPor("created_at")}
-                            style={{ cursor: "pointer" }}
-                        >
-                            Fecha Alta{indicadorOrden("created_at")}
-                        </th>
-                        <th>Última Suscripción</th>
-                        <th>Entrenador</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {clientes.data.length > 0 ? (
-                        clientes.data.map((cliente: Client) => {
-                            const ultimoPlan = cliente.ultima_suscripcion?.plan;
-                            const entrenador = cliente.trainer?.employee?.user;
-
-                            return (
-                                <tr
-                                    key={cliente.id}
-                                    style={{
-                                        background: cliente.deleted_at
-                                            ? "#fef2f2"
-                                            : "transparent",
-                                    }}
-                                >
-                                    <td>#{cliente.id}</td>
-                                    <td>
-                                        {cliente.user?.name ||
-                                            `Cliente #${cliente.id}`}
-                                        {cliente.deleted_at && (
-                                            <span
-                                                style={{
-                                                    color: "red",
-                                                    fontSize: "11px",
-                                                    display: "block",
-                                                }}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Estado de Suscripción
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={estado}
+                                                onChange={(e) =>
+                                                    setEstado(e.target.value)
+                                                }
+                                                className={selectBaseClass}
                                             >
-                                                (ELIMINADO)
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td>{cliente.user?.email || "-"}</td>
-                                    <td>{cliente.telefono || "-"}</td>
-                                    <td>
-                                        {cliente.created_at
-                                            ? new Date(
-                                                  cliente.created_at,
-                                              ).toLocaleDateString("es-AR")
-                                            : "-"}
-                                    </td>
-                                    <td>
-                                        {cliente.ultima_suscripcion ? (
-                                            <div>
-                                                <span
-                                                    className={
-                                                        cliente
-                                                            .ultima_suscripcion
-                                                            .estado === "activa"
-                                                            ? "text-green-600 font-semibold"
-                                                            : cliente
-                                                                    .ultima_suscripcion
-                                                                    .estado ===
-                                                                "vencida"
-                                                              ? "text-red-600 font-semibold"
-                                                              : "text-gray-600"
-                                                    }
-                                                >
-                                                    {
-                                                        cliente
-                                                            .ultima_suscripcion
-                                                            .plan?.nombre
-                                                    }
-                                                </span>
-                                                <span className="text-xs text-gray-500 block capitalize">
-                                                    (
-                                                    {
-                                                        cliente
-                                                            .ultima_suscripcion
-                                                            .estado
-                                                    }
+                                                <option value="">
+                                                    Todos los estados
+                                                </option>
+                                                <option value="activa">
+                                                    Suscripción Activa
+                                                </option>
+                                                <option value="pendiente">
+                                                    Pendiente
+                                                </option>
+                                                <option value="vencida">
+                                                    Vencida
+                                                </option>
+                                                <option value="cancelada">
+                                                    Cancelada
+                                                </option>
+                                                <option value="sin_suscripcion">
+                                                    Sin suscripción
+                                                </option>
+                                            </select>
+                                            <ChevronDown className="w-4 h-4 text-gray-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                        </div>
+                                    </div>
+
+                                    {entrenadores.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Entrenador
+                                            </label>
+                                            <SelectBuscador
+                                                options={opcionesEntrenadores}
+                                                value={buscarEntrenador}
+                                                onChange={(val) =>
+                                                    setBuscarEntrenador(
+                                                        String(val),
                                                     )
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400 italic">
-                                                Sin plan
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {entrenador ? (
-                                            <span
-                                                style={{
-                                                    fontWeight: "bold",
-                                                    color: "#2563eb",
-                                                }}
-                                            >
-                                                {entrenador.name}
-                                            </span>
-                                        ) : (
-                                            <span
-                                                style={{
-                                                    color: "#9ca3af",
-                                                    fontStyle: "italic",
-                                                }}
-                                            >
-                                                {ultimoPlan?.incluye_entrenador
-                                                    ? "Pendiente"
-                                                    : "No incluye"}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {cliente.deleted_at ? (
-                                            /* Si está eliminado, mostramos el botón de Restaurar */
-                                            <button
-                                                onClick={() => {
-                                                    if (
-                                                        confirm(
-                                                            "¿Estás seguro de que deseas restaurar este cliente?",
-                                                        )
-                                                    ) {
-                                                        router.patch(
-                                                            `/clientes/${cliente.id}/restore`,
-                                                        );
-                                                    }
-                                                }}
-                                                style={{
-                                                    color: "green",
-                                                    fontWeight: "bold",
-                                                    cursor: "pointer",
-                                                    background: "none",
-                                                    border: "none",
-                                                    padding: 0,
-                                                }}
-                                            >
-                                                Restaurar
-                                            </button>
-                                        ) : (
-                                            /* Si está activo, mostramos las acciones normales */
-                                            <>
-                                                <Link
-                                                    href={`/clientes/${cliente.id}`}
-                                                    style={{
-                                                        marginRight: "8px",
-                                                    }}
-                                                >
-                                                    Ver
-                                                </Link>
-                                                <Link
-                                                    href={`/clientes/${cliente.id}/edit`}
-                                                    style={{
-                                                        marginRight: "8px",
-                                                    }}
-                                                >
-                                                    Editar
-                                                </Link>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(cliente.id)
-                                                    }
-                                                    style={{
-                                                        color: "red",
-                                                        cursor: "pointer",
-                                                        background: "none",
-                                                        border: "none",
-                                                        padding: 0,
-                                                    }}
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={8} style={{ textAlign: "center" }}>
-                                No hay clientes registrados.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                                                }
+                                                placeholder="Filtrar por entrenador..."
+                                            />
+                                        </div>
+                                    )}
 
-            {/* Paginador */}
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: "15px",
-                }}
-            >
-                <p style={{ fontSize: "14px" }}>
-                    Mostrando {clientes.from ?? 0} a {clientes.to ?? 0} de{" "}
-                    {clientes.total} resultados
-                </p>
-                <div>
-                    {clientes.prev_page_url && (
-                        <button
-                            onClick={() =>
-                                router.get(
-                                    clientes.prev_page_url!,
-                                    {},
-                                    { preserveState: true },
-                                )
-                            }
-                            style={{
-                                marginRight: "10px",
-                                padding: "6px 12px",
-                                cursor: "pointer",
-                            }}
-                        >
-                            Anterior
-                        </button>
-                    )}
-                    <span>
-                        Página {clientes.current_page} de {clientes.last_page}
-                    </span>
-                    {clientes.next_page_url && (
-                        <button
-                            onClick={() =>
-                                router.get(
-                                    clientes.next_page_url!,
-                                    {},
-                                    { preserveState: true },
-                                )
-                            }
-                            style={{
-                                marginLeft: "10px",
-                                padding: "6px 12px",
-                                cursor: "pointer",
-                            }}
-                        >
-                            Siguiente
-                        </button>
-                    )}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Mostrar
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={paginas}
+                                                onChange={(e) =>
+                                                    setPaginas(
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                className={selectBaseClass}
+                                            >
+                                                <option value={5}>
+                                                    5 por página
+                                                </option>
+                                                <option value={10}>
+                                                    10 por página
+                                                </option>
+                                                <option value={20}>
+                                                    20 por página
+                                                </option>
+                                            </select>
+                                            <ChevronDown className="w-4 h-4 text-gray-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                        </div>
+                                    </div>
+
+                                    {esAdmin && (
+                                        <div className="space-y-1.5">
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Papelera
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={papelera}
+                                                    onChange={(e) =>
+                                                        setPapelera(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    className={`${selectBaseClass} bg-amber-50/60 border-amber-300 text-amber-950 focus:border-amber-500 focus:ring-amber-500`}
+                                                >
+                                                    <option value="sin_eliminados">
+                                                        Activos únicamente
+                                                    </option>
+                                                    <option value="solo_eliminados">
+                                                        Solo eliminados
+                                                    </option>
+                                                    <option value="con_eliminados">
+                                                        Todos (Activos y
+                                                        Eliminados)
+                                                    </option>
+                                                </select>
+                                                <ChevronDown className="w-4 h-4 text-amber-700 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row justify-end gap-2.5 pt-2 border-t border-gray-100">
+                                    <Button
+                                        type="submit"
+                                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    >
+                                        <Search className="w-4 h-4 mr-2" />
+                                        Buscar
+                                    </Button>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={limpiarFiltros}
+                                        className="w-full sm:w-auto bg-white"
+                                    >
+                                        <RotateCcw className="w-4 h-4 mr-2" />
+                                        Limpiar
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    {/* Tabla */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <CardContent className="p-0 bg-white">
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                            <th
+                                                onClick={() => ordenarPor("id")}
+                                                className="px-6 py-3.5 text-center cursor-pointer select-none hover:text-gray-900 whitespace-nowrap"
+                                            >
+                                                <span className="inline-flex items-center justify-center">
+                                                    N° Socio (ID)
+                                                    {indicadorOrden("id")}
+                                                </span>
+                                            </th>
+                                            <th
+                                                onClick={() =>
+                                                    ordenarPor("nombre")
+                                                }
+                                                className="px-6 py-3.5 text-center cursor-pointer select-none hover:text-gray-900 whitespace-nowrap"
+                                            >
+                                                <span className="inline-flex items-center justify-center">
+                                                    Nombre
+                                                    {indicadorOrden("nombre")}
+                                                </span>
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Email
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Teléfono
+                                            </th>
+                                            <th
+                                                onClick={() =>
+                                                    ordenarPor("created_at")
+                                                }
+                                                className="px-6 py-3.5 text-center cursor-pointer select-none hover:text-gray-900 whitespace-nowrap"
+                                            >
+                                                <span className="inline-flex items-center justify-center">
+                                                    Fecha Alta
+                                                    {indicadorOrden(
+                                                        "created_at",
+                                                    )}
+                                                </span>
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Última Suscripción
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Entrenador
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Acciones
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                        {clientes.data.length > 0 ? (
+                                            clientes.data.map(
+                                                (cliente: Client) => {
+                                                    const ultimoPlan =
+                                                        cliente
+                                                            .ultima_suscripcion
+                                                            ?.plan;
+                                                    const entrenador =
+                                                        cliente.trainer
+                                                            ?.employee?.user;
+
+                                                    return (
+                                                        <tr
+                                                            key={cliente.id}
+                                                            className={
+                                                                cliente.deleted_at
+                                                                    ? "bg-red-50/60 hover:bg-red-50"
+                                                                    : "hover:bg-gray-50/70"
+                                                            }
+                                                        >
+                                                            <td className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
+                                                                #{cliente.id}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                <div className="flex flex-col items-center gap-0.5">
+                                                                    <span className="font-medium text-gray-900">
+                                                                        {cliente
+                                                                            .user
+                                                                            ?.name ||
+                                                                            `Cliente #${cliente.id}`}
+                                                                    </span>
+                                                                    {cliente.deleted_at && (
+                                                                        <span className="text-xs font-semibold text-red-600">
+                                                                            (ELIMINADO)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {cliente.user
+                                                                    ?.email ||
+                                                                    "—"}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {cliente.telefono ||
+                                                                    "—"}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {cliente.created_at
+                                                                    ? new Date(
+                                                                          cliente.created_at,
+                                                                      ).toLocaleDateString(
+                                                                          "es-AR",
+                                                                      )
+                                                                    : "—"}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {cliente.ultima_suscripcion ? (
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span
+                                                                            className={getEstadoSuscripcionClass(
+                                                                                cliente
+                                                                                    .ultima_suscripcion
+                                                                                    .estado,
+                                                                            )}
+                                                                        >
+                                                                            {
+                                                                                cliente
+                                                                                    .ultima_suscripcion
+                                                                                    .plan
+                                                                                    ?.nombre
+                                                                            }
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500 capitalize">
+                                                                            (
+                                                                            {
+                                                                                cliente
+                                                                                    .ultima_suscripcion
+                                                                                    .estado
+                                                                            }
+                                                                            )
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-gray-400 italic">
+                                                                        Sin plan
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {entrenador ? (
+                                                                    <span className="font-semibold text-indigo-600">
+                                                                        {
+                                                                            entrenador.name
+                                                                        }
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-gray-400 italic">
+                                                                        {ultimoPlan?.incluye_entrenador
+                                                                            ? "Pendiente"
+                                                                            : "No incluye"}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                {cliente.deleted_at ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (
+                                                                                confirm(
+                                                                                    "¿Estás seguro de que deseas restaurar este cliente?",
+                                                                                )
+                                                                            ) {
+                                                                                router.patch(
+                                                                                    `/clientes/${cliente.id}/restore`,
+                                                                                );
+                                                                            }
+                                                                        }}
+                                                                        className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                                                                    >
+                                                                        Restaurar
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="inline-flex items-center justify-center gap-3">
+                                                                        <Link
+                                                                            href={`/clientes/${cliente.id}`}
+                                                                            className="font-medium text-gray-700 hover:text-indigo-600"
+                                                                        >
+                                                                            Ver
+                                                                        </Link>
+                                                                        <Link
+                                                                            href={`/clientes/${cliente.id}/edit`}
+                                                                            className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        >
+                                                                            Editar
+                                                                        </Link>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleDelete(
+                                                                                    cliente.id,
+                                                                                )
+                                                                            }
+                                                                            className="font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        >
+                                                                            Eliminar
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                },
+                                            )
+                                        ) : (
+                                            <tr>
+                                                <td
+                                                    colSpan={8}
+                                                    className="px-6 py-10 text-center text-sm text-gray-500"
+                                                >
+                                                    No hay clientes registrados.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+
+                        <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <p className="text-sm text-gray-600">
+                                Mostrando{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {clientes.from ?? 0}
+                                </span>{" "}
+                                a{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {clientes.to ?? 0}
+                                </span>{" "}
+                                de{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {clientes.total}
+                                </span>{" "}
+                                resultados
+                            </p>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
+                                {clientes.prev_page_url && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="bg-white"
+                                        onClick={() =>
+                                            router.get(
+                                                clientes.prev_page_url!,
+                                                {},
+                                                { preserveState: true },
+                                            )
+                                        }
+                                    >
+                                        Anterior
+                                    </Button>
+                                )}
+
+                                <span className="text-sm text-gray-700 whitespace-nowrap">
+                                    Página{" "}
+                                    <span className="font-semibold text-gray-900">
+                                        {clientes.current_page}
+                                    </span>{" "}
+                                    de{" "}
+                                    <span className="font-semibold text-gray-900">
+                                        {clientes.last_page}
+                                    </span>
+                                </span>
+
+                                {clientes.next_page_url && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="bg-white"
+                                        onClick={() =>
+                                            router.get(
+                                                clientes.next_page_url!,
+                                                {},
+                                                { preserveState: true },
+                                            )
+                                        }
+                                    >
+                                        Siguiente
+                                    </Button>
+                                )}
+                            </div>
+                        </CardFooter>
+                    </Card>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

@@ -1,5 +1,15 @@
 import React, { useState, FormEvent } from "react";
 import { Head, Link, router } from "@inertiajs/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import {
+    Plus,
+    ChevronDown,
+    Search,
+    RotateCcw,
+    ArrowUp,
+    ArrowDown,
+} from "lucide-react";
 
 interface User {
     name: string;
@@ -104,232 +114,332 @@ export default function Index({ ingresos, filtros }: IndexProps) {
         enviarConsulta({ direccion: nuevaDireccion });
     };
 
+    const inputBaseClass =
+        "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+
+    const selectBaseClass =
+        "w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+
     return (
         <>
             <Head title="Historial de Accesos" />
 
-            <div className="max-w-6xl mx-auto p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800">
-                            Historial de Accesos
-                        </h1>
-                        <p className="text-sm text-gray-500">
-                            Registro histórico de marcaciones e ingresos al
-                            gimnasio
-                        </p>
-                    </div>
+            <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
+                <div className="max-w-6xl mx-auto">
+                    {/* Encabezado */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Historial de Accesos
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Registro histórico de marcaciones e ingresos al
+                                gimnasio.
+                            </p>
+                        </div>
 
-                    <Link
-                        href="/ingresos/create"
-                        className="px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition"
-                    >
-                        + Terminal de Marcación
-                    </Link>
-                </div>
-
-                {/* Formulario de Búsqueda y Filtros */}
-                <form
-                    onSubmit={aplicarFiltros}
-                    className="bg-white p-4 rounded-lg shadow mb-6 flex flex-wrap gap-3 items-end"
-                >
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1">
-                            Cliente / Socio
-                        </label>
-                        <input
-                            type="text"
-                            value={cliente}
-                            onChange={(e) => setCliente(e.target.value)}
-                            placeholder="Nombre o ID de cliente..."
-                            className="border rounded px-3 py-1.5 text-sm min-w-[200px]"
-                        />
-                    </div>
-
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1">
-                            Registrado por
-                        </label>
-                        <input
-                            type="text"
-                            value={empleado}
-                            onChange={(e) => setEmpleado(e.target.value)}
-                            placeholder="Nombre o ID de empleado..."
-                            className="border rounded px-3 py-1.5 text-sm min-w-[200px]"
-                        />
-                    </div>
-
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1">
-                            Desde
-                        </label>
-                        <input
-                            type="date"
-                            value={desde}
-                            onChange={(e) => setDesde(e.target.value)}
-                            className="border rounded px-3 py-1.5 text-sm"
-                        />
-                    </div>
-
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1">
-                            Hasta
-                        </label>
-                        <input
-                            type="date"
-                            value={hasta}
-                            onChange={(e) => setHasta(e.target.value)}
-                            className="border rounded px-3 py-1.5 text-sm"
-                        />
-                    </div>
-
-                    <div className="flex flex-col">
-                        <label className="text-xs font-semibold text-gray-600 mb-1">
-                            Mostrar
-                        </label>
-                        <select
-                            value={paginas}
-                            onChange={(e) => setPaginas(Number(e.target.value))}
-                            className="border rounded px-3 py-1.5 text-sm"
+                        <Button
+                            asChild
+                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                        </select>
+                            <Link href="/ingresos/create">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Terminal de Marcación
+                            </Link>
+                        </Button>
                     </div>
 
-                    <div className="flex gap-2">
-                        <button
-                            type="submit"
-                            className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition cursor-pointer"
-                        >
-                            Filtrar
-                        </button>
+                    {/* Filtros */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white mb-6">
+                        <CardContent className="p-4 sm:p-5 bg-white">
+                            <form
+                                onSubmit={aplicarFiltros}
+                                className="space-y-4"
+                            >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Cliente / Socio
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={cliente}
+                                            onChange={(e) =>
+                                                setCliente(e.target.value)
+                                            }
+                                            placeholder="Nombre o ID de cliente..."
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
 
-                        <button
-                            type="button"
-                            onClick={limpiarFiltros}
-                            className="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition cursor-pointer"
-                        >
-                            Limpiar
-                        </button>
-                    </div>
-                </form>
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Registrado por
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={empleado}
+                                            onChange={(e) =>
+                                                setEmpleado(e.target.value)
+                                            }
+                                            placeholder="Nombre o ID de empleado..."
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
 
-                {/* Tabla */}
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100 border-b text-sm font-semibold text-gray-700">
-                                <th className="p-3"># ID</th>
-                                <th className="p-3">Cliente / Socio</th>
-                                <th
-                                    onClick={alternarOrdenFecha}
-                                    className="p-3 cursor-pointer select-none hover:bg-gray-200 transition"
-                                >
-                                    Fecha y Hora{" "}
-                                    {direccion === "asc" ? "↑" : "↓"}
-                                </th>
-                                <th className="p-3">Registrado Por</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {ingresos.data && ingresos.data.length > 0 ? (
-                                ingresos.data.map((ingreso) => {
-                                    const fechaMostrar =
-                                        ingreso.fecha_hora ||
-                                        ingreso.created_at;
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Mostrar
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                value={paginas}
+                                                onChange={(e) =>
+                                                    setPaginas(
+                                                        Number(e.target.value),
+                                                    )
+                                                }
+                                                className={selectBaseClass}
+                                            >
+                                                <option value={5}>
+                                                    5 por página
+                                                </option>
+                                                <option value={10}>
+                                                    10 por página
+                                                </option>
+                                                <option value={25}>
+                                                    25 por página
+                                                </option>
+                                            </select>
+                                            <ChevronDown className="w-4 h-4 text-gray-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                        </div>
+                                    </div>
 
-                                    return (
-                                        <tr
-                                            key={ingreso.id}
-                                            className="border-b hover:bg-gray-50 text-sm"
-                                        >
-                                            <td className="p-3 font-semibold text-gray-700">
-                                                #{ingreso.id}
-                                            </td>
-                                            <td className="p-3 font-medium text-gray-900">
-                                                {ingreso.client?.user?.name ||
-                                                    `Cliente #${ingreso.client_id}`}
-                                                {ingreso.client?.deleted_at && (
-                                                    <span className="ml-2 text-xs text-red-600 font-normal">
-                                                        (Baja)
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="p-3 text-gray-600">
-                                                {new Date(
-                                                    fechaMostrar,
-                                                ).toLocaleString("es-AR")}
-                                            </td>
-                                            <td className="p-3 text-gray-600">
-                                                {ingreso.employee?.user?.name ||
-                                                    "Totem / Sistema"}
-                                                {ingreso.employee
-                                                    ?.deleted_at && (
-                                                    <span className="ml-2 text-xs text-red-600">
-                                                        (Baja)
-                                                    </span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan={4}
-                                        className="p-6 text-center text-gray-500"
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Desde
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={desde}
+                                            onChange={(e) =>
+                                                setDesde(e.target.value)
+                                            }
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Hasta
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={hasta}
+                                            onChange={(e) =>
+                                                setHasta(e.target.value)
+                                            }
+                                            className={inputBaseClass}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row justify-end gap-2.5 pt-2 border-t border-gray-100">
+                                    <Button
+                                        type="submit"
+                                        className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
                                     >
-                                        No hay registros de ingresos con los
-                                        filtros actuales.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                        <Search className="w-4 h-4 mr-2" />
+                                        Filtrar
+                                    </Button>
 
-                {/* Paginador */}
-                <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
-                    <p>
-                        Mostrando {ingresos.from ?? 0} a {ingresos.to ?? 0} de{" "}
-                        {ingresos.total} resultados
-                    </p>
-                    <div className="flex items-center gap-2">
-                        {ingresos.prev_page_url && (
-                            <button
-                                onClick={() =>
-                                    router.get(
-                                        ingresos.prev_page_url!,
-                                        {},
-                                        { preserveState: true },
-                                    )
-                                }
-                                className="px-3 py-1.5 bg-white border rounded hover:bg-gray-100 cursor-pointer"
-                            >
-                                Anterior
-                            </button>
-                        )}
-                        <span>
-                            Página {ingresos.current_page} de{" "}
-                            {ingresos.last_page}
-                        </span>
-                        {ingresos.next_page_url && (
-                            <button
-                                onClick={() =>
-                                    router.get(
-                                        ingresos.next_page_url!,
-                                        {},
-                                        { preserveState: true },
-                                    )
-                                }
-                                className="px-3 py-1.5 bg-white border rounded hover:bg-gray-100 cursor-pointer"
-                            >
-                                Siguiente
-                            </button>
-                        )}
-                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={limpiarFiltros}
+                                        className="w-full sm:w-auto bg-white"
+                                    >
+                                        <RotateCcw className="w-4 h-4 mr-2" />
+                                        Limpiar
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    {/* Tabla */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <CardContent className="p-0 bg-white">
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50/80 border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                # ID
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Cliente / Socio
+                                            </th>
+                                            <th
+                                                onClick={alternarOrdenFecha}
+                                                className="px-6 py-3.5 text-center cursor-pointer select-none hover:text-gray-900 whitespace-nowrap"
+                                            >
+                                                <span className="inline-flex items-center justify-center">
+                                                    Fecha y Hora
+                                                    {direccion === "asc" ? (
+                                                        <ArrowUp className="w-3.5 h-3.5 inline-block ml-1 text-indigo-600" />
+                                                    ) : (
+                                                        <ArrowDown className="w-3.5 h-3.5 inline-block ml-1 text-indigo-600" />
+                                                    )}
+                                                </span>
+                                            </th>
+                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                Registrado Por
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                        {ingresos.data &&
+                                        ingresos.data.length > 0 ? (
+                                            ingresos.data.map((ingreso) => {
+                                                const fechaMostrar =
+                                                    ingreso.fecha_hora ||
+                                                    ingreso.created_at;
+
+                                                return (
+                                                    <tr
+                                                        key={ingreso.id}
+                                                        className="hover:bg-gray-50/70"
+                                                    >
+                                                        <td className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
+                                                            #{ingreso.id}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                            <div className="inline-flex items-center justify-center gap-1.5">
+                                                                <span className="font-medium text-gray-900">
+                                                                    {ingreso
+                                                                        .client
+                                                                        ?.user
+                                                                        ?.name ||
+                                                                        `Cliente #${ingreso.client_id}`}
+                                                                </span>
+                                                                {ingreso.client
+                                                                    ?.deleted_at && (
+                                                                    <span className="text-xs font-semibold text-red-600">
+                                                                        (Baja)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                            {new Date(
+                                                                fechaMostrar,
+                                                            ).toLocaleString(
+                                                                "es-AR",
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                            <div className="inline-flex items-center justify-center gap-1.5">
+                                                                <span>
+                                                                    {ingreso
+                                                                        .employee
+                                                                        ?.user
+                                                                        ?.name ||
+                                                                        "Totem / Sistema"}
+                                                                </span>
+                                                                {ingreso
+                                                                    .employee
+                                                                    ?.deleted_at && (
+                                                                    <span className="text-xs font-semibold text-red-600">
+                                                                        (Baja)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                            <tr>
+                                                <td
+                                                    colSpan={4}
+                                                    className="px-6 py-10 text-center text-sm text-gray-500"
+                                                >
+                                                    No hay registros de ingresos
+                                                    con los filtros actuales.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+
+                        <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <p className="text-sm text-gray-600">
+                                Mostrando{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {ingresos.from ?? 0}
+                                </span>{" "}
+                                a{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {ingresos.to ?? 0}
+                                </span>{" "}
+                                de{" "}
+                                <span className="font-semibold text-gray-900">
+                                    {ingresos.total}
+                                </span>{" "}
+                                resultados
+                            </p>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
+                                {ingresos.prev_page_url && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="bg-white"
+                                        onClick={() =>
+                                            router.get(
+                                                ingresos.prev_page_url!,
+                                                {},
+                                                { preserveState: true },
+                                            )
+                                        }
+                                    >
+                                        Anterior
+                                    </Button>
+                                )}
+
+                                <span className="text-sm text-gray-700 whitespace-nowrap">
+                                    Página{" "}
+                                    <span className="font-semibold text-gray-900">
+                                        {ingresos.current_page}
+                                    </span>{" "}
+                                    de{" "}
+                                    <span className="font-semibold text-gray-900">
+                                        {ingresos.last_page}
+                                    </span>
+                                </span>
+
+                                {ingresos.next_page_url && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="bg-white"
+                                        onClick={() =>
+                                            router.get(
+                                                ingresos.next_page_url!,
+                                                {},
+                                                { preserveState: true },
+                                            )
+                                        }
+                                    >
+                                        Siguiente
+                                    </Button>
+                                )}
+                            </div>
+                        </CardFooter>
+                    </Card>
                 </div>
             </div>
         </>
