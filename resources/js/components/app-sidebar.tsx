@@ -1,6 +1,6 @@
 import { Link } from "@inertiajs/react";
 import { BookOpen, FolderGit2, LayoutGrid } from "lucide-react";
-import AppLogo from "@/components/app-logo";
+import { AppLogo } from "@/components/app-logo";
 import { NavFooter } from "@/components/nav-footer";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -15,28 +15,76 @@ import {
 } from "@/components/ui/sidebar";
 import { dashboard } from "@/routes";
 import type { NavItem } from "@/types";
+import {
+    Briefcase,
+    CalendarCheck,
+    ClipboardCheck,
+    ClipboardList,
+    CreditCard,
+    Dumbbell,
+    LayoutDashboard,
+    LogIn,
+    Users,
+} from "lucide-react";
 //import { useAuth } from '@/hooks/use-auth';
 
 const mainNavItems: NavItem[] = [
     {
         title: "Dashboard",
         href: dashboard(),
-        icon: LayoutGrid,
+        icon: LayoutDashboard,
+    },
+
+    {
+        title: "Clientes",
+        href: "/clientes",
+        icon: Users,
+    },
+
+    {
+        title: "Empleados",
+        href: "/empleados",
+        icon: Briefcase,
+    },
+
+    {
+        title: "Entrenadores",
+        href: "/entrenadores",
+        icon: Dumbbell,
+    },
+
+    {
+        title: "Pagos",
+        href: "/pagos",
+        icon: CreditCard,
+    },
+
+    {
+        title: "Planes",
+        href: "/planes",
+        icon: ClipboardList,
     },
 
     {
         title: "Registrar Ingreso",
         href: "/ingresos/create",
-        icon: LayoutGrid,
+        icon: LogIn,
     },
 
     {
         title: "Listar Ingresos",
         href: "/ingresos",
-        icon: LayoutGrid,
+        icon: ClipboardCheck,
+    },
+
+    {
+        title: "Suscripciones",
+        href: "/suscripciones",
+        icon: CalendarCheck,
     },
 ];
 
+/*
 const footerNavItems: NavItem[] = [
     {
         title: "Repository",
@@ -49,15 +97,20 @@ const footerNavItems: NavItem[] = [
         icon: BookOpen,
     },
 ];
+*/
 
 export function AppSidebar() {
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+            <SidebarHeader className="py-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="h-auto! py-2 hover:bg-transparent active:bg-transparent"
+                        >
+                            <Link href="/dashboard">
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -70,7 +123,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
