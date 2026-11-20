@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 
 export interface SelectOption {
     id: number | string;
@@ -92,18 +93,18 @@ export function SelectBuscador({
                         setBusqueda(e.target.value);
                         if (!abierto) setAbierto(true);
                     }}
-                    className={`w-full border p-2 pr-8 rounded text-sm outline-none transition focus:border-blue-500 bg-white ${
+                    className={`w-full rounded-md border bg-white px-3 py-2 pr-8 text-sm text-gray-900 shadow-sm outline-none transition focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 ${
                         error ? "border-red-500" : "border-gray-300"
                     }`}
                 />
 
-                <button
-                    type="button"
-                    onClick={() => setAbierto(!abierto)}
-                    className="absolute right-2 top-2.5 text-gray-400 text-xs pointer-events-none"
-                >
-                    {abierto ? "▲" : "▼"}
-                </button>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+                    <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                            abierto ? "rotate-180" : ""
+                        }`}
+                    />
+                </span>
             </div>
 
             {/* Desplegable Flotante */}
