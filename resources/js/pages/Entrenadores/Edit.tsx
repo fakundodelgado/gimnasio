@@ -1,23 +1,32 @@
 import React from "react";
 import { Head, Link, useForm } from "@inertiajs/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
-interface Props {
-    entrenador: {
-        id: number;
-        especialidad: string;
-        employee: {
-            cuil: string;
-            telefono: string;
-            user: {
-                name: string;
-                email: string;
-            };
-        };
-        limite_alumnos: number;
-    };
+interface User {
+    name: string;
+    email: string;
 }
 
-export default function Edit({ entrenador }: Props) {
+interface Employee {
+    cuil: string;
+    telefono: string;
+    user: User;
+}
+
+interface Trainer {
+    id: number;
+    especialidad: string;
+    employee: Employee;
+    limite_alumnos: number;
+}
+
+interface EditProps {
+    entrenador: Trainer;
+}
+
+export default function Edit({ entrenador }: EditProps) {
     const { data, setData, put, processing, errors } = useForm({
         name: entrenador.employee?.user?.name || "",
         email: entrenador.employee?.user?.email || "",
@@ -33,189 +42,260 @@ export default function Edit({ entrenador }: Props) {
         put(`/entrenadores/${entrenador.id}`);
     };
 
+    const nombreEntrenador =
+        entrenador.employee?.user?.name || `Entrenador #${entrenador.id}`;
+
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <Head title="Editar Entrenador" />
+        <>
+            <Head title={`Editar Entrenador: ${nombreEntrenador}`} />
 
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">
-                    Editar Entrenador
-                </h1>
-                <Link
-                    href="/entrenadores"
-                    className="text-gray-600 hover:text-gray-800"
-                >
-                    &larr; Volver
-                </Link>
-            </div>
-
-            <form
-                onSubmit={handleSubmit}
-                className="bg-white shadow rounded-lg p-6 space-y-4"
-            >
-                <h2 className="text-lg font-semibold border-b pb-2 text-gray-700">
-                    Datos de Usuario
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Nombre Completo
-                        </label>
-                        <input
-                            type="text"
-                            value={data.name}
-                            onChange={(e) => setData("name", e.target.value)}
-                            className="mt-1 w-full border rounded-md p-2"
-                        />
-                        {errors.name && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.name}
+            <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
+                <div className="max-w-3xl mx-auto">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Editar Entrenador
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Modificá los datos de acceso, contacto o cupo de{" "}
+                                <span className="font-medium text-gray-700">
+                                    {nombreEntrenador}
+                                </span>
+                                .
                             </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Correo Electrónico
-                        </label>
-                        <input
-                            type="email"
-                            value={data.email}
-                            onChange={(e) => setData("email", e.target.value)}
-                            className="mt-1 w-full border rounded-md p-2"
-                        />
-                        {errors.email && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.email}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Contraseña{" "}
-                            <span className="text-xs text-gray-400">
-                                (dejar en blanco para conservar)
-                            </span>
-                        </label>
-                        <input
-                            type="password"
-                            value={data.password}
-                            onChange={(e) =>
-                                setData("password", e.target.value)
-                            }
-                            className="mt-1 w-full border rounded-md p-2"
-                        />
-                        {errors.password && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.password}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <h2 className="text-lg font-semibold border-b pb-2 pt-4 text-gray-700">
-                    Datos del Empleado
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            CUIL
-                        </label>
-                        <input
-                            type="text"
-                            value={data.cuil}
-                            onChange={(e) => setData("cuil", e.target.value)}
-                            className="mt-1 w-full border rounded-md p-2"
-                        />
-                        {errors.cuil && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.cuil}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Teléfono
-                        </label>
-                        <input
-                            type="text"
-                            value={data.telefono}
-                            onChange={(e) =>
-                                setData("telefono", e.target.value)
-                            }
-                            className="mt-1 w-full border rounded-md p-2"
-                        />
-                        {errors.telefono && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.telefono}
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                <h2 className="text-lg font-semibold border-b pb-2 pt-4 text-gray-700">
-                    Datos del Entrenador
-                </h2>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Especialidad
-                    </label>
-                    <input
-                        type="text"
-                        value={data.especialidad}
-                        onChange={(e) =>
-                            setData("especialidad", e.target.value)
-                        }
-                        className="mt-1 w-full border rounded-md p-2"
-                    />
-                    {errors.especialidad && (
-                        <p className="text-red-500 text-xs mt-1">
-                            {errors.especialidad}
-                        </p>
-                    )}
-                </div>
-
-                <div>
-                    <label
-                        htmlFor="limite_alumnos"
-                        className="block text-sm font-medium text-gray-700"
-                    >
-                        Límite de Alumnos (10 a 30)
-                    </label>
-                    <input
-                        type="number"
-                        id="limite_alumnos"
-                        name="limite_alumnos"
-                        min="10"
-                        max="30"
-                        value={data.limite_alumnos}
-                        onChange={(e) =>
-                            setData("limite_alumnos", e.target.value)
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        required
-                    />
-                    {errors.limite_alumnos && (
-                        <div className="text-red-600 text-sm mt-1">
-                            {errors.limite_alumnos}
                         </div>
-                    )}
-                </div>
 
-                <div className="pt-4 flex justify-end">
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                        {processing
-                            ? "Actualizando..."
-                            : "Actualizar Entrenador"}
-                    </button>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="w-full sm:w-auto shrink-0 bg-white"
+                        >
+                            <Link href="/entrenadores">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Volver al listado
+                            </Link>
+                        </Button>
+                    </div>
+
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <form onSubmit={handleSubmit}>
+                            <CardContent className="p-6 space-y-6 bg-white">
+                                <div className="space-y-4">
+                                    <h3 className="text-base font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                                        Datos de Usuario
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                Nombre Completo
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.name}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "name",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ej. Carlos Gómez"
+                                            />
+                                            {errors.name && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.name}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                Correo Electrónico
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={data.email}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "email",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="carlos.gomez@email.com"
+                                            />
+                                            {errors.email && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.email}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                Contraseña (Opcional)
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={data.password}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "password",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ingrese nueva contraseña..."
+                                            />
+                                            {errors.password && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.password}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-2">
+                                    <h3 className="text-base font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                                        Datos del Empleado
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                CUIL (11 dígitos)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.cuil}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "cuil",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ej. 20345678901"
+                                            />
+                                            {errors.cuil && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.cuil}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                Teléfono de Contacto
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.telefono}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "telefono",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ej. 3874123456"
+                                            />
+                                            {errors.telefono && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.telefono}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-2">
+                                    <h3 className="text-base font-semibold text-gray-900 border-b border-gray-100 pb-2">
+                                        Datos del Entrenador
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="block text-base font-medium text-gray-700">
+                                                Especialidad
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={data.especialidad}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "especialidad",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ej. Musculación y Fuerza"
+                                            />
+                                            {errors.especialidad && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.especialidad}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label
+                                                htmlFor="limite_alumnos"
+                                                className="block text-base font-medium text-gray-700"
+                                            >
+                                                Límite de Alumnos (10 a 30)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                id="limite_alumnos"
+                                                name="limite_alumnos"
+                                                min="10"
+                                                max="30"
+                                                value={data.limite_alumnos}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "limite_alumnos",
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                placeholder="Ej. 20"
+                                                required
+                                            />
+                                            {errors.limite_alumnos && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.limite_alumnos}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+
+                            <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
+                                <Button
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    type="submit"
+                                    disabled={processing}
+                                >
+                                    {processing
+                                        ? "Actualizando..."
+                                        : "Actualizar Entrenador"}
+                                </Button>
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-white"
+                                    variant="outline"
+                                >
+                                    <Link href="/entrenadores">Cancelar</Link>
+                                </Button>
+                            </CardFooter>
+                        </form>
+                    </Card>
                 </div>
-            </form>
-        </div>
+            </div>
+        </>
     );
 }

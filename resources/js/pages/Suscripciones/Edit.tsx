@@ -1,6 +1,9 @@
 import React, { FormEvent, ChangeEvent } from "react";
-import { useForm, Link } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
 import { SelectBuscador, SelectOption } from "@/components/SelectBuscador";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 
 interface User {
     id: number;
@@ -48,7 +51,7 @@ interface Subscription {
     plan?: Plan;
 }
 
-interface Props {
+interface EditProps {
     suscripcion: Subscription;
     clientes: Client[];
     planes: Plan[];
@@ -60,7 +63,7 @@ export default function Edit({
     clientes,
     planes,
     entrenadores,
-}: Props) {
+}: EditProps) {
     const { data, setData, put, processing, errors } = useForm<{
         trainer_id?: number | string;
         estado: string;
@@ -100,183 +103,196 @@ export default function Edit({
 
     const hoy = new Date().toISOString().split("T")[0];
 
+    const seCancelaraHoy =
+        data.estado === "cancelada" && suscripcion.estado !== "cancelada";
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         put(`/suscripciones/${suscripcion.id}`);
     };
 
-    const readOnlyStyle: React.CSSProperties = {
-        width: "100%",
-        padding: "8px",
-        backgroundColor: "#f3f4f6",
-        border: "1px solid #d1d5db",
-        borderRadius: "4px",
-        color: "#4b5563",
-        cursor: "not-allowed",
-        marginTop: "5px",
-    };
-
     return (
-        <div
-            style={{
-                padding: "20px",
-                maxWidth: "600px",
-                fontFamily: "sans-serif",
-            }}
-        >
-            <h2>Editar Suscripción #{suscripcion?.id}</h2>
+        <>
+            <Head title={`Editar Suscripción #${suscripcion?.id}`} />
 
-            <form
-                onSubmit={handleSubmit}
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "15px",
-                }}
-            >
-                {/* Cliente (Solo Lectura) */}
-                <div>
-                    <label>Cliente:</label>
-                    <input
-                        type="text"
-                        disabled
-                        readOnly
-                        style={readOnlyStyle}
-                        value={
-                            clienteActual
-                                ? `#${clienteActual.id} - ${clienteActual.user?.name || "Sin nombre"}`
-                                : `#${suscripcion.client_id}`
-                        }
-                    />
-                </div>
-
-                {/* Plan (Solo Lectura) */}
-                <div>
-                    <label>Plan Contratado:</label>
-                    <input
-                        type="text"
-                        disabled
-                        readOnly
-                        style={readOnlyStyle}
-                        value={
-                            planActual
-                                ? `${planActual.nombre} ($${planActual.precio})`
-                                : `Plan #${suscripcion.plan_id}`
-                        }
-                    />
-                </div>
-
-                {/* Entrenador (Editable solo si el plan lo incluye y no está cancelando) */}
-                <div>
-                    <label>Entrenador:</label>
-                    {planActual?.incluye_entrenador ? (
-                        <div className="mb-4">
-                            <SelectBuscador
-                                label="Entrenador Asignado"
-                                options={opcionesEntrenadores}
-                                value={data.trainer_id}
-                                onChange={(id) => setData("trainer_id", id)}
-                                placeholder="Buscar por CUIL, nombre o especialidad..."
-                                error={errors.trainer_id}
-                            />
+            <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
+                <div className="max-w-3xl mx-auto">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Editar Suscripción #{suscripcion?.id}
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Administrá el entrenador asignado o el estado de
+                                vigencia de esta suscripción.
+                            </p>
                         </div>
-                    ) : (
-                        <p className="text-sm text-gray-500 italic py-2">
-                            Este plan no incluye entrenador.
-                        </p>
-                    )}
-                </div>
 
-                {/* Fecha de Inicio (Solo Lectura) */}
-                <div>
-                    <label>Fecha de Inicio:</label>
-                    <input
-                        type="text"
-                        disabled
-                        readOnly
-                        style={readOnlyStyle}
-                        value={suscripcion.fecha_inicio}
-                    />
-                </div>
+                        <Button
+                            asChild
+                            variant="outline"
+                            className="w-full sm:w-auto shrink-0 bg-white"
+                        >
+                            <Link href="/suscripciones">
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Volver al listado
+                            </Link>
+                        </Button>
+                    </div>
 
-                {/* Fecha de Fin / Vencimiento */}
-                <div>
-                    <label>Fecha de Fin / Vencimiento:</label>
-                    <input
-                        type="text"
-                        disabled
-                        readOnly
-                        style={readOnlyStyle}
-                        value={
-                            data.estado === "cancelada" &&
-                            suscripcion.estado !== "cancelada"
-                                ? `${hoy} (se cortará hoy al cancelar)`
-                                : suscripcion.fecha_fin
-                        }
-                    />
-                </div>
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <form onSubmit={handleSubmit}>
+                            <CardContent className="p-6 space-y-5 bg-white">
+                                {/* Cliente (Solo Lectura) */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Cliente:
+                                    </label>
+                                    <p className="text-sm font-bold text-gray-900">
+                                        {clienteActual
+                                            ? `#${clienteActual.id} - ${clienteActual.user?.name || "Sin nombre"}`
+                                            : `#${suscripcion.client_id}`}
+                                    </p>
+                                </div>
 
-                {/* Estado (Solo permite mantener estado actual o cancelar si estaba vigente) */}
-                <div>
-                    <label>Estado:</label>
-                    <select
-                        value={data.estado}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                            setData("estado", e.target.value)
-                        }
-                        style={{
-                            width: "100%",
-                            padding: "8px",
-                            marginTop: "5px",
-                        }}
-                    >
-                        <option value={suscripcion.estado}>
-                            {suscripcion.estado.charAt(0).toUpperCase() +
-                                suscripcion.estado.slice(1)}{" "}
-                            (Estado actual)
-                        </option>
-                        {esVigente && (
-                            <option value="cancelada">
-                                Cancelar suscripción
-                            </option>
-                        )}
-                    </select>
-                    <small
-                        style={{
-                            color: "#6b7280",
-                            display: "block",
-                            marginTop: "4px",
-                        }}
-                    >
-                        Los cambios entre Pendiente y Activa se gestionan
-                        automáticamente desde el módulo de Pagos.
-                    </small>
-                    {errors.estado && (
-                        <div style={{ color: "red", fontSize: "13px" }}>
-                            {errors.estado}
-                        </div>
-                    )}
-                </div>
+                                {/* Plan (Solo Lectura) */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Plan Contratado:
+                                    </label>
+                                    <p className="text-sm font-bold text-gray-900">
+                                        {planActual
+                                            ? `${planActual.nombre} ($${planActual.precio})`
+                                            : `Plan #${suscripcion.plan_id}`}
+                                    </p>
+                                </div>
 
-                <div style={{ marginTop: "10px" }}>
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        style={{
-                            padding: "8px 16px",
-                            background: "#2563eb",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            marginRight: "10px",
-                        }}
-                    >
-                        Actualizar Suscripción
-                    </button>
-                    <Link href="/suscripciones">Cancelar</Link>
+                                {/* Entrenador (Editable solo si el plan lo incluye) */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Entrenador:
+                                    </label>
+                                    {planActual?.incluye_entrenador ? (
+                                        <div>
+                                            <SelectBuscador
+                                                label=""
+                                                options={opcionesEntrenadores}
+                                                value={data.trainer_id}
+                                                onChange={(id) =>
+                                                    setData("trainer_id", id)
+                                                }
+                                                placeholder="Buscar por CUIL, nombre o especialidad..."
+                                                error={errors.trainer_id}
+                                            />
+                                            {errors.trainer_id && (
+                                                <p className="text-sm text-red-600 mt-1.5">
+                                                    {errors.trainer_id}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">
+                                            Este plan no incluye entrenador.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Fecha de Inicio (Solo Lectura) */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Fecha de Inicio:
+                                    </label>
+                                    <p className="text-sm font-bold text-gray-900">
+                                        {suscripcion.fecha_inicio}
+                                    </p>
+                                </div>
+
+                                {/* Fecha de Fin / Vencimiento */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Fecha de Fin / Vencimiento:
+                                    </label>
+                                    {seCancelaraHoy ? (
+                                        <div className="bg-indigo-50/70 border border-indigo-100 rounded-lg px-4 py-3 text-sm text-indigo-900">
+                                            {hoy} (se cortará hoy al cancelar)
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm font-bold text-gray-900">
+                                            {suscripcion.fecha_fin}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Estado */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-base font-medium text-gray-700">
+                                        Estado:
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={data.estado}
+                                            onChange={(
+                                                e: ChangeEvent<HTMLSelectElement>,
+                                            ) =>
+                                                setData(
+                                                    "estado",
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        >
+                                            <option value={suscripcion.estado}>
+                                                {suscripcion.estado
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                    suscripcion.estado.slice(
+                                                        1,
+                                                    )}{" "}
+                                                (Estado actual)
+                                            </option>
+                                            {esVigente && (
+                                                <option value="cancelada">
+                                                    Cancelar suscripción
+                                                </option>
+                                            )}
+                                        </select>
+                                        <ChevronDown className="w-4 h-4 text-gray-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-1.5">
+                                        Los cambios entre Pendiente y Activa se
+                                        gestionan automáticamente desde el
+                                        módulo de Pagos.
+                                    </p>
+                                    {errors.estado && (
+                                        <p className="text-sm text-red-600 mt-1.5">
+                                            {errors.estado}
+                                        </p>
+                                    )}
+                                </div>
+                            </CardContent>
+
+                            <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
+                                <Button
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    type="submit"
+                                    disabled={processing}
+                                >
+                                    {processing
+                                        ? "Actualizando..."
+                                        : "Actualizar Suscripción"}
+                                </Button>
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-white"
+                                    variant="outline"
+                                >
+                                    <Link href="/suscripciones">Cancelar</Link>
+                                </Button>
+                            </CardFooter>
+                        </form>
+                    </Card>
                 </div>
-            </form>
-        </div>
+            </div>
+        </>
     );
 }
