@@ -1,4 +1,5 @@
 import { usePage } from "@inertiajs/react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import AppLayoutTemplate from "@/layouts/app/app-sidebar-layout";
 
 interface SharedProps {
@@ -16,43 +17,31 @@ export default function AppLayout({
     children: React.ReactNode;
     [key: string]: unknown;
 }) {
-    const { flash } = usePage<SharedProps>().props;
+    const { props: pageProps, url } = usePage<SharedProps>();
+    const flash = pageProps.flash;
+    const ocultarFlashGlobal = url.startsWith("/ingresos/create");
 
     return (
         <AppLayoutTemplate {...props}>
-            {(flash?.error || flash?.success) && (
-                <div className="px-4 pt-4">
+            {!ocultarFlashGlobal && (flash?.error || flash?.success) && (
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 space-y-2.5">
                     {flash?.error && (
                         <div
-                            style={{
-                                color: "#721c24",
-                                backgroundColor: "#f8d7da",
-                                borderColor: "#f5c6cb",
-                                padding: "10px 15px",
-                                marginBottom: "10px",
-                                borderRadius: "4px",
-                                border: "1px solid transparent",
-                                fontWeight: "bold",
-                            }}
+                            role="alert"
+                            className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 shadow-sm"
                         >
-                            {flash.error}
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>{flash.error}</span>
                         </div>
                     )}
 
                     {flash?.success && (
                         <div
-                            style={{
-                                color: "#155724",
-                                backgroundColor: "#d4edda",
-                                borderColor: "#c3e6cb",
-                                padding: "10px 15px",
-                                marginBottom: "10px",
-                                borderRadius: "4px",
-                                border: "1px solid transparent",
-                                fontWeight: "bold",
-                            }}
+                            role="status"
+                            className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm"
                         >
-                            {flash.success}
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{flash.success}</span>
                         </div>
                     )}
                 </div>
