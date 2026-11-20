@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Head, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, CheckCircle2, XCircle, LogIn } from "lucide-react";
 
 interface CustomPageProps {
     flash?: {
-        exito_acceso?: string;
-        error_acceso?: string;
         success?: string;
         error?: string;
     };
@@ -26,9 +27,17 @@ export default function Create() {
         client_id: "",
     });
 
+    const handleVolver = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            router.get("/ingresos");
+        }
+    };
+
     useEffect(() => {
-        const exito = flash.exito_acceso || flash.success;
-        const error = flash.error_acceso || flash.error || errors.client_id;
+        const exito = flash.success;
+        const error = flash.error || errors.client_id;
 
         if (exito) {
             setMensajeFeedback({ texto: exito, tipo: "exito" });
@@ -61,52 +70,91 @@ export default function Create() {
         <>
             <Head title="Control de Acceso" />
 
-            <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-                <div className="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full text-center space-y-6">
-                    <h1 className="text-3xl font-extrabold text-gray-800">
-                        Control de Acceso
-                    </h1>
-                    <p className="text-gray-500">
-                        Ingrese su ID o número de socio para ingresar
-                    </p>
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                value={data.client_id}
-                                onChange={(e) =>
-                                    setData("client_id", e.target.value)
-                                }
-                                placeholder="N° DE SOCIO / ID"
-                                disabled={processing}
-                                className="w-full text-center text-3xl font-bold py-4 border-2 border-blue-500 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-200 tracking-widest"
-                                autoFocus
-                            />
+            <div className="bg-gray-50 min-h-[calc(100vh-4rem)] py-6 px-4 sm:px-6 flex items-center justify-center">
+                <div className="max-w-xl w-full mx-auto">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Control de Acceso
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Terminal de marcación rápida por número de
+                                socio.
+                            </p>
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={processing || !data.client_id}
-                            className="w-full py-4 bg-blue-600 text-white font-bold text-xl rounded-lg hover:bg-blue-700 transition duration-150 disabled:opacity-50"
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleVolver}
+                            className="w-full sm:w-auto shrink-0 bg-white"
                         >
-                            {processing ? "VERIFICANDO..." : "MARCAR INGRESO"}
-                        </button>
-                    </form>
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Volver
+                        </Button>
+                    </div>
 
-                    {/* CONFIRMACIÓN VISUAL GIGANTE */}
-                    {mensajeFeedback && (
-                        <div
-                            className={`p-6 text-white font-extrabold text-2xl rounded-xl shadow-lg transform transition-all duration-300 ${
-                                mensajeFeedback.tipo === "exito"
-                                    ? "bg-green-600 ring-4 ring-green-300 animate-pulse"
-                                    : "bg-red-600 ring-4 ring-red-300"
-                            }`}
-                        >
-                            {mensajeFeedback.texto}
-                        </div>
-                    )}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <CardContent className="p-6 sm:p-7 space-y-5 bg-white text-center">
+                            <div className="space-y-1">
+                                <label
+                                    htmlFor="client_id"
+                                    className="block text-base font-medium text-gray-700"
+                                >
+                                    Ingrese su ID o número de socio para
+                                    ingresar
+                                </label>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <input
+                                        id="client_id"
+                                        ref={inputRef}
+                                        type="text"
+                                        value={data.client_id}
+                                        onChange={(e) =>
+                                            setData("client_id", e.target.value)
+                                        }
+                                        placeholder="N° DE SOCIO / ID"
+                                        disabled={processing}
+                                        className="w-full text-center text-2xl sm:text-3xl font-bold py-3.5 px-4 rounded-lg border-2 border-indigo-500 bg-white text-gray-900 shadow-sm tracking-widest focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:bg-gray-50"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={processing || !data.client_id}
+                                    className="w-full h-12 text-base font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                                >
+                                    <LogIn className="w-4 h-4 mr-2" />
+                                    {processing
+                                        ? "VERIFICANDO..."
+                                        : "MARCAR INGRESO"}
+                                </Button>
+                            </form>
+
+                            {/* CONFIRMACIÓN VISUAL */}
+                            {mensajeFeedback && (
+                                <div
+                                    role="alert"
+                                    className={`p-5 rounded-xl border text-white font-bold text-lg sm:text-xl shadow-sm flex items-center justify-center gap-3 transition-all ${
+                                        mensajeFeedback.tipo === "exito"
+                                            ? "bg-emerald-600 border-emerald-700 ring-4 ring-emerald-200"
+                                            : "bg-red-600 border-red-700 ring-4 ring-red-200"
+                                    }`}
+                                >
+                                    {mensajeFeedback.tipo === "exito" ? (
+                                        <CheckCircle2 className="w-7 h-7 shrink-0" />
+                                    ) : (
+                                        <XCircle className="w-7 h-7 shrink-0" />
+                                    )}
+                                    <span>{mensajeFeedback.texto}</span>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </>

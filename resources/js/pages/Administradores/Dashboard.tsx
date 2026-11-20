@@ -1,12 +1,11 @@
 import { Head, Link } from "@inertiajs/react";
 import {
     Users,
-    UserCheck,
     CreditCard,
     Dumbbell,
     ArrowUpRight,
-    TrendingUp,
     DollarSign,
+    Plus,
 } from "lucide-react";
 
 import {
@@ -64,8 +63,7 @@ interface DashboardProps {
     pagosMes: number;
 }
 
-// Paleta de colores adaptada a modo oscuro
-const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
+const PIE_COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
 
 export default function AdminDashboard({
     clientes = 0,
@@ -97,268 +95,311 @@ export default function AdminDashboard({
         <>
             <Head title="Panel de Administración - Gimnasio" />
 
-            <div className="flex-1 space-y-6 p-8 pt-6">
-                {/* Encabezado */}
-                <div className="flex items-center justify-between space-y-2">
-                    <div>
-                        <h2 className="text-3xl font-bold tracking-tight">
-                            Panel de Control del Gimnasio
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Resumen general de clientes, planes, suscripciones y
-                            finanzas.
-                        </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Button asChild>
-                            <Link href="/clientes/create">Nuevo Cliente</Link>
+            <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
+                <div className="max-w-7xl mx-auto space-y-6">
+                    {/* Encabezado */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-900">
+                                Panel de Control del Gimnasio
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Resumen general de clientes, planes,
+                                suscripciones y finanzas.
+                            </p>
+                        </div>
+
+                        <Button
+                            asChild
+                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            <Link href="/clientes/create">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nuevo Cliente
+                            </Link>
                         </Button>
                     </div>
-                </div>
 
-                {/* Tarjetas de Métricas Principal */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Clientes Totales
-                            </CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{clientes}</div>
-                            <p className="text-xs text-muted-foreground">
-                                <span className="text-emerald-500 font-semibold">
-                                    {clientesActivos}
-                                </span>{" "}
-                                activos /{" "}
-                                <span className="text-rose-500 font-semibold">
-                                    {clientesInactivos}
-                                </span>{" "}
-                                inactivos
-                            </p>
-                        </CardContent>
-                    </Card>
+                    {/* Tarjetas de Métricas Principales */}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+                                <CardTitle className="text-sm font-medium text-gray-700">
+                                    Clientes Totales
+                                </CardTitle>
+                                <Users className="h-4 w-4 text-gray-400" />
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="text-2xl font-bold text-gray-900">
+                                    {clientes}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    <span className="text-emerald-600 font-semibold">
+                                        {clientesActivos}
+                                    </span>{" "}
+                                    activos /{" "}
+                                    <span className="text-red-600 font-semibold">
+                                        {clientesInactivos}
+                                    </span>{" "}
+                                    inactivos
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Suscripciones
-                            </CardTitle>
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {suscripciones}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                {suscripcionesActivas} planes vigentes
-                                actualmente
-                            </p>
-                        </CardContent>
-                    </Card>
+                        <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+                                <CardTitle className="text-sm font-medium text-gray-700">
+                                    Suscripciones
+                                </CardTitle>
+                                <CreditCard className="h-4 w-4 text-gray-400" />
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="text-2xl font-bold text-gray-900">
+                                    {suscripciones}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {suscripcionesActivas} planes vigentes
+                                    actualmente
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Pagos (Últimos 30 días)
-                            </CardTitle>
-                            <DollarSign className="h-4 w-4 text-emerald-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{pagosMes}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Total histórico: {pagos} registros
-                            </p>
-                        </CardContent>
-                    </Card>
+                        <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+                                <CardTitle className="text-sm font-medium text-gray-700">
+                                    Pagos (Últimos 30 días)
+                                </CardTitle>
+                                <DollarSign className="h-4 w-4 text-emerald-600" />
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="text-2xl font-bold text-gray-900">
+                                    {pagosMes}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Total histórico: {pagos} registros
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                Personal Activo
-                            </CardTitle>
-                            <Dumbbell className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {entrenadores}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                {empleados} empleados en total ({usuarios}{" "}
-                                usuarios)
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
+                        <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+                                <CardTitle className="text-sm font-medium text-gray-700">
+                                    Personal Activo
+                                </CardTitle>
+                                <Dumbbell className="h-4 w-4 text-gray-400" />
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="text-2xl font-bold text-gray-900">
+                                    {entrenadores}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {empleados} empleados en total ({usuarios}{" "}
+                                    usuarios)
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                {/* Sección de Gráficos (Barras + Torta) */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    {/* Gráfico de Barras: Suscripciones por Plan */}
-                    <Card className="col-span-4">
-                        <CardHeader>
-                            <CardTitle>Popularidad de Planes</CardTitle>
-                            <CardDescription>
-                                Cantidad de suscripciones asociadas a cada plan
-                                historicamente
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-72 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={barChartData}
-                                        margin={{
-                                            top: 10,
-                                            right: 10,
-                                            left: -20,
-                                            bottom: 0,
-                                        }}
+                    {/* Sección de Gráficos (Barras + Torta) */}
+                    <div className="grid gap-4 lg:grid-cols-7">
+                        {/* Gráfico de Barras: Suscripciones por Plan */}
+                        <Card className="lg:col-span-4 shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="bg-white">
+                                <CardTitle className="text-gray-900">
+                                    Popularidad de Planes
+                                </CardTitle>
+                                <CardDescription className="text-gray-500">
+                                    Cantidad de suscripciones asociadas a cada
+                                    plan históricamente
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height="100%"
                                     >
-                                        <CartesianGrid
-                                            strokeDasharray="3 3"
-                                            stroke="#27272a"
-                                        />
-                                        <XAxis
-                                            dataKey="name"
-                                            stroke="#a1a1aa"
-                                            fontSize={12}
-                                        />
-                                        <YAxis
-                                            stroke="#a1a1aa"
-                                            fontSize={12}
-                                            allowDecimals={false}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: "#18181b",
-                                                borderColor: "#27272a",
-                                                borderRadius: "8px",
+                                        <BarChart
+                                            data={barChartData}
+                                            margin={{
+                                                top: 10,
+                                                right: 10,
+                                                left: -20,
+                                                bottom: 0,
                                             }}
-                                            labelStyle={{
-                                                color: "#fafafa",
-                                                fontWeight: 600,
-                                            }}
-                                        />
-                                        <Bar
-                                            dataKey="suscripciones"
-                                            fill="#3b82f6"
-                                            radius={[4, 4, 0, 0]}
-                                            name="Suscripciones"
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Gráfico de Torta: Estado de Suscripciones */}
-                    <Card className="col-span-3">
-                        <CardHeader>
-                            <CardTitle>Estado de Suscripciones</CardTitle>
-                            <CardDescription>
-                                Proporción de activas vs inactivos
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-72 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={pieChartData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={55}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
                                         >
-                                            {pieChartData.map((_, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={
-                                                        PIE_COLORS[
-                                                            index %
-                                                                PIE_COLORS.length
-                                                        ]
-                                                    }
-                                                />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: "#18181b",
-                                                borderColor: "#27272a",
-                                                borderRadius: "8px",
-                                            }}
-                                            itemStyle={{ color: "#fafafa" }}
-                                        />
-                                        <Legend
-                                            verticalAlign="bottom"
-                                            height={36}
-                                            iconType="circle"
-                                        />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
+                                                stroke="#e5e7eb"
+                                            />
+                                            <XAxis
+                                                dataKey="name"
+                                                stroke="#6b7280"
+                                                fontSize={12}
+                                            />
+                                            <YAxis
+                                                stroke="#6b7280"
+                                                fontSize={12}
+                                                allowDecimals={false}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: "#ffffff",
+                                                    borderColor: "#e5e7eb",
+                                                    borderRadius: "8px",
+                                                    color: "#111827",
+                                                }}
+                                                labelStyle={{
+                                                    color: "#111827",
+                                                    fontWeight: 600,
+                                                }}
+                                            />
+                                            <Bar
+                                                dataKey="suscripciones"
+                                                fill="#4f46e5"
+                                                radius={[4, 4, 0, 0]}
+                                                name="Suscripciones"
+                                            />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                {/* Tablas de Planes y Resumen */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="col-span-7">
-                        <CardHeader className="flex flex-row items-center justify-between">
+                        {/* Gráfico de Torta: Estado de Suscripciones */}
+                        <Card className="lg:col-span-3 shadow-sm border-gray-200 overflow-hidden bg-white">
+                            <CardHeader className="bg-white">
+                                <CardTitle className="text-gray-900">
+                                    Estado de Suscripciones
+                                </CardTitle>
+                                <CardDescription className="text-gray-500">
+                                    Proporción de activas vs inactivas
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="bg-white">
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer
+                                        width="100%"
+                                        height="100%"
+                                    >
+                                        <PieChart>
+                                            <Pie
+                                                data={pieChartData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={55}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {pieChartData.map(
+                                                    (_, index) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={
+                                                                PIE_COLORS[
+                                                                    index %
+                                                                        PIE_COLORS.length
+                                                                ]
+                                                            }
+                                                        />
+                                                    ),
+                                                )}
+                                            </Pie>
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: "#ffffff",
+                                                    borderColor: "#e5e7eb",
+                                                    borderRadius: "8px",
+                                                    color: "#111827",
+                                                }}
+                                                itemStyle={{ color: "#111827" }}
+                                            />
+                                            <Legend
+                                                verticalAlign="bottom"
+                                                height={36}
+                                                iconType="circle"
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Tabla de Planes */}
+                    <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
+                        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white">
                             <div>
-                                <CardTitle>
+                                <CardTitle className="text-gray-900">
                                     Detalle de Planes del Gimnasio
                                 </CardTitle>
-                                <CardDescription>
+                                <CardDescription className="text-gray-500">
                                     Listado de planes actuales y su nivel de
                                     adopción
                                 </CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="bg-white w-full sm:w-auto"
+                            >
                                 <Link
                                     href="/planes"
-                                    className="flex items-center gap-1"
+                                    className="inline-flex items-center justify-center gap-1"
                                 >
-                                    Gestionar planes{" "}
+                                    Gestionar planes
                                     <ArrowUpRight className="h-4 w-4" />
                                 </Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Nombre del Plan</TableHead>
-                                        <TableHead>Precio</TableHead>
-                                        <TableHead className="text-right">
-                                            Suscripciones Vinculadas
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {planes.map((plan) => (
-                                        <TableRow key={plan.id}>
-                                            <TableCell className="font-semibold">
-                                                {plan.nombre}
-                                            </TableCell>
-                                            <TableCell>
-                                                ${plan.precio}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Badge variant="secondary">
-                                                    {plan.subscriptions_count ??
-                                                        0}{" "}
-                                                    usuarios
-                                                </Badge>
-                                            </TableCell>
+                        <CardContent className="p-0 bg-white">
+                            <div className="overflow-x-auto">
+                                <Table className="w-full border-collapse">
+                                    <TableHeader>
+                                        <TableRow className="bg-gray-50/80 border-b border-gray-200">
+                                            <TableHead className="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                                Nombre del Plan
+                                            </TableHead>
+                                            <TableHead className="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                                Precio
+                                            </TableHead>
+                                            <TableHead className="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                                Suscripciones Vinculadas
+                                            </TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody className="divide-y divide-gray-100 text-sm text-gray-700">
+                                        {planes.map((plan) => (
+                                            <TableRow
+                                                key={plan.id}
+                                                className="hover:bg-gray-50/70"
+                                            >
+                                                <TableCell className="px-6 py-4 text-center font-semibold text-gray-900 whitespace-nowrap">
+                                                    {plan.nombre}
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
+                                                    $
+                                                    {Number(
+                                                        plan.precio,
+                                                    ).toLocaleString("es-AR")}
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 text-center whitespace-nowrap">
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="bg-gray-100 text-gray-800 hover:bg-gray-100"
+                                                    >
+                                                        {plan.subscriptions_count ??
+                                                            0}{" "}
+                                                        usuarios
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
