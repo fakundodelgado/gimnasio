@@ -42,6 +42,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="correo@ejemplo.com"
+                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -49,15 +50,6 @@ export default function Login({ status, canResetPassword }: Props) {
                             <div className="grid gap-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Contraseña</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm text-indigo-600 hover:text-indigo-700"
-                                            tabIndex={5}
-                                        >
-                                            ¿Olvidaste tu contraseña?
-                                        </TextLink>
-                                    )}
                                 </div>
                                 <PasswordInput
                                     id="password"
@@ -66,6 +58,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Contraseña"
+                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -75,13 +68,14 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
+                                    className="data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
                                 />
                                 <Label htmlFor="remember">Recordarme</Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                                className="mt-4 w-full bg-indigo-600 text-white hover:bg-indigo-700"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"

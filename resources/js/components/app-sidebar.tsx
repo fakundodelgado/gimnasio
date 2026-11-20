@@ -16,8 +16,11 @@ import {
 import { dashboard } from "@/routes";
 import type { NavItem } from "@/types";
 import {
-    Briefcase,
     CalendarCheck,
+    ShieldCheck,
+    UserCog,
+    Briefcase,
+    KeyRound,
     ClipboardCheck,
     ClipboardList,
     CreditCard,
@@ -78,9 +81,27 @@ const mainNavItems: NavItem[] = [
     },
 
     {
+        title: "Permisos",
+        href: "/permissions",
+        icon: ShieldCheck,
+    },
+
+    {
+        title: "Roles",
+        href: "/roles",
+        icon: KeyRound,
+    },
+
+    {
         title: "Suscripciones",
         href: "/suscripciones",
         icon: CalendarCheck,
+    },
+
+    {
+        title: "Usuarios",
+        href: "/users",
+        icon: UserCog,
     },
 ];
 
