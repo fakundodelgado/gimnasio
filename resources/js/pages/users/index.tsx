@@ -11,24 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-    AlertTriangle,
     Briefcase,
     DollarSign,
     Dumbbell,
     Eye,
     KeyRound,
-    Loader2,
     Pencil,
     Plus,
     Shield,
@@ -77,7 +66,6 @@ const renderRolIcono = (roleName: string) => {
 export default function Index({ users }: IndexProps) {
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Estados para el Modal de Confirmación
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -312,50 +300,16 @@ export default function Index({ users }: IndexProps) {
             </div>
 
             {/* MODAL DE CONFIRMACIÓN CON SHADCN/UI */}
-            <AlertDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <AlertDialogContent className="sm:max-w-106.25 bg-white border-gray-200">
-                    <AlertDialogHeader>
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-red-50 text-red-600 rounded-full">
-                                <AlertTriangle className="w-5 h-5" />
-                            </div>
-                            <AlertDialogTitle className="text-xl text-gray-900">
-                                ¿Eliminar usuario?
-                            </AlertDialogTitle>
-                        </div>
-                        <AlertDialogDescription className="text-sm text-gray-500 leading-relaxed">
-                            Estás a punto de borrar este usuario
-                            permanentemente. Esta acción no se puede deshacer.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="mt-4 gap-2 sm:gap-2">
-                        <AlertDialogCancel
-                            disabled={isDeleting}
-                            onClick={() => setIsModalOpen(false)}
-                            className="bg-white"
-                        >
-                            Volver
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            disabled={isDeleting}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                ejecutarEliminacion();
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white font-medium shadow-sm transition-colors duration-200"
-                        >
-                            {isDeleting ? (
-                                <div className="flex items-center justify-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>Eliminando...</span>
-                                </div>
-                            ) : (
-                                "Sí, eliminar usuario"
-                            )}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ConfirmDeleteDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onConfirm={ejecutarEliminacion}
+                isDeleting={isDeleting}
+                title="¿Eliminar usuario?"
+                itemLabel={users.find((u) => u.id === idSeleccionado)?.name}
+                description="Esta acción borrará la cuenta permanentemente y no se puede deshacer."
+                confirmText="Sí, eliminar usuario"
+            />
         </>
     );
 }

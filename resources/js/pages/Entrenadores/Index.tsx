@@ -7,9 +7,14 @@ import {
     ChevronDown,
     Search,
     RotateCcw,
+    Eye,
+    Pencil,
+    Trash2,
     ArrowUp,
     ArrowDown,
 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
+import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
 
 interface User {
     id: number;
@@ -136,10 +141,60 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
         );
     };
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const entrenadorSeleccionado = entrenadores.data.find(
+        (entrenador) => entrenador.id === idSeleccionado,
+    );
+
     const handleDelete = (id: number) => {
-        if (confirm("¿Estás seguro de que deseas eliminar este entrenador?")) {
-            router.delete(`/entrenadores/${id}`);
-        }
+        setIdSeleccionado(id);
+        setIsModalOpen(true);
+    };
+
+    const ejecutarEliminacion = () => {
+        if (!idSeleccionado) return;
+        setIsDeleting(true);
+        router.delete(`/entrenadores/${idSeleccionado}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsModalOpen(false);
+                setIdSeleccionado(null);
+            },
+            onFinish: () => setIsDeleting(false),
+        });
+    };
+
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [idARestaurar, setIdARestaurar] = useState<number | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    const entrenadorARestaurar = entrenadores.data.find(
+        (entrenador) => entrenador.id === idARestaurar,
+    );
+
+    const handleRestore = (id: number) => {
+        setIdARestaurar(id);
+        setIsRestoreModalOpen(true);
+    };
+
+    const ejecutarRestauracion = () => {
+        if (!idARestaurar) return;
+        setIsRestoring(true);
+        router.patch(
+            `/entrenadores/${idARestaurar}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsRestoreModalOpen(false);
+                    setIdARestaurar(null);
+                },
+                onFinish: () => setIsRestoring(false),
+            },
+        );
     };
 
     const inputBaseClass =
@@ -425,35 +480,34 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                                                             {tr.deleted_at ? (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => {
-                                                                        if (
-                                                                            confirm(
-                                                                                "¿Estás seguro de que deseas restaurar este entrenador?",
-                                                                            )
-                                                                        ) {
-                                                                            router.patch(
-                                                                                `/entrenadores/${tr.id}/restore`,
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                    className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                                                                    onClick={() =>
+                                                                        handleRestore(
+                                                                            tr.id,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex items-center whitespace-nowrap font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
                                                                 >
+                                                                    <RotateCcw className="w-4 h-4 mr-1.5" />
                                                                     Restaurar
                                                                 </button>
                                                             ) : (
-                                                                <div className="inline-flex items-center justify-center gap-3">
+                                                                <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
                                                                     <Link
                                                                         href={`/entrenadores/${tr.id}`}
-                                                                        className="font-medium text-gray-700 hover:text-indigo-600"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                     >
+                                                                        <Eye className="w-4 h-4 mr-1.5" />
                                                                         Ver
                                                                     </Link>
+
                                                                     <Link
                                                                         href={`/entrenadores/${tr.id}/edit`}
-                                                                        className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
                                                                     >
+                                                                        <Pencil className="w-4 h-4 mr-1.5" />
                                                                         Editar
                                                                     </Link>
+
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
@@ -461,8 +515,9 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                                                                                 tr.id,
                                                                             )
                                                                         }
-                                                                        className="font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
                                                                     >
+                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
                                                                         Eliminar
                                                                     </button>
                                                                 </div>
@@ -554,6 +609,28 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmarRestauracion
+                open={isRestoreModalOpen}
+                onOpenChange={setIsRestoreModalOpen}
+                onConfirm={ejecutarRestauracion}
+                isRestoring={isRestoring}
+                title="¿Restaurar entrenador?"
+                itemLabel={entrenadorARestaurar?.employee?.user?.name}
+                description="El entrenador volverá a estar activo en el sistema."
+                confirmText="Sí, restaurar entrenador"
+            />
+
+            <ConfirmDeleteDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onConfirm={ejecutarEliminacion}
+                isDeleting={isDeleting}
+                title="¿Eliminar entrenador?"
+                itemLabel={entrenadorSeleccionado?.employee?.user?.name}
+                description="Esta acción no se puede deshacer."
+                confirmText="Sí, eliminar entrenador"
+            />
         </>
     );
 }

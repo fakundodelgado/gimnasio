@@ -8,9 +8,14 @@ import {
     ChevronDown,
     Search,
     RotateCcw,
+    Eye,
+    Pencil,
+    Trash2,
     ArrowUp,
     ArrowDown,
 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
+import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
 
 interface User {
     id: number;
@@ -177,10 +182,60 @@ export default function Index({
         );
     };
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const clienteSeleccionado = clientes.data.find(
+        (cliente) => cliente.id === idSeleccionado,
+    );
+
     const handleDelete = (id: number) => {
-        if (confirm("¿Estás seguro de que deseas eliminar este cliente?")) {
-            router.delete(`/clientes/${id}`);
-        }
+        setIdSeleccionado(id);
+        setIsModalOpen(true);
+    };
+
+    const ejecutarEliminacion = () => {
+        if (!idSeleccionado) return;
+        setIsDeleting(true);
+        router.delete(`/clientes/${idSeleccionado}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsModalOpen(false);
+                setIdSeleccionado(null);
+            },
+            onFinish: () => setIsDeleting(false),
+        });
+    };
+
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [idARestaurar, setIdARestaurar] = useState<number | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    const clienteARestaurar = clientes.data.find(
+        (cliente) => cliente.id === idARestaurar,
+    );
+
+    const handleRestore = (id: number) => {
+        setIdARestaurar(id);
+        setIsRestoreModalOpen(true);
+    };
+
+    const ejecutarRestauracion = () => {
+        if (!idARestaurar) return;
+        setIsRestoring(true);
+        router.patch(
+            `/clientes/${idARestaurar}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsRestoreModalOpen(false);
+                    setIdARestaurar(null);
+                },
+                onFinish: () => setIsRestoring(false),
+            },
+        );
     };
 
     const getEstadoSuscripcionClass = (estadoValor: string) => {
@@ -571,35 +626,34 @@ export default function Index({
                                                                 {cliente.deleted_at ? (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
-                                                                            if (
-                                                                                confirm(
-                                                                                    "¿Estás seguro de que deseas restaurar este cliente?",
-                                                                                )
-                                                                            ) {
-                                                                                router.patch(
-                                                                                    `/clientes/${cliente.id}/restore`,
-                                                                                );
-                                                                            }
-                                                                        }}
-                                                                        className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                                                                        onClick={() =>
+                                                                            handleRestore(
+                                                                                cliente.id,
+                                                                            )
+                                                                        }
+                                                                        className="inline-flex items-center whitespace-nowrap font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
                                                                     >
+                                                                        <RotateCcw className="w-4 h-4 mr-1.5" />
                                                                         Restaurar
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="inline-flex items-center justify-center gap-3">
+                                                                    <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
                                                                         <Link
                                                                             href={`/clientes/${cliente.id}`}
-                                                                            className="font-medium text-gray-700 hover:text-indigo-600"
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                         >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
                                                                             Ver
                                                                         </Link>
+
                                                                         <Link
                                                                             href={`/clientes/${cliente.id}/edit`}
-                                                                            className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
                                                                         >
+                                                                            <Pencil className="w-4 h-4 mr-1.5" />
                                                                             Editar
                                                                         </Link>
+
                                                                         <button
                                                                             type="button"
                                                                             onClick={() =>
@@ -607,8 +661,9 @@ export default function Index({
                                                                                     cliente.id,
                                                                                 )
                                                                             }
-                                                                            className="font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
                                                                         >
+                                                                            <Trash2 className="w-4 h-4 mr-1.5" />
                                                                             Eliminar
                                                                         </button>
                                                                     </div>
@@ -700,6 +755,28 @@ export default function Index({
                     </Card>
                 </div>
             </div>
+
+            <ConfirmarRestauracion
+                open={isRestoreModalOpen}
+                onOpenChange={setIsRestoreModalOpen}
+                onConfirm={ejecutarRestauracion}
+                isRestoring={isRestoring}
+                title="¿Restaurar cliente?"
+                itemLabel={clienteARestaurar?.user?.name}
+                description="El cliente volverá a estar activo en el sistema."
+                confirmText="Sí, restaurar cliente"
+            />
+
+            <ConfirmDeleteDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onConfirm={ejecutarEliminacion}
+                isDeleting={isDeleting}
+                title="¿Eliminar cliente?"
+                itemLabel={clienteSeleccionado?.user?.name}
+                description="Esta acción no se puede deshacer."
+                confirmText="Sí, eliminar cliente"
+            />
         </>
     );
 }

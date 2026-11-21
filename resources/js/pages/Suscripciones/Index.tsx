@@ -8,9 +8,14 @@ import {
     ChevronDown,
     Search,
     RotateCcw,
+    Eye,
+    Pencil,
+    Trash2,
     ArrowUp,
     ArrowDown,
 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
+import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
 
 interface User {
     id: number;
@@ -168,10 +173,60 @@ export default function Index({
         );
     };
 
-    const handleDelete = (subId: number) => {
-        if (confirm("¿Estás seguro de que deseas eliminar esta suscripción?")) {
-            router.delete(`/suscripciones/${subId}`);
-        }
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const suscripcionSeleccionada = suscripciones.data.find(
+        (suscripcion) => suscripcion.id === idSeleccionado,
+    );
+
+    const handleDelete = (id: number) => {
+        setIdSeleccionado(id);
+        setIsModalOpen(true);
+    };
+
+    const ejecutarEliminacion = () => {
+        if (!idSeleccionado) return;
+        setIsDeleting(true);
+        router.delete(`/suscripciones/${idSeleccionado}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsModalOpen(false);
+                setIdSeleccionado(null);
+            },
+            onFinish: () => setIsDeleting(false),
+        });
+    };
+
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [idARestaurar, setIdARestaurar] = useState<number | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    const suscripcionARestaurar = suscripciones.data.find(
+        (suscripcion) => suscripcion.id === idARestaurar,
+    );
+
+    const handleRestore = (id: number) => {
+        setIdARestaurar(id);
+        setIsRestoreModalOpen(true);
+    };
+
+    const ejecutarRestauracion = () => {
+        if (!idARestaurar) return;
+        setIsRestoring(true);
+        router.patch(
+            `/suscripciones/${idARestaurar}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsRestoreModalOpen(false);
+                    setIdARestaurar(null);
+                },
+                onFinish: () => setIsRestoring(false),
+            },
+        );
     };
 
     const getEstadoBadgeClass = (estadoValor: string) => {
@@ -573,35 +628,34 @@ export default function Index({
                                                             {sub.deleted_at ? (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => {
-                                                                        if (
-                                                                            confirm(
-                                                                                "¿Estás seguro de que deseas restaurar esta suscripción?",
-                                                                            )
-                                                                        ) {
-                                                                            router.patch(
-                                                                                `/suscripciones/${sub.id}/restore`,
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                    className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                                                                    onClick={() =>
+                                                                        handleRestore(
+                                                                            sub.id,
+                                                                        )
+                                                                    }
+                                                                    className="inline-flex items-center whitespace-nowrap font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
                                                                 >
+                                                                    <RotateCcw className="w-4 h-4 mr-1.5" />
                                                                     Restaurar
                                                                 </button>
                                                             ) : (
-                                                                <div className="inline-flex items-center justify-center gap-3">
+                                                                <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
                                                                     <Link
                                                                         href={`/suscripciones/${sub.id}`}
-                                                                        className="font-medium text-gray-700 hover:text-indigo-600"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                     >
+                                                                        <Eye className="w-4 h-4 mr-1.5" />
                                                                         Ver
                                                                     </Link>
+
                                                                     <Link
                                                                         href={`/suscripciones/${sub.id}/edit`}
-                                                                        className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
                                                                     >
+                                                                        <Pencil className="w-4 h-4 mr-1.5" />
                                                                         Editar
                                                                     </Link>
+
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
@@ -609,8 +663,9 @@ export default function Index({
                                                                                 sub.id,
                                                                             )
                                                                         }
-                                                                        className="font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
                                                                     >
+                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
                                                                         Eliminar
                                                                     </button>
                                                                 </div>
@@ -702,6 +757,36 @@ export default function Index({
                     </Card>
                 </div>
             </div>
+
+            <ConfirmarRestauracion
+                open={isRestoreModalOpen}
+                onOpenChange={setIsRestoreModalOpen}
+                onConfirm={ejecutarRestauracion}
+                isRestoring={isRestoring}
+                title="¿Restaurar suscripción?"
+                itemLabel={
+                    suscripcionARestaurar
+                        ? `Suscripción #${suscripcionARestaurar.id}${suscripcionARestaurar.client?.user?.name ? ` (${suscripcionARestaurar.client?.user?.name})` : ""}`
+                        : undefined
+                }
+                description="La suscripción volverá a estar activa en el sistema."
+                confirmText="Sí, restaurar suscripción"
+            />
+
+            <ConfirmDeleteDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onConfirm={ejecutarEliminacion}
+                isDeleting={isDeleting}
+                title="¿Eliminar suscripción?"
+                itemLabel={
+                    suscripcionSeleccionada
+                        ? `Suscripción #${suscripcionSeleccionada.id}${suscripcionSeleccionada.client?.user?.name ? ` (${suscripcionSeleccionada.client?.user?.name})` : ""}`
+                        : undefined
+                }
+                description="Esta acción no se puede deshacer."
+                confirmText="Sí, eliminar suscripción"
+            />
         </>
     );
 }

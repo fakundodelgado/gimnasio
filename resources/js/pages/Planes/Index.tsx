@@ -7,9 +7,14 @@ import {
     ChevronDown,
     Search,
     RotateCcw,
+    Eye,
+    Pencil,
+    Trash2,
     ArrowUp,
     ArrowDown,
 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
+import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
 
 interface Plan {
     id: number;
@@ -126,10 +131,59 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
         );
     };
 
+    // Estados para el Modal de Confirmación
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const planSeleccionado = planes.data.find(
+        (plan) => plan.id === idSeleccionado,
+    );
+
     const handleDelete = (id: number) => {
-        if (confirm("¿Estás seguro de que deseas eliminar este plan?")) {
-            router.delete(`/planes/${id}`, { preserveScroll: true });
-        }
+        setIdSeleccionado(id);
+        setIsModalOpen(true);
+    };
+
+    const ejecutarEliminacion = () => {
+        if (!idSeleccionado) return;
+        setIsDeleting(true);
+        router.delete(`/planes/${idSeleccionado}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsModalOpen(false);
+                setIdSeleccionado(null);
+            },
+            onFinish: () => setIsDeleting(false),
+        });
+    };
+
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [idARestaurar, setIdARestaurar] = useState<number | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    const planARestaurar = planes.data.find((plan) => plan.id === idARestaurar);
+
+    const handleRestore = (id: number) => {
+        setIdARestaurar(id);
+        setIsRestoreModalOpen(true);
+    };
+
+    const ejecutarRestauracion = () => {
+        if (!idARestaurar) return;
+        setIsRestoring(true);
+        router.patch(
+            `/planes/${idARestaurar}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsRestoreModalOpen(false);
+                    setIdARestaurar(null);
+                },
+                onFinish: () => setIsRestoring(false),
+            },
+        );
     };
 
     const selectBaseClass =
@@ -440,35 +494,34 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
                                                         {plan.deleted_at ? (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => {
-                                                                    if (
-                                                                        confirm(
-                                                                            "¿Estás seguro de que deseas restaurar este plan?",
-                                                                        )
-                                                                    ) {
-                                                                        router.patch(
-                                                                            `/planes/${plan.id}/restore`,
-                                                                        );
-                                                                    }
-                                                                }}
-                                                                className="font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                                                                onClick={() =>
+                                                                    handleRestore(
+                                                                        plan.id,
+                                                                    )
+                                                                }
+                                                                className="inline-flex items-center whitespace-nowrap font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
                                                             >
+                                                                <RotateCcw className="w-4 h-4 mr-1.5" />
                                                                 Restaurar
                                                             </button>
                                                         ) : (
-                                                            <div className="inline-flex items-center justify-center gap-3">
+                                                            <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
                                                                 <Link
                                                                     href={`/planes/${plan.id}`}
-                                                                    className="font-medium text-gray-700 hover:text-indigo-600"
+                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                 >
+                                                                    <Eye className="w-4 h-4 mr-1.5" />
                                                                     Ver
                                                                 </Link>
+
                                                                 <Link
                                                                     href={`/planes/${plan.id}/edit`}
-                                                                    className="font-medium text-indigo-600 hover:text-indigo-800"
+                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
                                                                 >
+                                                                    <Pencil className="w-4 h-4 mr-1.5" />
                                                                     Editar
                                                                 </Link>
+
                                                                 <button
                                                                     type="button"
                                                                     onClick={() =>
@@ -476,8 +529,9 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
                                                                             plan.id,
                                                                         )
                                                                     }
-                                                                    className="font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
                                                                 >
+                                                                    <Trash2 className="w-4 h-4 mr-1.5" />
                                                                     Eliminar
                                                                 </button>
                                                             </div>
@@ -568,6 +622,28 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
                     </Card>
                 </div>
             </div>
+
+            <ConfirmarRestauracion
+                open={isRestoreModalOpen}
+                onOpenChange={setIsRestoreModalOpen}
+                onConfirm={ejecutarRestauracion}
+                isRestoring={isRestoring}
+                title="¿Restaurar plan?"
+                itemLabel={planARestaurar?.nombre}
+                description="El plan volverá a estar disponible."
+                confirmText="Sí, restaurar plan"
+            />
+
+            <ConfirmDeleteDialog
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onConfirm={ejecutarEliminacion}
+                isDeleting={isDeleting}
+                title="¿Eliminar plan?"
+                itemLabel={planSeleccionado?.nombre}
+                description="Esta acción no se puede deshacer."
+                confirmText="Sí, eliminar plan"
+            />
         </>
     );
 }
