@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -74,6 +75,7 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
     const [buscarNumero, setBuscarNumero] = useState(
         filtros.buscar_numero ?? "",
     );
+    const { can } = useAuth();
     const [orden, setOrden] = useState(filtros.orden ?? "id");
     const [direccion, setDireccion] = useState(filtros.direccion ?? "asc");
     const [papelera, setPapelera] = useState(
@@ -221,15 +223,17 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                             </p>
                         </div>
 
-                        <Button
-                            asChild
-                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            <Link href="/entrenadores/create">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nuevo Entrenador
-                            </Link>
-                        </Button>
+                        {can("crear entrenador") && (
+                            <Button
+                                asChild
+                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                <Link href="/entrenadores/create">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nuevo Entrenador
+                                </Link>
+                            </Button>
+                        )}
                     </div>
 
                     {/* Filtros */}
@@ -492,34 +496,44 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                                                                 </button>
                                                             ) : (
                                                                 <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
-                                                                    <Link
-                                                                        href={`/entrenadores/${tr.id}`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
-                                                                    >
-                                                                        <Eye className="w-4 h-4 mr-1.5" />
-                                                                        Ver
-                                                                    </Link>
-
-                                                                    <Link
-                                                                        href={`/entrenadores/${tr.id}/edit`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
-                                                                    >
-                                                                        <Pencil className="w-4 h-4 mr-1.5" />
-                                                                        Editar
-                                                                    </Link>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleDelete(
-                                                                                tr.id,
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                        Eliminar
-                                                                    </button>
+                                                                    {can(
+                                                                        "mostrar entrenador",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/entrenadores/${tr.id}`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
+                                                                            Ver
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "editar entrenador",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/entrenadores/${tr.id}/edit`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        >
+                                                                            <Pencil className="w-4 h-4 mr-1.5" />
+                                                                            Editar
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "eliminar empleado",
+                                                                    ) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleDelete(
+                                                                                    tr.id,
+                                                                                )
+                                                                            }
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4 mr-1.5" />
+                                                                            Eliminar
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </td>

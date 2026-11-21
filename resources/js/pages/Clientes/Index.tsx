@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -104,6 +105,7 @@ export default function Index({
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+    const { can } = useAuth();
     const [estado, setEstado] = useState(filtros.estado ?? "");
     const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
 
@@ -274,16 +276,17 @@ export default function Index({
                                 suscripción y entrenadores asignados.
                             </p>
                         </div>
-
-                        <Button
-                            asChild
-                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            <Link href="/clientes/create">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nuevo Cliente
-                            </Link>
-                        </Button>
+                        {can("crear cliente") && (
+                            <Button
+                                asChild
+                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                <Link href="/clientes/create">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nuevo Cliente
+                                </Link>
+                            </Button>
+                        )}
                     </div>
 
                     {/* Filtros */}
@@ -638,34 +641,44 @@ export default function Index({
                                                                     </button>
                                                                 ) : (
                                                                     <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
-                                                                        <Link
-                                                                            href={`/clientes/${cliente.id}`}
-                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1.5" />
-                                                                            Ver
-                                                                        </Link>
-
-                                                                        <Link
-                                                                            href={`/clientes/${cliente.id}/edit`}
-                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
-                                                                        >
-                                                                            <Pencil className="w-4 h-4 mr-1.5" />
-                                                                            Editar
-                                                                        </Link>
-
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                handleDelete(
-                                                                                    cliente.id,
-                                                                                )
-                                                                            }
-                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                            Eliminar
-                                                                        </button>
+                                                                        {can(
+                                                                            "mostrar cliente",
+                                                                        ) && (
+                                                                            <Link
+                                                                                href={`/clientes/${cliente.id}`}
+                                                                                className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
+                                                                            >
+                                                                                <Eye className="w-4 h-4 mr-1.5" />
+                                                                                Ver
+                                                                            </Link>
+                                                                        )}
+                                                                        {can(
+                                                                            "editar cliente",
+                                                                        ) && (
+                                                                            <Link
+                                                                                href={`/clientes/${cliente.id}/edit`}
+                                                                                className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
+                                                                            >
+                                                                                <Pencil className="w-4 h-4 mr-1.5" />
+                                                                                Editar
+                                                                            </Link>
+                                                                        )}
+                                                                        {can(
+                                                                            "eliminar cliente",
+                                                                        ) && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleDelete(
+                                                                                        cliente.id,
+                                                                                    )
+                                                                                }
+                                                                                className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                            >
+                                                                                <Trash2 className="w-4 h-4 mr-1.5" />
+                                                                                Eliminar
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                             </td>

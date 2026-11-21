@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Mail, Phone, IdCard, Calendar } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -33,6 +34,7 @@ export default function Show({ empleado }: ShowProps) {
     const fechaAlta = empleado?.created_at
         ? new Date(empleado.created_at).toLocaleDateString("es-AR")
         : "No registrada";
+    const { can } = useAuth();
 
     return (
         <>
@@ -148,15 +150,19 @@ export default function Show({ empleado }: ShowProps) {
 
                         {/* Pie de Tarjeta con Acción Principal */}
                         <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
-                            <Button
-                                asChild
-                                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                            >
-                                <Link href={`/empleados/${empleado?.id}/edit`}>
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Editar Empleado
-                                </Link>
-                            </Button>
+                            {can("editar empleado") && (
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                                >
+                                    <Link
+                                        href={`/empleados/${empleado?.id}/edit`}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar Empleado
+                                    </Link>
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

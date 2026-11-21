@@ -17,6 +17,7 @@ import {
     UserCheck,
     Users,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Plan {
     id: number;
@@ -33,6 +34,7 @@ interface ShowProps {
 }
 
 export default function Show({ plan }: ShowProps) {
+    const { can } = useAuth();
     return (
         <>
             <Head title={`Plan: ${plan.nombre}`} />
@@ -185,15 +187,17 @@ export default function Show({ plan }: ShowProps) {
 
                         {/* Pie de Tarjeta con Acción Principal */}
                         <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
-                            <Button
-                                asChild
-                                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                            >
-                                <Link href={`/planes/${plan.id}/edit`}>
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Editar Plan
-                                </Link>
-                            </Button>
+                            {can("editar plan") && (
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                                >
+                                    <Link href={`/planes/${plan.id}/edit`}>
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar Plan
+                                    </Link>
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

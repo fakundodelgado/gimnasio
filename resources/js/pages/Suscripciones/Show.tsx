@@ -18,6 +18,7 @@ import {
     Calendar,
     CalendarCheck,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -55,7 +56,7 @@ export default function Show({ suscripcion }: ShowProps) {
     const esActiva = estadoNormalizado === "activa";
     const esVencida = estadoNormalizado === "vencida";
     const esCancelada = estadoNormalizado === "cancelada";
-
+    const { can } = useAuth();
     const nombreCliente =
         suscripcion.client?.user?.name || `Cliente #${suscripcion.client?.id}`;
     const nombrePlan =
@@ -216,17 +217,19 @@ export default function Show({ suscripcion }: ShowProps) {
 
                         {/* Pie de Tarjeta con Acción Principal */}
                         <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
-                            <Button
-                                asChild
-                                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                            >
-                                <Link
-                                    href={`/suscripciones/${suscripcion.id}/edit`}
+                            {can("editar suscripcion") && (
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
                                 >
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Editar
-                                </Link>
-                            </Button>
+                                    <Link
+                                        href={`/suscripciones/${suscripcion.id}/edit`}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

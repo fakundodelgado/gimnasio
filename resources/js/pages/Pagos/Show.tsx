@@ -18,6 +18,7 @@ import {
     Receipt,
     UserCheck,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -64,6 +65,7 @@ export default function Show({ pago }: ShowProps) {
             ? ` (${pago.subscription.plan.nombre})`
             : ""
     }`;
+    const { can } = useAuth();
 
     const empleadoTexto =
         pago?.employee?.user?.name || `Empleado #${pago?.employee_id ?? ""}`;
@@ -81,8 +83,8 @@ export default function Show({ pago }: ShowProps) {
                                 Detalle de Pago
                             </h1>
                             <p className="text-sm text-gray-500 mt-1">
-                                Información del comprobante, monto abonado,
-                                medio de pago y registro.
+                                Información del comprobante, monto abonado y
+                                medio de pago.
                             </p>
                         </div>
 
@@ -199,15 +201,17 @@ export default function Show({ pago }: ShowProps) {
 
                         {/* Pie de Tarjeta con Acción Principal */}
                         <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
-                            <Button
-                                asChild
-                                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                            >
-                                <Link href={`/pagos/${pago?.id}/edit`}>
-                                    <Pencil className="w-4 h-4 mr-2" />
-                                    Editar
-                                </Link>
-                            </Button>
+                            {can("editar pago") && (
+                                <Button
+                                    asChild
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                                >
+                                    <Link href={`/pagos/${pago?.id}/edit`}>
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Editar
+                                    </Link>
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>

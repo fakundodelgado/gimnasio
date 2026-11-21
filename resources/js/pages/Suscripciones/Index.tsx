@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -99,6 +100,8 @@ export default function Index({
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+
+    const { can } = useAuth();
 
     const opcionesPlanes = planes.map((p) => ({
         id: String(p.id),
@@ -265,12 +268,13 @@ export default function Index({
                                 Listado de Suscripciones
                             </h2>
                             <p className="text-sm text-gray-500 mt-1">
-                                Consultá y administrá las suscripciones, planes
-                                contratados, fechas de vigencia y estados.
+                                {esCliente
+                                    ? "Consultá tus suscripciones, planes contratados, fechas de vigencia y estados."
+                                    : "Consultá y administrá las suscripciones, planes contratados, fechas de vigencia y estados."}
                             </p>
                         </div>
 
-                        {!esCliente && (
+                        {can("crear suscripcion") && (
                             <Button
                                 asChild
                                 className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -496,9 +500,11 @@ export default function Index({
                                                     {indicadorOrden("id")}
                                                 </span>
                                             </th>
-                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
-                                                Cliente
-                                            </th>
+                                            {!esCliente && (
+                                                <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                    Cliente
+                                                </th>
+                                            )}
                                             {!esCliente && (
                                                 <th className="px-6 py-3.5 text-center whitespace-nowrap">
                                                     Teléfono
@@ -572,11 +578,14 @@ export default function Index({
                                                         <td className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
                                                             #{sub.id}
                                                         </td>
-                                                        <td className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
-                                                            {sub.client?.user
-                                                                ?.name ||
-                                                                `Cliente #${sub.client_id}`}
-                                                        </td>
+                                                        {!esCliente && (
+                                                            <td className="px-6 py-4 text-center font-medium text-gray-900 whitespace-nowrap">
+                                                                {sub.client
+                                                                    ?.user
+                                                                    ?.name ||
+                                                                    `Cliente #${sub.client_id}`}
+                                                            </td>
+                                                        )}
                                                         {!esCliente && (
                                                             <td className="px-6 py-4 text-center whitespace-nowrap">
                                                                 {sub.client
@@ -640,34 +649,44 @@ export default function Index({
                                                                 </button>
                                                             ) : (
                                                                 <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
-                                                                    <Link
-                                                                        href={`/suscripciones/${sub.id}`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
-                                                                    >
-                                                                        <Eye className="w-4 h-4 mr-1.5" />
-                                                                        Ver
-                                                                    </Link>
-
-                                                                    <Link
-                                                                        href={`/suscripciones/${sub.id}/edit`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
-                                                                    >
-                                                                        <Pencil className="w-4 h-4 mr-1.5" />
-                                                                        Editar
-                                                                    </Link>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleDelete(
-                                                                                sub.id,
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                        Eliminar
-                                                                    </button>
+                                                                    {can(
+                                                                        "mostrar suscripcion",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/suscripciones/${sub.id}`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
+                                                                            Ver
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "editar suscripcion",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/suscripciones/${sub.id}/edit`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        >
+                                                                            <Pencil className="w-4 h-4 mr-1.5" />
+                                                                            Editar
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "eliminar suscripcion",
+                                                                    ) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleDelete(
+                                                                                    sub.id,
+                                                                                )
+                                                                            }
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4 mr-1.5" />
+                                                                            Eliminar
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </td>

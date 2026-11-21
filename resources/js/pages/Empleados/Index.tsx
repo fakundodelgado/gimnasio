@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -80,7 +81,7 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
     );
     const [tipo, setTipo] = useState(filtros.tipo ?? "");
     const [paginas, setPaginas] = useState(filtros.paginas ?? 5);
-
+    const { can } = useAuth();
     const construirParametros = (overrides: Partial<Filtros> = {}) => ({
         buscar_texto: buscarTexto,
         buscar_numero: buscarNumero,
@@ -214,16 +215,17 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                 de contacto y perfiles asignados.
                             </p>
                         </div>
-
-                        <Button
-                            asChild
-                            className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            <Link href="/empleados/create">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nuevo Empleado
-                            </Link>
-                        </Button>
+                        {can("crear empleado") && (
+                            <Button
+                                asChild
+                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                <Link href="/empleados/create">
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Nuevo Empleado
+                                </Link>
+                            </Button>
+                        )}
                     </div>
 
                     {/* Filtros */}
@@ -528,34 +530,44 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                                                 </button>
                                                             ) : (
                                                                 <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
-                                                                    <Link
-                                                                        href={`/empleados/${emp.id}`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
-                                                                    >
-                                                                        <Eye className="w-4 h-4 mr-1.5" />
-                                                                        Ver
-                                                                    </Link>
-
-                                                                    <Link
-                                                                        href={`/empleados/${emp.id}/edit`}
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
-                                                                    >
-                                                                        <Pencil className="w-4 h-4 mr-1.5" />
-                                                                        Editar
-                                                                    </Link>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleDelete(
-                                                                                emp.id,
-                                                                            )
-                                                                        }
-                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                        Eliminar
-                                                                    </button>
+                                                                    {can(
+                                                                        "mostrar empleado",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/empleados/${emp.id}`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
+                                                                            Ver
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "editar empleado",
+                                                                    ) && (
+                                                                        <Link
+                                                                            href={`/empleados/${emp.id}/edit`}
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
+                                                                        >
+                                                                            <Pencil className="w-4 h-4 mr-1.5" />
+                                                                            Editar
+                                                                        </Link>
+                                                                    )}
+                                                                    {can(
+                                                                        "eliminar empleado",
+                                                                    ) && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleDelete(
+                                                                                    emp.id,
+                                                                                )
+                                                                            }
+                                                                            className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4 mr-1.5" />
+                                                                            Eliminar
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </td>

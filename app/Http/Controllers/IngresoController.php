@@ -18,6 +18,8 @@ class IngresoController extends Controller
     public function index(Request $request)
     {
 
+        $esEmpleado = auth()->user()->hasRole('employee');
+
         // Buscan por ID o Nombre
         $cliente = trim((string)$request->input('cliente', ''));
         $empleado = trim((string)$request->input('empleado', ''));
@@ -95,6 +97,7 @@ class IngresoController extends Controller
                 'direccion' => $direccion,
                 'paginas' => $paginas,
             ],
+            'esEmpleado' => $esEmpleado,
         ]);
     }
 

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -119,6 +120,7 @@ export default function Index({
     const [papelera, setPapelera] = useState(
         filtros.papelera ?? "sin_eliminados",
     );
+    const { can } = useAuth();
 
     const enviarConsulta = (
         overrides: Record<string, string | number> = {},
@@ -284,7 +286,7 @@ export default function Index({
                             </p>
                         </div>
 
-                        {!esCliente && (
+                        {can("crear pago") && (
                             <Button
                                 asChild
                                 className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -744,34 +746,44 @@ export default function Index({
                                                             </button>
                                                         ) : (
                                                             <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
-                                                                <Link
-                                                                    href={`/pagos/${pago.id}`}
-                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
-                                                                >
-                                                                    <Eye className="w-4 h-4 mr-1.5" />
-                                                                    Ver
-                                                                </Link>
-
-                                                                <Link
-                                                                    href={`/pagos/${pago.id}/edit`}
-                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
-                                                                >
-                                                                    <Pencil className="w-4 h-4 mr-1.5" />
-                                                                    Editar
-                                                                </Link>
-
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleDelete(
-                                                                            pago.id,
-                                                                        )
-                                                                    }
-                                                                    className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                    Eliminar
-                                                                </button>
+                                                                {can(
+                                                                    "mostrar pago",
+                                                                ) && (
+                                                                    <Link
+                                                                        href={`/pagos/${pago.id}`}
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
+                                                                    >
+                                                                        <Eye className="w-4 h-4 mr-1.5" />
+                                                                        Ver
+                                                                    </Link>
+                                                                )}
+                                                                {can(
+                                                                    "editar pago",
+                                                                ) && (
+                                                                    <Link
+                                                                        href={`/pagos/${pago.id}/edit`}
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-indigo-600 hover:text-indigo-800"
+                                                                    >
+                                                                        <Pencil className="w-4 h-4 mr-1.5" />
+                                                                        Editar
+                                                                    </Link>
+                                                                )}
+                                                                {can(
+                                                                    "eliminar pago",
+                                                                ) && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleDelete(
+                                                                                pago.id,
+                                                                            )
+                                                                        }
+                                                                        className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 mr-1.5" />
+                                                                        Eliminar
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </td>

@@ -61,9 +61,10 @@ interface Filtros {
 interface IndexProps {
     ingresos: IngresosPaginados;
     filtros: Filtros;
+    esEmpleado: boolean;
 }
 
-export default function Index({ ingresos, filtros }: IndexProps) {
+export default function Index({ ingresos, filtros, esEmpleado }: IndexProps) {
     const [cliente, setCliente] = useState(filtros.cliente ?? "");
     const [empleado, setEmpleado] = useState(filtros.empleado ?? "");
     const [desde, setDesde] = useState(filtros.desde ?? "");
@@ -293,9 +294,11 @@ export default function Index({ ingresos, filtros }: IndexProps) {
                                                     )}
                                                 </span>
                                             </th>
-                                            <th className="px-6 py-3.5 text-center whitespace-nowrap">
-                                                Registrado Por
-                                            </th>
+                                            {!esEmpleado && (
+                                                <th className="px-6 py-3.5 text-center whitespace-nowrap">
+                                                    Registrado Por
+                                                </th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
@@ -338,24 +341,26 @@ export default function Index({ ingresos, filtros }: IndexProps) {
                                                                 "es-AR",
                                                             )}
                                                         </td>
-                                                        <td className="px-6 py-4 text-center whitespace-nowrap">
-                                                            <div className="inline-flex items-center justify-center gap-1.5">
-                                                                <span>
+                                                        {!esEmpleado && (
+                                                            <td className="px-6 py-4 text-center whitespace-nowrap">
+                                                                <div className="inline-flex items-center justify-center gap-1.5">
+                                                                    <span>
+                                                                        {ingreso
+                                                                            .employee
+                                                                            ?.user
+                                                                            ?.name ||
+                                                                            "Totem / Sistema"}
+                                                                    </span>
                                                                     {ingreso
                                                                         .employee
-                                                                        ?.user
-                                                                        ?.name ||
-                                                                        "Totem / Sistema"}
-                                                                </span>
-                                                                {ingreso
-                                                                    .employee
-                                                                    ?.deleted_at && (
-                                                                    <span className="text-xs font-semibold text-red-600">
-                                                                        (Baja)
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
+                                                                        ?.deleted_at && (
+                                                                        <span className="text-xs font-semibold text-red-600">
+                                                                            (Baja)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 );
                                             })
