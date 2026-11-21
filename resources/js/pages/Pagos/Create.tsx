@@ -13,7 +13,6 @@ interface User {
 interface Plan {
     id: number;
     nombre: string;
-    precio: number | string;
 }
 
 interface Client {
@@ -25,6 +24,7 @@ interface Subscription {
     id: number;
     plan?: Plan;
     client?: Client;
+    precio: number;
     payments_sum_monto?: number | string | null;
 }
 
@@ -57,7 +57,7 @@ export default function Create({ fecha, suscripciones }: Props) {
     const saldoPendiente = suscripcionSeleccionada?.plan
         ? Math.max(
               0,
-              Number(suscripcionSeleccionada.plan.precio) -
+              Number(suscripcionSeleccionada.precio) -
                   Number(suscripcionSeleccionada.payments_sum_monto || 0),
           )
         : null;
