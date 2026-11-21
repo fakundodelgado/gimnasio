@@ -29,7 +29,7 @@ import {
     LogIn,
     Users,
 } from "lucide-react";
-//import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from "@/hooks/use-auth";
 
 const mainNavItems: NavItem[] = [
     {
@@ -42,66 +42,77 @@ const mainNavItems: NavItem[] = [
         title: "Clientes",
         href: "/clientes",
         icon: Users,
+        permission: "listar clientes",
     },
 
     {
         title: "Empleados",
         href: "/empleados",
         icon: Briefcase,
+        permission: "listar empleados",
     },
 
     {
         title: "Entrenadores",
         href: "/entrenadores",
         icon: Dumbbell,
+        permission: "listar entrenadores",
     },
 
     {
         title: "Pagos",
         href: "/pagos",
         icon: CreditCard,
+        permission: "listar pagos",
     },
 
     {
         title: "Planes",
         href: "/planes",
         icon: ClipboardList,
+        permission: "listar planes",
     },
 
     {
         title: "Registrar Ingreso",
         href: "/ingresos/create",
         icon: LogIn,
+        permission: "crear ingreso",
     },
 
     {
         title: "Listar Ingresos",
         href: "/ingresos",
         icon: ClipboardCheck,
+        permission: "listar ingresos",
     },
 
     {
         title: "Permisos",
         href: "/permissions",
         icon: ShieldCheck,
+        permission: "listar permisos",
     },
 
     {
         title: "Roles",
         href: "/roles",
         icon: KeyRound,
+        permission: "listar roles",
     },
 
     {
         title: "Suscripciones",
         href: "/suscripciones",
         icon: CalendarCheck,
+        permission: "listar suscripciones",
     },
 
     {
         title: "Usuarios",
         href: "/users",
         icon: UserCog,
+        permission: "listar usuarios",
     },
 ];
 
@@ -121,6 +132,11 @@ const footerNavItems: NavItem[] = [
 */
 
 export function AppSidebar() {
+    const { can } = useAuth();
+    const filteredNavItems = mainNavItems.filter((item) => {
+        return !item.permission || can(item.permission);
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader className="py-3">
@@ -140,7 +156,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

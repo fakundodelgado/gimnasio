@@ -207,10 +207,13 @@ class RolesAndPermissionsSeeder extends Seeder
         $client->givePermissionTo([
 
             // Solo funcionan sobre si mismo
-            'mostrar cliente',
-            'editar cliente',
-            'eliminar cliente', // Deberia de ser capaz de eliminar su cuenta por X razon.
-            'restaurar cliente', // Tambien de restaurar la misma, aunque, no creo que se implemente de momento.
+            'mostrar cliente', // Como carnet virtual
+            'editar cliente', // Limitado a modificar su telefono, quiza.
+
+            // Deberia ser capaz de eliminar su usauario y en cadena al "cliente" pero como el borrado es logico no causaria problema, se deja para despues
+
+            //'eliminar cliente', 
+            //'restaurar cliente', 
 
             // Solo su entrenador
             'mostrar entrenador',  // Tendria sentido que pueda ver el perfil de su entrenador asignado.
@@ -231,34 +234,36 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $employee->givePermissionTo([
 
+            // Clientes
             'listar clientes',
             'mostrar cliente',
             'crear cliente',
             'editar cliente',
-            'eliminar cliente',
-            'restaurar cliente',
 
-            // Solo funcionan sobre si mismo
-            'mostrar empleado',
-            'editar empleado',
+            // Solo el administrador debera de gestionar empleados
 
+            // Planes
             'listar planes',
             'mostrar plan',
 
+            // Sucripciones
             'listar suscripciones',
             'mostrar suscripcion',
             'crear suscripcion',
             'editar suscripcion',
-            'eliminar suscripcion',
 
+            // Pagos
             'listar pagos',
             'mostrar pago',
             'crear pago',
             'editar pago',
 
+            // Entrenadores
             'listar entrenadores',
             'mostrar entrenador',
 
+            // Ingresos
+            'listar ingresos',
             'crear ingreso',
 
 
@@ -271,9 +276,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'listar clientes',
             'mostrar cliente',
 
-            // Solo funciona sobre si mismo
+            // Su propia ficha.
             'mostrar entrenador',
-            'editar entrenador',
+
+            // Para poder aconsejar a los alumnos.
+            'listar planes',
+            'mostrar plan',
+
+            // Por las dudas, para poder dar una mano.
+            'crear ingreso',
 
         ]);
 

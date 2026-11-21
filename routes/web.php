@@ -105,18 +105,21 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/pagos/{pago}/restore', [PaymentController::class, 'restore'])
         ->name('pagos.restore')
         ->withTrashed();
-    //->parameters(['pagos' => 'pago']);
+
     Route::resource('ingresos', IngresoController::class)->only(['index', 'create', 'store']);
 
-    Route::resource('roles', RoleController::class);
+    // Super sera el unico capaz de ver las rutas, con eso me ahorro de poner el middleware sobre cada metodo
+    Route::middleware(['role:super'])->group(function () {
+        Route::resource('roles', RoleController::class);
 
-    Route::resource('permissions', PermissionController::class)->except([
-        'show',
-        'edit',
-        'create'
-    ]);
+        Route::resource('permissions', PermissionController::class)->except([
+            'show',
+            'edit',
+            'create',
+        ]);
 
-    Route::resource('users', UserController::class);
+        Route::resource('users', UserController::class);
+    });
 });
 
 require __DIR__ . '/settings.php';
