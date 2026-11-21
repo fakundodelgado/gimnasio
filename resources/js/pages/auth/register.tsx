@@ -37,7 +37,7 @@ export default function Register({ passwordRules }: Props) {
                                     autoComplete="name"
                                     name="name"
                                     placeholder="Nombre completo"
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError
                                     message={errors.name}
@@ -57,7 +57,7 @@ export default function Register({ passwordRules }: Props) {
                                     autoComplete="email"
                                     name="email"
                                     placeholder="correo@ejemplo.com"
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -72,7 +72,7 @@ export default function Register({ passwordRules }: Props) {
                                     name="password"
                                     placeholder="Contraseña"
                                     passwordrules={passwordRules}
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -89,7 +89,7 @@ export default function Register({ passwordRules }: Props) {
                                     name="password_confirmation"
                                     placeholder="Confirmar contraseña"
                                     passwordrules={passwordRules}
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError
                                     message={errors.password_confirmation}

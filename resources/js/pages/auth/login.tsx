@@ -42,7 +42,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="correo@ejemplo.com"
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -58,7 +58,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Contraseña"
-                                    className="focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -68,7 +68,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="remember"
                                     name="remember"
                                     tabIndex={3}
-                                    className="data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="data-[state=checked]:border-indigo-600 data-[state=checked]:bg-indigo-600 focus:border-indigo-600 focus:ring-0 focus:outline-none"
                                 />
                                 <Label htmlFor="remember">Recordarme</Label>
                             </div>

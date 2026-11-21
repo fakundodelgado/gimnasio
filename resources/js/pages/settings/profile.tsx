@@ -50,7 +50,7 @@ export default function Profile({
 
                                 <Input
                                     id="name"
-                                    className="mt-1 block w-full focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                     defaultValue={auth.user.name}
                                     name="name"
                                     required
@@ -72,7 +72,7 @@ export default function Profile({
                                 <Input
                                     id="email"
                                     type="email"
-                                    className="mt-1 block w-full focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                     defaultValue={auth.user.email}
                                     name="email"
                                     required

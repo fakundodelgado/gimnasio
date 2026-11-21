@@ -65,7 +65,7 @@ export default function Security(props: Props) {
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                     autoComplete="current-password"
                                     placeholder="Contraseña actual"
                                 />
@@ -82,7 +82,7 @@ export default function Security(props: Props) {
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                     autoComplete="new-password"
                                     placeholder="Nueva contraseña"
                                     passwordrules={props.passwordRules}
@@ -99,7 +99,7 @@ export default function Security(props: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full focus-visible:border-indigo-600 focus-visible:ring-indigo-600/20"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white focus:border-2 focus:border-blue-600 focus:ring-0 focus:outline-none focus-visible:border-2 focus-visible:border-blue-600 focus-visible:ring-0 focus-visible:outline-none"
                                     autoComplete="new-password"
                                     placeholder="Confirmar contraseña"
                                     passwordrules={props.passwordRules}
