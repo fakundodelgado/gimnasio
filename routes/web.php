@@ -13,12 +13,15 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ClientDashboardController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\EmployeeDashboardController;
 use App\Http\Controllers\TrainerDashboardController;
 use Illuminate\Support\Facades\Auth;
 //use App\Models\User;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [WelcomeController::class, 'index'])
+    ->middleware('guest')
+    ->name('home');
 
 Route::middleware(['auth'])->group(function () {
 
