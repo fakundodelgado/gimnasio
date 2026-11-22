@@ -47,6 +47,7 @@ interface Client {
 
 interface ShowProps {
     cliente: Client;
+    esCliente: boolean;
 }
 
 export default function Show({ cliente }: ShowProps) {
@@ -54,6 +55,7 @@ export default function Show({ cliente }: ShowProps) {
     const entrenador = cliente?.trainer?.employee?.user;
     const tieneSuscripcionActiva = Boolean(planActivo);
     const { can } = useAuth();
+    const link = can("listar clientes") ? "/clientes" : "/dashboard";
 
     return (
         <>
@@ -78,7 +80,7 @@ export default function Show({ cliente }: ShowProps) {
                             variant="outline"
                             className="w-full sm:w-auto bg-white"
                         >
-                            <Link href="/clientes">
+                            <Link href={link}>
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver al listado
                             </Link>

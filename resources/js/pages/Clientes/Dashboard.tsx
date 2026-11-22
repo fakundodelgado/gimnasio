@@ -1,4 +1,4 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import {
     Calendar,
     CreditCard,
@@ -24,6 +24,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 interface Plan {
     id: number;
@@ -38,6 +39,10 @@ interface Subscription {
     fecha_inicio?: string;
     fecha_fin?: string;
     plan: Plan;
+}
+
+interface Client {
+    id: number;
 }
 
 interface Trainer {
@@ -66,6 +71,7 @@ interface ClientDashboardProps {
     suscripciones: Subscription[];
     pagosCliente: Payment[];
     totalGasto: number;
+    cliente: Client;
 }
 
 export default function ClientDashboard({
@@ -77,13 +83,14 @@ export default function ClientDashboard({
     suscripciones = [],
     pagosCliente = [],
     totalGasto = 0,
+    cliente,
 }: ClientDashboardProps) {
     return (
         <>
             <Head title="Mi Panel - Gimnasio" />
 
             <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
-                <div className="max-w-7xl mx-auto space-y-6">
+                <div className="max-w-9xl mx-auto space-y-6">
                     {/* Encabezado de Bienvenida */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">
@@ -94,6 +101,16 @@ export default function ClientDashboard({
                                 Acá podés consultar el estado de tu membresía,
                                 tus asistencias y tus pagos.
                             </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                asChild
+                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                <Link href={`/clientes/${cliente.id}`}>
+                                    Perfil
+                                </Link>
+                            </Button>
                         </div>
                     </div>
 

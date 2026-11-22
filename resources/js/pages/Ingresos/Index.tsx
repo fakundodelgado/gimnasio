@@ -126,7 +126,7 @@ export default function Index({ ingresos, filtros, esEmpleado }: IndexProps) {
             <Head title="Historial de Accesos" />
 
             <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
-                <div className="max-w-6xl mx-auto">
+                <div className="max-w-9xl mx-auto">
                     {/* Encabezado */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div className="flex-1 min-w-0">

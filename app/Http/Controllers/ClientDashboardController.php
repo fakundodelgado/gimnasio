@@ -8,7 +8,7 @@ use App\Models\Ingreso;
 use App\Models\Client;
 //use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Auth;
+//use Illuminate\Support\Facades\Auth;
 
 class ClientDashboardController extends Controller
 {
@@ -20,6 +20,7 @@ class ClientDashboardController extends Controller
 
         // Datos cliente
         $usuario = auth()->user();
+        $cliente = $usuario->client()->first();
 
         // Datos ingresos
         $ingresosMes = Ingreso::where('client_id', $usuario->client->id)->whereBetween('fecha_hora', [$fechaInicio, $fechaFin])->count();
@@ -62,6 +63,7 @@ class ClientDashboardController extends Controller
             'suscripciones' => $suscripciones,
             'pagosCliente' => $pagosCliente,
             'totalGasto' => $totalGasto,
+            'cliente' => $cliente,
         ]);
     }
 }

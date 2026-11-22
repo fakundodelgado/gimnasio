@@ -128,7 +128,7 @@ export default function EmployeeDashboard({
             <Head title="Panel de Empleado - Gimnasio" />
 
             <div className="bg-gray-50 min-h-screen py-6 px-4 sm:px-6">
-                <div className="max-w-7xl mx-auto space-y-6">
+                <div className="max-w-9xl mx-auto space-y-6">
                     {/* Encabezado */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex-1 min-w-0">

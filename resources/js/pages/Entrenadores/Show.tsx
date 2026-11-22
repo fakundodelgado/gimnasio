@@ -70,6 +70,7 @@ export default function Show({ entrenador, alumnos }: ShowProps) {
     const emailEntrenador =
         entrenador?.employee?.user?.email || "Sin correo registrado";
     const { can } = useAuth();
+    const link = can("listar entrenadores") ? "/entrenadores" : "/dashboard";
 
     return (
         <>
@@ -95,7 +96,7 @@ export default function Show({ entrenador, alumnos }: ShowProps) {
                             variant="outline"
                             className="w-full sm:w-auto bg-white"
                         >
-                            <Link href="/entrenadores">
+                            <Link href={link}>
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver
                             </Link>

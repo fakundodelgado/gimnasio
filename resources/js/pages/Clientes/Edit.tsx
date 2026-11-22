@@ -4,6 +4,7 @@ import { SelectBuscador } from "@/components/SelectBuscador";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     id: number;
@@ -43,6 +44,7 @@ interface Client {
 interface EditProps {
     cliente: Client;
     entrenadores?: Trainer[];
+    esCliente: boolean;
 }
 
 const CUPO_MAXIMO_POR_ENTRENADOR = 10;
@@ -50,7 +52,8 @@ const CUPO_MAXIMO_POR_ENTRENADOR = 10;
 export default function Edit({ cliente, entrenadores = [] }: EditProps) {
     const planActivo = cliente?.active_subscription?.plan;
     const permiteEntrenador = planActivo?.incluye_entrenador ?? false;
-
+    const { can } = useAuth();
+    const link = can("listar clientes") ? "/clientes" : "/dashboard";
     const { data, setData, put, processing, errors } = useForm({
         name: cliente?.user?.name || "",
         email: cliente?.user?.email || "",
@@ -114,7 +117,7 @@ export default function Edit({ cliente, entrenadores = [] }: EditProps) {
                             variant="outline"
                             className="w-full sm:w-auto shrink-0 bg-white"
                         >
-                            <Link href="/clientes">
+                            <Link href={link}>
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver al listado
                             </Link>
@@ -274,7 +277,7 @@ export default function Edit({ cliente, entrenadores = [] }: EditProps) {
                                     className="w-full sm:w-auto bg-white"
                                     variant="outline"
                                 >
-                                    <Link href="/clientes">Cancelar</Link>
+                                    <Link href={link}>Cancelar</Link>
                                 </Button>
                             </CardFooter>
                         </form>

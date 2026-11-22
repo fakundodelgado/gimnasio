@@ -3,6 +3,7 @@ import { Head, Link, useForm } from "@inertiajs/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface User {
     name: string;
@@ -42,6 +43,9 @@ export default function Edit({ entrenador }: EditProps) {
         put(`/entrenadores/${entrenador.id}`);
     };
 
+    const { can } = useAuth();
+    const link = can("listar entrenadores") ? "/entrenadores" : "/dashboard";
+
     const nombreEntrenador =
         entrenador.employee?.user?.name || `Entrenador #${entrenador.id}`;
 
@@ -70,7 +74,7 @@ export default function Edit({ entrenador }: EditProps) {
                             variant="outline"
                             className="w-full sm:w-auto shrink-0 bg-white"
                         >
-                            <Link href="/entrenadores">
+                            <Link href={link}>
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Volver al listado
                             </Link>
@@ -289,7 +293,7 @@ export default function Edit({ entrenador }: EditProps) {
                                     className="w-full sm:w-auto bg-white"
                                     variant="outline"
                                 >
-                                    <Link href="/entrenadores">Cancelar</Link>
+                                    <Link href={link}>Cancelar</Link>
                                 </Button>
                             </CardFooter>
                         </form>
