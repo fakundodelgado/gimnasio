@@ -272,13 +272,9 @@ class SubscriptionController extends Controller
     #[Middleware('permission:editar suscripcion')]
     public function edit(Subscription $suscripcion)
     {
-        $suscripcion->load('client');
+        $suscripcion->load(['client.user', 'plan']);
 
         $suscripcion->trainer_id = $suscripcion->client?->trainer_id;
-
-        $clientes = Client::with('user:id,name,email')->get();
-
-        $planes = Plan::all();
 
         $entrenadores = Trainer::with('employee.user')
             ->withCount(['clients' => function ($query) {
@@ -290,8 +286,8 @@ class SubscriptionController extends Controller
 
         return Inertia::render('Suscripciones/Edit', [
             'suscripcion'  => $suscripcion,
-            'clientes'     => $clientes,
-            'planes'       => $planes,
+            'cliente' => $suscripcion->client,
+            'plan' => $suscripcion->plan,
             'entrenadores' => $entrenadores,
         ]);
     }
@@ -304,14 +300,15 @@ class SubscriptionController extends Controller
     {
 
         $datos = $request->validated();
+        $suscripcion->recalcularEstado();
 
-        if ((int) $datos['plan_id'] !== (int) $suscripcion->plan_id && $suscripcion->payments()->exists()) {
-            return back()->withErrors([
-                'plan_id' => 'No se puede cambiar el plan de una suscripción que ya tiene pagos registrados. Creá una nueva suscripción para reemplazarla.'
-            ]);
+
+        if (in_array($suscripcion->estado, ['vencida', 'cancelada'], true)) {
+            return back()->with('error', "No se puede editar una suscripción {$suscripcion->estado}.");
         }
 
-        $plan = Plan::findOrFail($datos['plan_id']);
+
+        $plan = $suscripcion->plan;
 
         if (!$plan->incluye_entrenador) {
             $datos['trainer_id'] = null;
@@ -321,7 +318,7 @@ class SubscriptionController extends Controller
 
             if ((int) $datos['trainer_id'] !== (int) $suscripcion->client?->trainer_id) {
                 $entrenador = Trainer::withCount(['clients' => function ($q) {
-                    $q->whereHas('subscriptions', fn($sub) => $sub->where('estado', 'activa'));
+                    $q->whereHas('subscriptions', fn($sub) => $sub->whereIn('estado', ['activa', 'pendiente']));
                 }])->findOrFail($datos['trainer_id']);
 
                 if ($entrenador->clients_count >= $entrenador->limite_alumnos) {
@@ -332,12 +329,8 @@ class SubscriptionController extends Controller
             }
         }
 
-        if (isset($datos['fecha_inicio'])) {
-            $fechaInicio = Carbon::parse($datos['fecha_inicio']);
-            $datos['fecha_fin'] = $fechaInicio->copy()->addDays($plan->duracion)->toDateString();
-        }
-
         DB::transaction(function () use ($suscripcion, $datos, $plan) {
+
             $suscripcion->update($datos);
 
             $client = Client::findOrFail($suscripcion->client_id);

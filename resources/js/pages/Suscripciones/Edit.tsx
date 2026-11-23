@@ -53,15 +53,15 @@ interface Subscription {
 
 interface EditProps {
     suscripcion: Subscription;
-    clientes: Client[];
-    planes: Plan[];
+    cliente: Client;
+    plan: Plan;
     entrenadores: Trainer[];
 }
 
 export default function Edit({
     suscripcion,
-    clientes,
-    planes,
+    cliente,
+    plan,
     entrenadores,
 }: EditProps) {
     const { data, setData, put, processing, errors } = useForm<{
@@ -72,12 +72,14 @@ export default function Edit({
         estado: suscripcion?.estado ?? "activa",
     });
 
-    const clienteActual = clientes.find(
-        (c) => Number(c.id) === Number(suscripcion?.client_id),
-    );
-    const planActual = planes.find(
-        (p) => Number(p.id) === Number(suscripcion?.plan_id),
-    );
+    const suscripcionEstado =
+        suscripcion.estado === "activa"
+            ? "Activa"
+            : suscripcion.estado === "vencida"
+              ? "Vencida"
+              : suscripcion.estado === "cancelada"
+                ? "Cancelada"
+                : "Pendiente";
 
     const opcionesEntrenadores: SelectOption[] = entrenadores.map((tr) => {
         const esSuEntrenadorActual =
@@ -149,9 +151,7 @@ export default function Edit({
                                         Cliente:
                                     </label>
                                     <p className="text-sm font-bold text-gray-900">
-                                        {clienteActual
-                                            ? `#${clienteActual.id} - ${clienteActual.user?.name || "Sin nombre"}`
-                                            : `#${suscripcion.client_id}`}
+                                        {cliente.user?.name}
                                     </p>
                                 </div>
 
@@ -161,9 +161,7 @@ export default function Edit({
                                         Plan Contratado:
                                     </label>
                                     <p className="text-sm font-bold text-gray-900">
-                                        {planActual
-                                            ? `${planActual.nombre} ($${planActual.precio})`
-                                            : `Plan #${suscripcion.plan_id}`}
+                                        {plan.nombre}
                                     </p>
                                 </div>
 
@@ -172,7 +170,7 @@ export default function Edit({
                                     <label className="block text-base font-medium text-gray-700">
                                         Entrenador:
                                     </label>
-                                    {planActual?.incluye_entrenador ? (
+                                    {plan?.incluye_entrenador ? (
                                         <div>
                                             <SelectBuscador
                                                 label=""
@@ -228,46 +226,9 @@ export default function Edit({
                                     <label className="block text-base font-medium text-gray-700">
                                         Estado:
                                     </label>
-                                    <div className="relative">
-                                        <select
-                                            value={data.estado}
-                                            onChange={(
-                                                e: ChangeEvent<HTMLSelectElement>,
-                                            ) =>
-                                                setData(
-                                                    "estado",
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className="w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                        >
-                                            <option value={suscripcion.estado}>
-                                                {suscripcion.estado
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    suscripcion.estado.slice(
-                                                        1,
-                                                    )}{" "}
-                                                (Estado actual)
-                                            </option>
-                                            {esVigente && (
-                                                <option value="cancelada">
-                                                    Cancelar suscripción
-                                                </option>
-                                            )}
-                                        </select>
-                                        <ChevronDown className="w-4 h-4 text-gray-500 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
-                                    </div>
-                                    <p className="text-sm text-gray-500 mt-1.5">
-                                        Los cambios entre Pendiente y Activa se
-                                        gestionan automáticamente desde el
-                                        módulo de Pagos.
+                                    <p className="text-sm font-bold text-gray-900">
+                                        {suscripcionEstado}
                                     </p>
-                                    {errors.estado && (
-                                        <p className="text-sm text-red-600 mt-1.5">
-                                            {errors.estado}
-                                        </p>
-                                    )}
                                 </div>
                             </CardContent>
 

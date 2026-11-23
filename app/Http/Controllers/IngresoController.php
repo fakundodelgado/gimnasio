@@ -112,42 +112,28 @@ class IngresoController extends Controller
     {
         $datos = $request->validated();
 
-        $client = Client::with(['user', 'activeSubscription.plan'])->find($datos['client_id']);
+        $client = Client::with(['user', 'ultimaSuscripcion.plan'])->find($datos['client_id']);
 
         if (!$client) {
             return back()->with('error', 'Cliente no encontrado. Verifique el ID ingresado.');
         }
 
-        $suscripcion = $client->ultimaSuscripcion()->first();
+        $suscripcion = $client->ultimaSuscripcion;
 
         if (!$suscripcion) {
             return back()->with('error', 'El cliente no posee ninguna suscripcion.');
         }
 
-        $plan = $client->activeSubscription?->plan ?? $suscripcion->plan;
-        $planDuracion = $plan->duracion;
+        $plan = $suscripcion->plan;
 
-        if ($suscripcion->estado === 'pendiente') {
+        $suscripcion->recalcularEstado();
 
-            $limiteSegundoPago = Carbon::parse($suscripcion->fecha_inicio)->addDays($planDuracion / 2);
-
-            if ($limiteSegundoPago >= Carbon::today()) {
-                $suscripcion->fecha_fin = Carbon::today();
-                $suscripcion->estado = 'cancelada';
-                $suscripcion->save();
-                return back()->with('error', 'La suscripcion fue cancelada. Fecha limite para segundo pago excedida.');
-            }
+        if ($suscripcion->estado === 'cancelada') {
+            return back()->with('error', 'La suscripcion se encuentra cancelada. Por favor, adquiera un nuevo pase.');
         }
 
-        if ($suscripcion->estado === 'activa' && $suscripcion->fecha_fin < Carbon::today()) {
-            $suscripcion->estado = 'vencida';
-            $suscripcion->save();
+        if ($suscripcion->estado === 'vencida') {
             return back()->with('error', 'La suscripcion vencio. Por favor, compre otro pase.');
-        }
-
-        // Si la suscripción está cancelada o vencida (y no entró en los casos anteriores de gracia)
-        if (in_array($suscripcion->estado, ['cancelada', 'vencida'], true)) {
-            return back()->with('error', "La suscripcion se encuentra {$suscripcion->estado}. Por favor, compre otro pase.");
         }
 
         $user = $request->user();
@@ -168,7 +154,7 @@ class IngresoController extends Controller
             'fecha_hora'  => now(),
         ]);
 
-        $planNombre = $plan->nombre ?? 'General';
+        $planNombre = $plan->nombre;
 
         return back()->with('success', "ACCESO PERMITIDO: ¡Bienvenido/a {$client->user->name}! ({$planNombre})");
     }

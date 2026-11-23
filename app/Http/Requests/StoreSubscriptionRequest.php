@@ -25,8 +25,8 @@ class StoreSubscriptionRequest extends FormRequest
     {
 
         return [
-            'client_id' => ['required', 'exists:clients,id'],
-            'plan_id' => ['required', 'exists:plans,id'],
+            //'client_id' => ['required', 'exists:clients,id'],
+            //'plan_id' => ['required', 'exists:plans,id'],
             // 'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
 
             /*
@@ -39,9 +39,9 @@ class StoreSubscriptionRequest extends FormRequest
 
             */
 
-            'estado' => ['required', 'string', 'in:activa,pendiente'],
+            //'estado' => ['required', 'string', 'in:activa,pendiente'], // Se recalcula mediante el metodo 
             'trainer_id' => ['nullable', 'exists:trainers,id'], // Para que tambien me llegue por el request ahora que el formulario acepta esa opcion
-            'metodo_pago' => ['required', 'in:tarjeta,efectivo,transferencia']
+            //'metodo_pago' => ['required', 'in:tarjeta,efectivo,transferencia']
         ];
     }
 
