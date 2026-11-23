@@ -13,6 +13,7 @@ import {
     Trash2,
     ArrowUp,
     ArrowDown,
+    ListChecks,
 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/confirmar-eliminacion";
 import { ConfirmarRestauracion } from "@/components/confirmar-restauracion";
@@ -180,6 +181,20 @@ export default function Index({
     const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const [procesando, setProcesando] = useState(false);
+
+    const handleActualizarEstados = () => {
+        router.post(
+            "/suscripciones/actualizar-estados",
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => setProcesando(true),
+                onFinish: () => setProcesando(false),
+            },
+        );
+    };
+
     const suscripcionSeleccionada = suscripciones.data.find(
         (suscripcion) => suscripcion.id === idSeleccionado,
     );
@@ -273,6 +288,18 @@ export default function Index({
                                     : "Consultá y administrá las suscripciones, planes contratados, fechas de vigencia y estados."}
                             </p>
                         </div>
+
+                        {can("editar suscripcion") && (
+                            <Button
+                                type="button"
+                                onClick={handleActualizarEstados}
+                                disabled={procesando}
+                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                <ListChecks className="w-4 h-4 mr-2" />
+                                Actualizar estados
+                            </Button>
+                        )}
 
                         {can("crear suscripcion") && (
                             <Button

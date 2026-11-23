@@ -103,6 +103,8 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/suscripciones/{suscripcion}/restore', [SubscriptionController::class, 'restore'])
         ->name('suscripciones.restore')
         ->withTrashed();
+    Route::post('/suscripciones/actualizar-estados', [SubscriptionController::class, 'actualizarEstados'])
+        ->name('suscripciones.actualizar-estados');
 
     Route::resource('pagos', PaymentController::class);
     Route::patch('/pagos/{pago}/restore', [PaymentController::class, 'restore'])

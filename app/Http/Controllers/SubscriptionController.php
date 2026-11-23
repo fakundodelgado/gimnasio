@@ -397,4 +397,15 @@ class SubscriptionController extends Controller
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripción restaurada correctamente.');
     }
+
+    #[Middleware('permission:editar suscripcion')]
+    public function actualizarEstados()
+    {
+        $cantidad = Subscription::actualizarEstados();
+
+        return redirect()->back()->with(
+            'success',
+            "Estados actualizados correctamente ({$cantidad} suscripciones modificadas)."
+        );
+    }
 }

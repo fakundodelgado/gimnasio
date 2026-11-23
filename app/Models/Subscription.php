@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class Subscription extends Model
 {
@@ -45,19 +46,48 @@ class Subscription extends Model
             return;
         }
 
+        $duracionPlan = $this->plan->duracion;
+        $mitadDuración = $this->fecha_inicio->copy()->addDays($duracionPlan / 2);
+
         $totalPagado = round((float) $this->payments()->sum('monto'), 2);
         $precioSuscripcion = round((float) $this->precio, 2);
 
         if ($totalPagado <= 0) {
-            $this->estado = 'cancelada';
-            $this->fecha_fin = \Carbon\Carbon::today();
-            $this->save();
+            if ($this->estado !== 'cancelada') {
+                $this->fecha_fin = Carbon::today();
+                $this->estado = 'cancelada';
+                $this->save();
+            }
         } elseif ($totalPagado >= $precioSuscripcion) {
-            $this->estado = 'activa';
+            $this->estado = Carbon::today() > $this->fecha_fin ? 'vencida' : 'activa';
+            $this->save();
+        } elseif (Carbon::today() > $mitadDuración) {
+            $this->estado = 'cancelada';
+            $this->fecha_fin = $mitadDuración->toDateString();
             $this->save();
         } else {
             $this->estado = 'pendiente';
             $this->save();
         }
+    }
+
+    public static function actualizarEstados(): int
+    {
+        $actualizadas = 0;
+
+        $suscripciones = Subscription::with('plan')
+            ->whereIn('estado', ['activa', 'pendiente'])
+            ->get();
+
+        foreach ($suscripciones as $suscripcion) {
+            $estadoAnterior = $suscripcion->estado;
+            $suscripcion->recalcularEstado();
+
+            if ($suscripcion->estado !== $estadoAnterior) {
+                $actualizadas++;
+            }
+        }
+
+        return $actualizadas;
     }
 }
