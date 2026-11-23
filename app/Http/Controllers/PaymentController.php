@@ -219,31 +219,28 @@ class PaymentController extends Controller
     #[Middleware('permission:restaurar pago')]
     public function restore(Payment $pago)
     {
+        $suscripcion = $pago->subscription;
 
-        $suscripcion = $pago->subscription()->withTrashed()->first();
-
-        if ($suscripcion) {
-            $totalPagadoActual = (float) $suscripcion->payments()->sum('monto');
-            $precioSuscripcion = (float) $suscripcion->precio;
-
-            if (($totalPagadoActual + (float) $pago->monto) > $precioSuscripcion) {
-                return back()->with('error', 'No se puede restaurar el pago: la suscripción ya se encuentra totalmente pagada.');
-            }
+        if (!$suscripcion) {
+            return back()->with('error', 'No se puede restaurar el pago porque la suscripción fue eliminada.');
         }
 
-        DB::transaction(function () use ($pago) {
-            $pago->restore();
+        $totalPagadoActual = round((float) $suscripcion->payments()->sum('monto'), 2);
+        $precioSuscripcion = round((float) $suscripcion->precio, 2);
+        $cantidadPagos     = $suscripcion->payments()->count();
 
-            $suscripcion = $pago->subscription()->with('plan')->first();
-            if ($suscripcion) {
-                $suscripcion->recalcularEstado();
-            }
+        if ($cantidadPagos >= 2 || round($totalPagadoActual + (float) $pago->monto, 2) > $precioSuscripcion) {
+            return back()->with('error', 'No se puede restaurar el pago: la suscripción ya se encuentra totalmente pagada.');
+        }
+
+        DB::transaction(function () use ($pago, $suscripcion) {
+            $pago->restore();
+            $suscripcion->load('plan');
+            $suscripcion->recalcularEstado();
         });
 
         return redirect()->route('pagos.index')->with('success', 'Pago restaurado correctamente.');
     }
-
-    // !!! Faltaria la opcion de restaurar si el modelo de negocios asi lo permitiera
 
     // Dado que los datos son generados puede que las fechas y los IDs no sean demasiado coherentes, por ejemplo
     // puede suceder que el primer pago sea de hace un dia y el ultimo de hace un mes, lo que en teoria carece de sentido.
