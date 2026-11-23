@@ -20,6 +20,8 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
 
     protected Builder $query;
     protected bool $esAdmin;
+    protected int $filaActual = 1;
+    protected array $filasAnuladas = [];
 
     public function __construct(Builder $query, bool $esAdmin)
     {
@@ -50,11 +52,19 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
             $columnas[] = 'Empleado';
         }
 
+        $columnas[] = 'Estado';
+
         return $columnas;
     }
 
     public function map($pago): array
     {
+        $this->filaActual++;
+
+        if ($pago->trashed()) {
+            $this->filasAnuladas[] = $this->filaActual;
+        }
+
         $fila = [
             $pago->id,
             $pago->subscription_id,
@@ -71,10 +81,11 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
             $fila[] = $pago->employee?->user?->name ?? 'Administración';
         }
 
+        $fila[] = $pago->trashed() ? 'Anulado' : 'Activo';
+
         return $fila;
     }
 
-    // En esto me ayude con inteligencia artificial (en principio no tenia ni idea de que hacia cada cosa)
     public function styles(Worksheet $sheet): array
     {
         $ultimaColumna = $sheet->getHighestColumn();
@@ -94,6 +105,19 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
                 'startColor' => ['rgb' => 'E5E7EB'],
             ],
         ]);
+
+        // Pintar de rojo suave las filas anuladas
+        foreach ($this->filasAnuladas as $fila) {
+            $sheet->getStyle("A{$fila}:{$ultimaColumna}{$fila}")->applyFromArray([
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FEE2E2'],
+                ],
+                'font' => [
+                    'color' => ['rgb' => 'B91C1C'],
+                ],
+            ]);
+        }
 
         // Bordes finos en toda la tabla resultante
         $sheet->getStyle("A1:{$ultimaColumna}{$ultimaFila}")->applyFromArray([

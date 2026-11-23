@@ -69,17 +69,36 @@
 </head>
 
 <body>
-    <h1>Historial de Pagos Registrados</h1>
-    <div class="subtitulo">
-        Generado el {{ now()->format('d/m/Y H:i') }}
-        @if (!empty($filtros['desde']) || !empty($filtros['hasta']))
-            · Período:
-            {{ !empty($filtros['desde']) ? \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') : 'Inicio' }}
-            al
-            {{ !empty($filtros['hasta']) ? \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') : 'Actualidad' }}
-        @endif
-        @if (!empty($filtros['metodo']))
-            · Método: {{ ucfirst($filtros['metodo']) }}
+    <div style="position: relative; width: 100%; min-height: 65px;">
+        <img 
+            src="{{ public_path('imagenes/logo.png') }}" 
+            style="position: absolute; top: 0; left: 0; width: 70px; height: auto;"
+        >
+
+        <h1 style="margin: 0; padding-top: 20px; text-align: center;">
+            Historial de Pagos Registrados
+        </h1>
+    </div>
+
+    <div class="subtitulo" style="margin-top: 2px;">
+    <div>Generado el {{ now()->format('d/m/Y H:i') }}</div>
+        @if (!empty($filtros['desde']) || !empty($filtros['hasta']) || !empty($filtros['metodo']))
+            <div style="margin-top: 3px;">
+                @if (!empty($filtros['desde']) || !empty($filtros['hasta']))
+                    Período:
+                    {{ !empty($filtros['desde']) ? \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') : 'Inicio' }}
+                    al
+                    {{ !empty($filtros['hasta']) ? \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') : 'Actualidad' }}
+                @endif
+
+                @if ((!empty($filtros['desde']) || !empty($filtros['hasta'])) && !empty($filtros['metodo']))
+                    ·
+                @endif
+
+                @if (!empty($filtros['metodo']))
+                    Método: {{ ucfirst($filtros['metodo']) }}
+                @endif
+            </div>
         @endif
     </div>
 
@@ -135,8 +154,12 @@
                     <td colspan="{{ $esAdmin ? 9 : 8 }}" class="text-right">
                         Total ({{ $pagos->count() }} {{ $pagos->count() === 1 ? 'pago' : 'pagos' }}):
                     </td>
+                    @php
+                        $totalRecaudado = $pagos->sum(fn($p) => $p->trashed() ? 0 : $p->monto);
+                    @endphp
+
                     <td class="text-right">
-                        ${{ number_format($pagos->sum('monto'), 2, ',', '.') }}
+                        ${{ number_format($totalRecaudado, 2, ',', '.') }}
                     </td>
                 </tr>
             </tfoot>

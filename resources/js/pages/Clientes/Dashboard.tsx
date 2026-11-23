@@ -108,7 +108,7 @@ export default function ClientDashboard({
                                 className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                                 <Link href={`/clientes/${cliente.id}`}>
-                                    Perfil
+                                    Carnet virtual
                                 </Link>
                             </Button>
                         </div>

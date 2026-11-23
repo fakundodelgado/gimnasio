@@ -191,6 +191,14 @@ class ClientController extends Controller
     #[Middleware('permission:mostrar cliente')]
     public function show(Client $cliente)
     {
+
+        $user = auth()->user()->load('client');
+        $esCliente = $user->hasRole('client');
+
+        if ($esCliente && $user->client?->id !== $cliente->id) {
+            return back()->with('error', 'Usted no puede ver los datos de otros usuarios.');
+        }
+
         $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
 
 
@@ -205,12 +213,20 @@ class ClientController extends Controller
     public function edit(Client $cliente)
     {
 
+        $user = auth()->user()->load('client');
+        $esCliente = $user->hasRole('client');
+
+        if ($esCliente && $user->client?->id !== $cliente->id) {
+            return back()->with('error', 'Usted no puede modificar los datos de otros usuarios.');
+        }
+
         $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
         $entrenadores = Trainer::with('employee.user')
             ->withCount('clients') // Cuenta cuántos clientes tienen su id en la columna client.trainer_id
             ->get();
 
         return Inertia::render('Clientes/Edit', [
+            'esCliente' => $esCliente,
             'cliente'      => $cliente,
             'entrenadores' => $entrenadores,
         ]);
@@ -224,10 +240,14 @@ class ClientController extends Controller
     public function update(UpdateClientRequest $request, Client $cliente, UserService $userService)
     {
 
-        $user = $request->user();
-        $esAdmin = $user->hasRole(['admin', 'super']);
+        $user = auth()->user()->load('client');
+        $esCliente = $user->hasRole('client');
 
-        if ($esAdmin && $request->filled('trainer_id')) {
+        if ($esCliente && $user->client?->id !== $cliente->id) {
+            return back()->with('error', 'Usted no puede modificar los datos de otros usuarios.');
+        }
+
+        if (!$esCliente && $request->filled('trainer_id')) {
             $planActivo = $cliente->activeSubscription?->plan;
 
             if (!$planActivo || !$planActivo->incluye_entrenador) {
@@ -237,7 +257,7 @@ class ClientController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request, $cliente, $userService, $esAdmin) {
+        DB::transaction(function () use ($request, $cliente, $userService, $esCliente) {
 
             $userService->updateUser($cliente->user, $request->validated());
 
@@ -245,12 +265,16 @@ class ClientController extends Controller
                 'telefono' => $request->telefono,
             ];
 
-            if ($esAdmin && $request->has('trainer_id')) {
+            if (!$esCliente && $request->has('trainer_id')) {
                 $datosCliente['trainer_id'] = $request->trainer_id;
             }
 
             $cliente->update($datosCliente);
         });
+
+        if ($esCliente) {
+            return redirect()->route('dashboard')->with('success', 'Se actualizaron sus datos correctamente');
+        }
 
         return redirect()->route('clientes.index')->with('success', 'Cliente actualizado correctamente.');
     }

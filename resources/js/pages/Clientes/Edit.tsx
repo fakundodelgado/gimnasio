@@ -49,7 +49,11 @@ interface EditProps {
 
 const CUPO_MAXIMO_POR_ENTRENADOR = 10;
 
-export default function Edit({ cliente, entrenadores = [] }: EditProps) {
+export default function Edit({
+    cliente,
+    entrenadores = [],
+    esCliente,
+}: EditProps) {
     const planActivo = cliente?.active_subscription?.plan;
     const permiteEntrenador = planActivo?.incluye_entrenador ?? false;
     const { can } = useAuth();
@@ -216,50 +220,52 @@ export default function Edit({ cliente, entrenadores = [] }: EditProps) {
                                 </div>
 
                                 {/* Bloque de Asignación de Entrenador con SelectBuscador */}
-                                <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                                    <label className="block text-base font-medium text-gray-700">
-                                        Entrenador Asignado
-                                    </label>
+                                {!esCliente && (
+                                    <div className="space-y-1.5 pt-2 border-t border-gray-100">
+                                        <label className="block text-base font-medium text-gray-700">
+                                            Entrenador Asignado
+                                        </label>
 
-                                    {permiteEntrenador ? (
-                                        <SelectBuscador
-                                            options={opcionesEntrenadores}
-                                            value={data.trainer_id}
-                                            onChange={(id) =>
-                                                setData(
-                                                    "trainer_id",
-                                                    id ? String(id) : "",
-                                                )
-                                            }
-                                            placeholder="Buscar entrenador por ID o nombre..."
-                                            error={errors.trainer_id}
-                                        />
-                                    ) : (
-                                        <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg px-4 py-3 text-sm text-amber-900">
-                                            {planActivo ? (
-                                                <p>
-                                                    El plan actual (
-                                                    <strong>
-                                                        {planActivo.nombre}
-                                                    </strong>
-                                                    ) no incluye entrenador
-                                                    personal.
-                                                </p>
-                                            ) : (
-                                                <p>
-                                                    El cliente no posee una
-                                                    suscripción activa para
-                                                    asignarle entrenador.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-                                    {errors.trainer_id && (
-                                        <p className="text-sm text-red-600 mt-1.5">
-                                            {errors.trainer_id}
-                                        </p>
-                                    )}
-                                </div>
+                                        {permiteEntrenador ? (
+                                            <SelectBuscador
+                                                options={opcionesEntrenadores}
+                                                value={data.trainer_id}
+                                                onChange={(id) =>
+                                                    setData(
+                                                        "trainer_id",
+                                                        id ? String(id) : "",
+                                                    )
+                                                }
+                                                placeholder="Buscar entrenador por ID o nombre..."
+                                                error={errors.trainer_id}
+                                            />
+                                        ) : (
+                                            <div className="bg-amber-50/80 border border-amber-200/80 rounded-lg px-4 py-3 text-sm text-amber-900">
+                                                {planActivo ? (
+                                                    <p>
+                                                        El plan actual (
+                                                        <strong>
+                                                            {planActivo.nombre}
+                                                        </strong>
+                                                        ) no incluye entrenador
+                                                        personal.
+                                                    </p>
+                                                ) : (
+                                                    <p>
+                                                        El cliente no posee una
+                                                        suscripción activa para
+                                                        asignarle entrenador.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                        {errors.trainer_id && (
+                                            <p className="text-sm text-red-600 mt-1.5">
+                                                {errors.trainer_id}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </CardContent>
 
                             <CardFooter className="bg-gray-50/70 border-t border-gray-100 px-6 py-4 flex flex-col sm:flex-row justify-end gap-3">
