@@ -10,7 +10,7 @@ Aplicación web full-stack para la administración integral de un gimnasio (soci
 
 ## Requisitos previos
 
-* **PHP >= 8.2** (con `curl`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `xsl` y `zip` habilitados en `php.ini`)
+* **PHP >= 8.4** (con `curl`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `xsl` y `zip` habilitados en `php.ini`)
 * **Composer**
 * **Node.js y npm**
 * **MySQL**
@@ -39,7 +39,7 @@ Aplicación web full-stack para la administración integral de un gimnasio (soci
    ```bash
    php artisan migrate --seed && composer run dev
    ```
-   *(Si la base de datos `gimnasio` no existe, confirmar su creación cuando Laravel lo solicite. Como alternativa a `composer run dev`, ejecutar `php artisan serve` y `npm run dev` en dos terminales).*
+   *(Si la base de datos `gimnasio` no existe, crearla previamente).*
 
 4. **Acceder al sistema:**
    Abrir `http://localhost:8000` en el navegador.
