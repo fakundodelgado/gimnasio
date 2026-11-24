@@ -4,7 +4,7 @@ Aplicación web full-stack para la administración integral de un gimnasio (soci
 
 ## Tecnologías
 
-* **Backend:** Laravel 11, PHP 8.2+, Spatie Laravel-Permission, DomPDF, Laravel Excel
+* **Backend:** Laravel 13, PHP 8.3+, Spatie Laravel-Permission, DomPDF, Laravel Excel
 * **Frontend:** React, TypeScript, Inertia.js, Tailwind CSS
 * **Base de datos:** MySQL
 
@@ -54,25 +54,13 @@ MAIL_FROM_NAME="${APP_NAME}"
 ```bash
 php artisan migrate --seed
 ```
-*(Si la base de datos `gimnasio` aún no existe, confirmar su creación cuando Laravel lo solicite).*
+*(Si la base de datos `gimnasio` aún no existe, crear una previamente).*
 
 ### 4. Levantar el proyecto
 
-**Opción A — Un solo comando (Laravel + Vite juntos):**
 ```bash
 composer run dev
 ```
-
-**Opción B — En dos terminales separadas:**
-```bash
-# Terminal 1 (Backend)
-php artisan serve
-
-# Terminal 2 (Frontend / Vite)
-npm run dev
-```
-
-*(Si se desea compilar el frontend estático sin dejar Vite corriendo en segundo plano, ejecutar `npm run build` y luego `php artisan serve`).*
 
 ### 5. Acceder al sistema
 Abrir `http://localhost:8000` en el navegador.
