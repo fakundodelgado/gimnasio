@@ -363,12 +363,9 @@ class SubscriptionController extends Controller
             // Borramos también los pagos asociados a esta suscripción errónea
             $suscripcion->payments()->delete();
 
-            $suscripcion->update([
-                'estado'    => 'cancelada',
-                'fecha_fin' => Carbon::today(),
-            ]);
-
             $suscripcion->delete();
+
+            $cliente->recalcularEstado();
         });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion eliminada correctamente.');
@@ -377,6 +374,18 @@ class SubscriptionController extends Controller
     #[Middleware('permission:restaurar suscripcion')] // o el permiso que uses
     public function restore(Subscription $suscripcion)
     {
+
+        if (in_array($suscripcion->estado, ['activa', 'pendiente'], true)) {
+            $yaTieneVigente = Subscription::where('client_id', $suscripcion->client_id)
+                ->where('id', '!=', $suscripcion->id)
+                ->whereIn('estado', ['activa', 'pendiente'])
+                ->exists();
+
+            if ($yaTieneVigente) {
+                return back()->with('error', 'No se puede restaurar: el cliente ya posee otra suscripción activa o pendiente.');
+            }
+        }
+
         DB::transaction(function () use ($suscripcion) {
             $suscripcion->restore();
             // Restauramos los pagos que se habían borrado con ella
