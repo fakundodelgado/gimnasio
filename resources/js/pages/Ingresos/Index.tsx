@@ -61,10 +61,10 @@ interface Filtros {
 interface IndexProps {
     ingresos: IngresosPaginados;
     filtros: Filtros;
-    esEmpleado: boolean;
+    esAdmin: boolean;
 }
 
-export default function Index({ ingresos, filtros, esEmpleado }: IndexProps) {
+export default function Index({ ingresos, filtros, esAdmin }: IndexProps) {
     const [cliente, setCliente] = useState(filtros.cliente ?? "");
     const [empleado, setEmpleado] = useState(filtros.empleado ?? "");
     const [desde, setDesde] = useState(filtros.desde ?? "");
@@ -294,7 +294,7 @@ export default function Index({ ingresos, filtros, esEmpleado }: IndexProps) {
                                                     )}
                                                 </span>
                                             </th>
-                                            {!esEmpleado && (
+                                            {esAdmin && (
                                                 <th className="px-6 py-3.5 text-center whitespace-nowrap">
                                                     Registrado Por
                                                 </th>
@@ -341,7 +341,7 @@ export default function Index({ ingresos, filtros, esEmpleado }: IndexProps) {
                                                                 "es-AR",
                                                             )}
                                                         </td>
-                                                        {!esEmpleado && (
+                                                        {esAdmin && (
                                                             <td className="px-6 py-4 text-center whitespace-nowrap">
                                                                 <div className="inline-flex items-center justify-center gap-1.5">
                                                                     <span>

@@ -27,6 +27,7 @@ interface Trainer {
     id: number;
     especialidad?: string;
     clients_count?: number; // Conteo traído con withCount('clients') desde el controlador
+    limite_alumnos: number;
     employee?: {
         user?: User;
     };
@@ -46,8 +47,6 @@ interface EditProps {
     entrenadores?: Trainer[];
     esCliente: boolean;
 }
-
-const CUPO_MAXIMO_POR_ENTRENADOR = 10;
 
 export default function Edit({
     cliente,
@@ -74,13 +73,12 @@ export default function Edit({
 
         // Deshabilita si superó el cupo y NO es su entrenador actual
         const sinCupo =
-            clientesAsignados >= CUPO_MAXIMO_POR_ENTRENADOR &&
-            !esElEntrenadorActual;
+            clientesAsignados >= t.limite_alumnos && !esElEntrenadorActual;
 
         const nombre = t.employee?.user?.name || `Entrenador #${t.id}`;
         const textoCupo = sinCupo
-            ? `(SIN CUPO - ${clientesAsignados}/${CUPO_MAXIMO_POR_ENTRENADOR})`
-            : `(${clientesAsignados}/${CUPO_MAXIMO_POR_ENTRENADOR} cupos)`;
+            ? `(SIN CUPO - ${clientesAsignados}/${t.limite_alumnos})`
+            : `(${clientesAsignados}/${t.limite_alumnos} cupos)`;
 
         return {
             id: t.id,

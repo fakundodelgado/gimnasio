@@ -221,8 +221,13 @@ class ClientController extends Controller
         }
 
         $cliente->load(['user', 'trainer.employee.user', 'activeSubscription.plan']);
+
         $entrenadores = Trainer::with('employee.user')
-            ->withCount('clients') // Cuenta cuántos clientes tienen su id en la columna client.trainer_id
+            ->withCount(['clients' => function ($query) {
+                $query->whereHas('subscriptions', function ($q) {
+                    $q->whereIn('estado', ['activa', 'pendiente']);
+                });
+            }])
             ->get();
 
         return Inertia::render('Clientes/Edit', [
@@ -253,6 +258,17 @@ class ClientController extends Controller
             if (!$planActivo || !$planActivo->incluye_entrenador) {
                 return redirect()->back()->withErrors([
                     'trainer_id' => 'El cliente no posee un plan activo que incluya entrenador.'
+                ]);
+            }
+
+            $entrenador = Trainer::withCount(['clients' => function ($q) use ($cliente) {
+                $q->where('id', '!=', $cliente->id)
+                    ->whereHas('subscriptions', fn($sub) => $sub->whereIn('estado', ['activa', 'pendiente']));
+            }])->findOrFail($request->trainer_id);
+
+            if ($entrenador->clients_count >= $entrenador->limite_alumnos) {
+                return redirect()->back()->withErrors([
+                    'trainer_id' => 'El entrenador seleccionado ya no tiene cupo disponible.'
                 ]);
             }
         }

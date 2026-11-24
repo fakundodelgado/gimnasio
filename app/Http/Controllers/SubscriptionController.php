@@ -173,7 +173,7 @@ class SubscriptionController extends Controller
         $entrenadores = Trainer::with('employee.user')
             ->withCount(['clients' => function ($query) {
                 $query->whereHas('subscriptions', function ($q) {
-                    $q->where('estado', 'activa');
+                    $q->whereIn('estado', ['activa', 'pendiente']);
                 });
             }])->get();
 
@@ -212,7 +212,7 @@ class SubscriptionController extends Controller
 
         if (!empty($datos['trainer_id'])) {
             $entrenador = Trainer::withCount(['clients' => function ($q) {
-                $q->whereHas('subscriptions', fn($sub) => $sub->where('estado', 'activa'));
+                $q->whereHas('subscriptions', fn($sub) => $sub->whereIn('estado', ['activa', 'pendiente']));
             }])->findOrFail($datos['trainer_id']);
 
             if ($entrenador->clients_count >= $entrenador->limite_alumnos) {
@@ -253,7 +253,10 @@ class SubscriptionController extends Controller
 
             Payment::create(['employee_id' => $empleado->id, 'monto' => $monto, 'fecha_pago' => Carbon::today(), 'subscription_id' => $nueva->id, 'metodo_pago' => $datos['metodo_pago']]);
 
-            $cliente->recalcularEstado();
+            if ($datos['trainer_id'] !== null) {
+                $cliente->trainer_id = $datos['trainer_id'];
+                $cliente->save();
+            }
         });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion creada correctamente.');
@@ -339,6 +342,7 @@ class SubscriptionController extends Controller
         DB::transaction(function () use ($suscripcion, $datos, $plan) {
 
             $suscripcion->update($datos);
+
             $suscripcion->client->recalcularEstado();
         });
 

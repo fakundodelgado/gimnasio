@@ -63,7 +63,7 @@ class TrainerController extends Controller
 
         $query->withCount(['clients' => function ($q) {
             $q->whereHas('subscriptions', function ($subQ) {
-                $subQ->where('estado', 'activa');
+                $subQ->whereIn('estado', ['activa', 'pendiente']);
             });
         }]);
 
