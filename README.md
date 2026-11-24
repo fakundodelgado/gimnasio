@@ -10,7 +10,7 @@ Aplicación web full-stack para la administración integral de un gimnasio (soci
 
 ## Requisitos previos
 
-* **PHP >= 8.2** (con `curl`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `xsl` y `zip` habilitados en `php.ini`)
+* **PHP >= 8.3** (con `curl`, `fileinfo`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_mysql`, `xsl` y `zip` habilitados en `php.ini`)
 * **Composer**
 * **Node.js y npm**
 * **MySQL**
