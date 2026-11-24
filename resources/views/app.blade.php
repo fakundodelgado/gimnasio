@@ -30,7 +30,9 @@
             }
         </style>
 
-        <link rel="icon" type="image/png" href="{{ asset('imagenes/logo.png') }}?v=2">
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         @fonts
 
