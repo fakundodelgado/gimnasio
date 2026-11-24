@@ -16,10 +16,11 @@ class UserService
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required', 
-                'string', 
-                'email', 
-                'max:255', 
+                'required',
+                'string',
+                'email',
+                'regex:/^.+@.+\..+$/',
+                'max:255',
                 Rule::unique('users', 'email')->ignore($userId)->whereNull('deleted_at'),
             ],
             'password' => $userId ? ['nullable', Password::defaults()] : ['required', Password::defaults()],
@@ -41,7 +42,8 @@ class UserService
         return [
             'required' => 'el campo :attribute es obligatorio.',
             'email.unique' => 'el :attribute ingresado pertenece a otro usuario.',
-        ];  
+            'email.regex' => 'el :attribute debe incluir un dominio válido (ej. usuario@dominio.com).'
+        ];
     }
 
     // Creacion
@@ -104,5 +106,4 @@ class UserService
 
         return $user;
     }
-    
 }
