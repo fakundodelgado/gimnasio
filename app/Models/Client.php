@@ -51,4 +51,17 @@ class Client extends Model
             ->where('estado', 'activa')
             ->latestOfMany();
     }
+
+    public function recalcularEstado(): void
+    {
+        $suscripcion = $this->ultimaSuscripcion()->with('plan')->first();
+
+        $mantieneEntrenador = $suscripcion
+            && in_array($suscripcion->estado, ['activa', 'pendiente'])
+            && $suscripcion->plan?->incluye_entrenador;
+
+        if (!$mantieneEntrenador && $this->trainer_id !== null) {
+            $this->update(['trainer_id' => null]);
+        }
+    }
 }

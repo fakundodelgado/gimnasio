@@ -39,11 +39,11 @@ class AdminDashboardController extends Controller
         // Suscripciones
         $suscripciones = Subscription::count();
         $suscripcionesActivas = Subscription::where('estado', 'activa')->count();
-        $suscripcionesInactivas = $suscripciones - $suscripcionesActivas;
+        $suscripcionesPendientes = Subscription::where('estado', 'pendiente')->count();
 
         // Pagos
-        $pagos = Payment::count();
         $pagosMes = Payment::whereBetween('fecha_pago', [$fechaInicio, $fechaFin])->count();
+        $generadoMes = Payment::whereBetween('fecha_pago', [$fechaInicio, $fechaFin])->sum('monto');
 
         return Inertia::render('Administradores/Dashboard', [
             'clientes' => $clientes,
@@ -55,9 +55,9 @@ class AdminDashboardController extends Controller
             'planes' => $planes,
             'suscripciones' => $suscripciones,
             'suscripcionesActivas' => $suscripcionesActivas,
-            'suscripcionesInactivas' => $suscripcionesInactivas,
-            'pagos' => $pagos,
+            'suscripcionesPendientes' => $suscripcionesPendientes,
             'pagosMes' => $pagosMes,
+            'generadoMes' => $generadoMes,
         ]);
     }
 }

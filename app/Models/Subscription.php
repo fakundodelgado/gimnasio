@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Subscription extends Model
 {
@@ -46,29 +47,33 @@ class Subscription extends Model
             return;
         }
 
-        $duracionPlan = $this->plan->duracion;
-        $mitadDuración = $this->fecha_inicio->copy()->addDays($duracionPlan / 2);
+        DB::transaction(function () {
+            $duracionPlan = $this->fecha_inicio->diffInDays($this->fecha_fin);
+            $mitadDuracion = $this->fecha_inicio->copy()->addDays((int) round($duracionPlan / 2));
 
-        $totalPagado = round((float) $this->payments()->sum('monto'), 2);
-        $precioSuscripcion = round((float) $this->precio, 2);
+            $totalPagado = round((float) $this->payments()->sum('monto'), 2);
+            $precioSuscripcion = round((float) $this->precio, 2);
 
-        if ($totalPagado <= 0) {
-            if ($this->estado !== 'cancelada') {
-                $this->fecha_fin = Carbon::today();
+            if ($totalPagado <= 0) {
+                if ($this->estado !== 'cancelada') {
+                    $this->fecha_fin = Carbon::today();
+                    $this->estado = 'cancelada';
+                    $this->save();
+                }
+            } elseif ($totalPagado >= $precioSuscripcion) {
+                $this->estado = Carbon::today() > $this->fecha_fin ? 'vencida' : 'activa';
+                $this->save();
+            } elseif (Carbon::today() > $mitadDuracion) {
                 $this->estado = 'cancelada';
+                $this->fecha_fin = $mitadDuracion->toDateString();
+                $this->save();
+            } else {
+                $this->estado = 'pendiente';
                 $this->save();
             }
-        } elseif ($totalPagado >= $precioSuscripcion) {
-            $this->estado = Carbon::today() > $this->fecha_fin ? 'vencida' : 'activa';
-            $this->save();
-        } elseif (Carbon::today() > $mitadDuración) {
-            $this->estado = 'cancelada';
-            $this->fecha_fin = $mitadDuración->toDateString();
-            $this->save();
-        } else {
-            $this->estado = 'pendiente';
-            $this->save();
-        }
+
+            $this->client?->recalcularEstado();
+        });
     }
 
     public static function actualizarEstados(): int

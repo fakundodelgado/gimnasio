@@ -58,9 +58,10 @@ interface DashboardProps {
     planes: Plan[];
     suscripciones: number;
     suscripcionesActivas: number;
-    suscripcionesInactivas: number;
+    suscripcionesPendientes: number;
     pagos: number;
     pagosMes: number;
+    generadoMes: number;
 }
 
 const PIE_COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"];
@@ -75,9 +76,9 @@ export default function AdminDashboard({
     planes = [],
     suscripciones = 0,
     suscripcionesActivas = 0,
-    suscripcionesInactivas = 0,
-    pagos = 0,
+    suscripcionesPendientes = 0,
     pagosMes = 0,
+    generadoMes = 0,
 }: DashboardProps) {
     // Mapeo para el gráfico de barras (Suscripciones por Plan)
     const barChartData = planes.map((p) => ({
@@ -88,7 +89,7 @@ export default function AdminDashboard({
     // Mapeo para el gráfico de torta (Estado de Suscripciones)
     const pieChartData = [
         { name: "Activas", value: suscripcionesActivas },
-        { name: "Inactivas", value: suscripcionesInactivas },
+        { name: "Pendientes", value: suscripcionesPendientes },
     ];
 
     return (
@@ -138,8 +139,13 @@ export default function AdminDashboard({
                                         {clientesActivos}
                                     </span>{" "}
                                     activos /{" "}
+                                    <span className="text-yellow-600 font-semibold">
+                                        {suscripcionesPendientes}
+                                    </span>{" "}
+                                    pendientes /{" "}
                                     <span className="text-red-600 font-semibold">
-                                        {clientesInactivos}
+                                        {clientesInactivos -
+                                            suscripcionesPendientes}
                                     </span>{" "}
                                     inactivos
                                 </p>
@@ -149,7 +155,7 @@ export default function AdminDashboard({
                         <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
                                 <CardTitle className="text-sm font-medium text-gray-700">
-                                    Suscripciones
+                                    Suscripciones Totales (Historico)
                                 </CardTitle>
                                 <CreditCard className="h-4 w-4 text-gray-400" />
                             </CardHeader>
@@ -176,7 +182,7 @@ export default function AdminDashboard({
                                     {pagosMes}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Total histórico: {pagos} registros
+                                    Ingresos generados: ${generadoMes}
                                 </p>
                             </CardContent>
                         </Card>
@@ -184,7 +190,7 @@ export default function AdminDashboard({
                         <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
                                 <CardTitle className="text-sm font-medium text-gray-700">
-                                    Personal Activo
+                                    Entrenadores Activos
                                 </CardTitle>
                                 <Dumbbell className="h-4 w-4 text-gray-400" />
                             </CardHeader>

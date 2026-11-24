@@ -85,6 +85,21 @@ export default function ClientDashboard({
     totalGasto = 0,
     cliente,
 }: ClientDashboardProps) {
+    const getEstadoBadgeClass = (estadoValor: string) => {
+        switch (estadoValor.toLowerCase()) {
+            case "activa":
+                return "bg-emerald-50 text-emerald-700 border-emerald-200";
+            case "pendiente":
+                return "bg-amber-50 text-amber-800 border-amber-200";
+            case "vencida":
+                return "bg-gray-100 text-gray-700 border-gray-200";
+            case "cancelada":
+                return "bg-red-50 text-red-700 border-red-200";
+            default:
+                return "bg-gray-100 text-gray-700 border-gray-200";
+        }
+    };
+
     return (
         <>
             <Head title="Mi Panel - Gimnasio" />
@@ -322,20 +337,9 @@ export default function ClientDashboard({
                                                         </TableCell>
                                                         <TableCell className="px-6 py-4 text-center whitespace-nowrap">
                                                             <Badge
-                                                                variant={
-                                                                    sub.estado ===
-                                                                    "activa"
-                                                                        ? "default"
-                                                                        : "secondary"
-                                                                }
-                                                                className={
-                                                                    sub.estado ===
-                                                                    "activa"
-                                                                        ? "capitalize bg-emerald-600 hover:bg-emerald-600 text-white"
-                                                                        : "capitalize bg-gray-100 text-gray-700 hover:bg-gray-100"
-                                                                }
+                                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getEstadoBadgeClass(sub.estado)}`}
                                                             >
-                                                                {sub.estado}
+                                                                {sub.estado.toUpperCase()}
                                                             </Badge>
                                                         </TableCell>
                                                     </TableRow>

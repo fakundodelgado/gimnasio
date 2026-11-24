@@ -17,7 +17,15 @@ class TrainerDashboardController extends Controller
         $entrenador = $usuario->employee->trainer;
 
         // Traer todos los alumnos para poder mostrarlos
-        $alumnos = Client::with(['user', 'subscriptions' => fn($query) => $query->where('estado', 'activa')->with('plan')])->where('trainer_id', $entrenador->id)->get();
+        $alumnos = Client::with([
+            'user',
+            'subscriptions' => fn($query) => $query
+                ->whereIn('estado', ['activa', 'pendiente'])
+                ->latest('id')
+                ->with('plan'),
+        ])
+            ->where('trainer_id', $entrenador->id)
+            ->get();
 
         // Alumnos actuales y cupos disponibles
         $totalAlumnos = $alumnos->count();

@@ -169,7 +169,7 @@ export default function EmployeeDashboard({
                         <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
                                 <CardTitle className="text-sm font-medium text-gray-700">
-                                    Accesos Validados (30d)
+                                    Accesos Validados (Últimos 30 días)
                                 </CardTitle>
                                 <QrCode className="h-4 w-4 text-indigo-600" />
                             </CardHeader>
@@ -189,7 +189,7 @@ export default function EmployeeDashboard({
                         <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
                                 <CardTitle className="text-sm font-medium text-gray-700">
-                                    Cobros Procesados (30d)
+                                    Cobros Procesados (Últimos 30 días)
                                 </CardTitle>
                                 <DollarSign className="h-4 w-4 text-emerald-600" />
                             </CardHeader>
@@ -209,7 +209,7 @@ export default function EmployeeDashboard({
                         <Card className="shadow-sm border-gray-200 overflow-hidden bg-white">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
                                 <CardTitle className="text-sm font-medium text-gray-700">
-                                    Altas de Planes (30d)
+                                    Altas de Planes (Últimos 30 días)
                                 </CardTitle>
                                 <CreditCard className="h-4 w-4 text-indigo-600" />
                             </CardHeader>
