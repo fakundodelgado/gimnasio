@@ -48,7 +48,7 @@ class Client extends Model
     public function activeSubscription()
     {
         return $this->hasOne(Subscription::class, 'client_id', 'id')
-            ->where('estado', 'activa')
+            ->whereIn('estado', ['activa', 'pendiente'])
             ->latestOfMany();
     }
 
@@ -56,9 +56,7 @@ class Client extends Model
     {
         $suscripcion = $this->ultimaSuscripcion()->with('plan')->first();
 
-        $mantieneEntrenador = $suscripcion
-            && in_array($suscripcion->estado, ['activa', 'pendiente'])
-            && $suscripcion->plan?->incluye_entrenador;
+        $mantieneEntrenador = $suscripcion && in_array($suscripcion->estado, ['activa', 'pendiente']) && $suscripcion->plan?->incluye_entrenador;
 
         if (!$mantieneEntrenador && $this->trainer_id !== null) {
             $this->update(['trainer_id' => null]);

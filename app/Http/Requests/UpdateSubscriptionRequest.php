@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 //use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-//use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rule;
 use Override;
 
 
@@ -36,7 +36,7 @@ class UpdateSubscriptionRequest extends FormRequest
             //'precio' => ['required', 'numeric', 'min:5000', 'max:100000'],
             //'fecha_inicio' => ['required', 'date'],
             //'fecha_fin' => ['required', 'date', 'after_or_equal:fecha_inicio'],
-            //'estado' => ['required', Rule::in([$suscripcion->estado, 'vencida', 'cancelada'])], // los estados se calculan automaticamente
+            'estado' => ['required', Rule::in([$suscripcion->estado, 'vencida', 'cancelada'])],
             'trainer_id' => ['nullable', 'exists:trainers,id'],
         ];
     }

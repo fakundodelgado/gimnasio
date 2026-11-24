@@ -160,7 +160,10 @@ class SubscriptionController extends Controller
     #[Middleware('permission:crear suscripcion')]
     public function create()
     {
-        $clientes = Client::with('user:id,name')->get();
+        $clientes = Client::with('user:id,name')
+            ->whereDoesntHave('subscriptions', function ($query) {
+                $query->whereIn('estado', ['activa', 'pendiente']);
+            })->get();
 
         $planes = Plan::all();
 
@@ -172,8 +175,7 @@ class SubscriptionController extends Controller
                 $query->whereHas('subscriptions', function ($q) {
                     $q->where('estado', 'activa');
                 });
-            }])
-            ->get();
+            }])->get();
 
         return Inertia::render('Suscripciones/Create', ['clientes' => $clientes, 'planes' => $planes, 'inicio' => $inicio, 'entrenadores' => $entrenadores]);
     }
@@ -187,6 +189,15 @@ class SubscriptionController extends Controller
     {
 
         $datos = $request->validated();
+
+        $cliente = Client::findOrFail($datos['client_id']);
+        $tieneSuscripcionValida = $cliente->subscriptions()
+            ->whereIn('estado', ['activa', 'pendiente'])
+            ->exists();
+
+        if ($tieneSuscripcionValida) {
+            return redirect()->back()->with('error', 'El cliente ya tiene una suscripción válida. Revea esa situación antes de crear otra.');
+        }
 
         $fechaInicio = Carbon::today();
         $plan = Plan::findOrFail($datos['plan_id']);
@@ -242,11 +253,7 @@ class SubscriptionController extends Controller
 
             Payment::create(['employee_id' => $empleado->id, 'monto' => $monto, 'fecha_pago' => Carbon::today(), 'subscription_id' => $nueva->id, 'metodo_pago' => $datos['metodo_pago']]);
 
-            if (!$plan->incluye_entrenador) {
-                $cliente->update(['trainer_id' => null]);
-            } else {
-                $cliente->update(['trainer_id' => $datos['trainer_id']]);
-            }
+            $cliente->recalcularEstado();
         });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscripcion creada correctamente.');
@@ -332,14 +339,7 @@ class SubscriptionController extends Controller
         DB::transaction(function () use ($suscripcion, $datos, $plan) {
 
             $suscripcion->update($datos);
-
-            $client = Client::findOrFail($suscripcion->client_id);
-
-            if (!$plan->incluye_entrenador) {
-                $client->update(['trainer_id' => null]);
-            } else {
-                $client->update(['trainer_id' => $datos['trainer_id']]);
-            }
+            $suscripcion->client->recalcularEstado();
         });
 
         return redirect()->route('suscripciones.index')->with('success', 'Suscipcion actualizada correctamente.');

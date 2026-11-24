@@ -43,7 +43,7 @@ class Subscription extends Model
     public function recalcularEstado(): void
     {
         // Para probar
-        if (!in_array($this->estado, ['activa', 'pendiente', 'cancelada'], true)) {
+        if (!in_array($this->estado, ['activa', 'pendiente'], true)) {
             return;
         }
 

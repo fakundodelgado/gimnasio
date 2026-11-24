@@ -225,6 +225,10 @@ class PaymentController extends Controller
             return back()->with('error', 'No se puede restaurar el pago porque la suscripción fue eliminada.');
         }
 
+        if (!$suscripcion->estado === 'cancelada') {
+            return back()->with('error', 'No se puede restaurar pagos en suscripciones canceladas');
+        }
+
         $totalPagadoActual = round((float) $suscripcion->payments()->sum('monto'), 2);
         $precioSuscripcion = round((float) $suscripcion->precio, 2);
         $cantidadPagos     = $suscripcion->payments()->count();
