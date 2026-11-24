@@ -91,14 +91,10 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
         $ultimaColumna = $sheet->getHighestColumn();
         $ultimaFila = $sheet->getHighestRow();
 
-        // Encabezados en negrita, centrados y con fondo gris claro
+        // Encabezados en negrita y con fondo gris claro
         $sheet->getStyle("A1:{$ultimaColumna}1")->applyFromArray([
             'font' => [
                 'bold' => true,
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -119,8 +115,12 @@ class PagosExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
             ]);
         }
 
-        // Bordes finos en toda la tabla resultante
+        // Bordes finos y alineación centrada en toda la tabla resultante
         $sheet->getStyle("A1:{$ultimaColumna}{$ultimaFila}")->applyFromArray([
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
