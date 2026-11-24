@@ -20,7 +20,7 @@ Aplicación web full-stack para la administración integral de un gimnasio (soci
 
 ### 1. Clonar el repositorio e instalar dependencias
 ```bash
-git clone [https://github.com/fakundodelgado/gimnasio.git](https://github.com/fakundodelgado/gimnasio.git)
+git clone https://github.com/fakundodelgado/gimnasio.git
 cd gimnasio
 composer install
 npm install
