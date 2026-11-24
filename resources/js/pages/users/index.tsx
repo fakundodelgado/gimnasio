@@ -131,6 +131,34 @@ export default function Index({ users }: IndexProps) {
                         </Button>
                     </div>
 
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-950">
+                        <span>
+                            Este crud gestiona únicamente cuentas
+                            administrativas (<strong>Super Admin</strong> y{" "}
+                            <strong>Admin</strong>). Para otros perfiles:
+                        </span>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                            <Link
+                                href="/clientes"
+                                className="rounded-md bg-white px-3 py-1.5 font-medium text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-100 transition"
+                            >
+                                Clientes
+                            </Link>
+                            <Link
+                                href="/empleados"
+                                className="rounded-md bg-white px-3 py-1.5 font-medium text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-100 transition"
+                            >
+                                Empleados
+                            </Link>
+                            <Link
+                                href="/entrenadores"
+                                className="rounded-md bg-white px-3 py-1.5 font-medium text-indigo-700 shadow-sm ring-1 ring-indigo-200 hover:bg-indigo-100 transition"
+                            >
+                                Entrenadores
+                            </Link>
+                        </div>
+                    </div>
+
                     {/* Buscador de punta a punta */}
                     <div className="w-full">
                         <input
