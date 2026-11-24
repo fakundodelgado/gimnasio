@@ -1,6 +1,6 @@
 # Sistema de Gestión de Gimnasio
 
-Aplicación web full-stack para la administración integral de un gimnasio (socios, planes, suscripciones, pagos, asignación de entrenadores y reportes en PDF y Excel).
+Aplicación web full-stack para la administración integral de un gimnasio (clientes, empleados, planes, suscripciones, pagos, asignación de entrenadores y reportes en PDF y Excel).
 
 ## Tecnologías
 
