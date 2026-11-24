@@ -516,7 +516,7 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
                                                                         className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                     >
                                                                         <Eye className="w-4 h-4 mr-1.5" />
-                                                                        Ver
+                                                                        Detalles
                                                                     </Link>
                                                                 )}
                                                                 {can(

@@ -526,7 +526,7 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                                                     className="inline-flex items-center whitespace-nowrap font-semibold text-emerald-700 hover:text-emerald-800 cursor-pointer"
                                                                 >
                                                                     <RotateCcw className="w-4 h-4 mr-1.5" />
-                                                                    Restaurar
+                                                                    Dar de alta
                                                                 </button>
                                                             ) : (
                                                                 <div className="inline-flex items-center justify-center gap-3 whitespace-nowrap">
@@ -538,7 +538,7 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                                                             className="inline-flex items-center whitespace-nowrap font-medium text-gray-700 hover:text-indigo-600"
                                                                         >
                                                                             <Eye className="w-4 h-4 mr-1.5" />
-                                                                            Ver
+                                                                            Detalles
                                                                         </Link>
                                                                     )}
                                                                     {can(
@@ -565,7 +565,9 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                                                                             className="inline-flex items-center whitespace-nowrap font-medium text-red-600 hover:text-red-800 cursor-pointer"
                                                                         >
                                                                             <Trash2 className="w-4 h-4 mr-1.5" />
-                                                                            Eliminar
+                                                                            Dar
+                                                                            de
+                                                                            baja
                                                                         </button>
                                                                     )}
                                                                 </div>
