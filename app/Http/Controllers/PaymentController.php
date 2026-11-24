@@ -72,9 +72,9 @@ class PaymentController extends Controller
         $saldoPendiente = round((float) $suscripcion->precio - $totalPagadoPrevio, 2);
 
         // Este es un caso medio fino, pero puede evitar problemas por pagos medio simultaneos al mismo cliente
-        if ($suscripcion->estado !== 'pendiente') {
+        if ($suscripcion->estado !== 'pendiente' || $suscripcion->payments()->count() >= 2) {
             return back()->withErrors([
-                'subscription_id' => 'Solo se pueden registrar pagos en suscripciones pendientes.'
+                'subscription_id' => 'Esta suscripción no admite más pagos (ya está saldada o alcanzó el máximo de 2 pagos).',
             ]);
         }
 
