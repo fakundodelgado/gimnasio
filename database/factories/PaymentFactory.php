@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Payment;
 use App\Models\Employee;
+use App\Models\Payment;
 use App\Models\Subscription;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,41 +12,45 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class PaymentFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
-
-        $empleado = Employee::factory();
-        $subscripcion = Subscription::factory();
-
         return [
+            'employee_id' => fn() => Employee::whereHas('user', fn($q) => $q->role('employee'))
+                ->inRandomOrder()
+                ->first()?->id ?? Employee::factory(),
+            'subscription_id' => Subscription::factory(),
+            'fecha_pago' => function (array $attr) {
+                $sub = is_numeric($attr['subscription_id'])
+                    ? Subscription::withTrashed()->find($attr['subscription_id'])
+                    : null;
 
-            'employee_id' => $empleado,
-            'subscription_id' => $subscripcion,
-            'fecha_pago' => fake()->dateTimeBetween('-1 month', 'now'),
-            'metodo_pago' => fake()->randomElement(['efectivo', 'transferencia', 'terjeta']),
-            // Aqui se complica un poco, lo que quiero es obtener el valor de la subscription (total a pagar)
-            'monto' => function (array $atributos) {
-                return Subscription::find($atributos['subscription_id'])?->precio ?? fake()->randomFloat(2,10000,50000);
-            }
-            
+                return $sub?->fecha_inicio ?? now()->format('Y-m-d');
+            },
+            'metodo_pago' => fake()->randomElement(['efectivo', 'transferencia', 'tarjeta']),
+            'monto' => function (array $attr) {
+                $sub = is_numeric($attr['subscription_id'])
+                    ? Subscription::withTrashed()->find($attr['subscription_id'])
+                    : null;
+
+                return $sub?->precio ?? 25000;
+            },
         ];
     }
 
-    public function parcial(float $porcentaje = 0.5): static
+    public function parcial(): static
     {
-        return $this->state(function (array $attributes) use ($porcentaje) {
-            $precioBase = Subscription::find($attributes['subscription_id'])?->precio ?? 10000; 
-            // el ? es como el coalesce que vemos en base de datos, si el valor llega a ser nulo manda un 10000.
-            // Esto se debe mas a un tecnicismo de las factories mas que de un caso que pueda llegar a pasar en la vida real por como defini la BD.
-            return [
-                'monto' => $precioBase * $porcentaje,
-            ];
-        });
+        return $this->state(fn(array $attr) => [
+            'monto' => function (array $finalAttr) {
+                $sub = Subscription::withTrashed()->find($finalAttr['subscription_id']);
+                return round(($sub?->precio ?? 25000) / 2, 2);
+            },
+        ]);
     }
 
+    public function anulado(): static
+    {
+        return $this->state(fn(array $attr) => [
+            'deleted_at' => now(),
+        ]);
+    }
 }

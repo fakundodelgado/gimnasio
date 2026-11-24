@@ -216,7 +216,7 @@ class RolesAndPermissionsSeeder extends Seeder
             //'restaurar cliente', 
 
             // Solo su entrenador
-            'mostrar entrenador',  // Tendria sentido que pueda ver el perfil de su entrenador asignado.
+            // 'mostrar entrenador',  // Tendria sentido que pueda ver el perfil de su entrenador asignado.
 
             // Propias.
             'listar suscripciones',
@@ -277,7 +277,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'mostrar cliente',
 
             // Su propia ficha.
-            'mostrar entrenador',
+            //'mostrar entrenador',
 
             // Para poder aconsejar a los alumnos.
             'listar planes',
@@ -285,6 +285,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Por las dudas, para poder dar una mano.
             'crear ingreso',
+            'listar ingresos',
 
         ]);
 

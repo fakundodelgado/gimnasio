@@ -15,7 +15,7 @@ class TrainerSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(3)->create()->each(function ($user) {
+        User::factory(4)->create()->each(function ($user) {
 
             $user->assignRole('trainer');
 

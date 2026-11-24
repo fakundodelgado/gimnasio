@@ -3,8 +3,9 @@
 namespace Database\Factories;
 
 use App\Models\Client;
-use App\Models\Subscription;
 use App\Models\Plan;
+use App\Models\Subscription;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,56 +13,63 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class SubscriptionFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
-        $fecha_inicio = fake()->dateTimeBetween('-2 month', 'now'); // Fecha entre dos meses anteriores y el dia de hoy, a now tambien pongo como cadena
-        $plan = Plan::factory();
-
         return [
             'client_id' => Client::factory(),
-            'plan_id' => $plan,
-            'precio' => fake()->randomFloat(2, 5000, 50000),
-            'fecha_inicio' => $fecha_inicio->format('Y-m-d'), //Year-month-day
-            'fecha_fin' => (clone $fecha_inicio)->modify('+30 days')->format('Y-m-d'),
-            'estado' => fake()->randomElement(['activa', 'vencida', 'cancelada', 'pendiente']),
+            'plan_id' => Plan::inRandomOrder()->first()?->id ?? Plan::factory(),
+            'precio' => fn(array $attr) => Plan::find(value($attr['plan_id']))?->precio ?? 25000,
+            'fecha_inicio' => now()->format('Y-m-d'),
+            'fecha_fin' => function (array $attr) {
+                $duracion = Plan::find(value($attr['plan_id']))?->duracion ?? 30;
+                return Carbon::parse($attr['fecha_inicio'])->addDays($duracion)->format('Y-m-d');
+            },
+            'estado' => 'activa',
         ];
     }
 
-    // Las funciones de abajo son conocidas como states, me permiten controlar hasta cierto punto los datos que se genera, además me ayudan a evitar
-    // inconsistencias, por ejemplo, un estado vencido pero con fecha de inicio el dia de ayer.
-
-    public function activa(): static
+    public function activa(?int $diasTranscurridos = null): static
     {
-        return $this->state(function (array $attributes) {
-            $inicio = now()->subDays(fake()->numberBetween(1, 15));
+        return $this->state(function (array $attr) use ($diasTranscurridos) {
+            $duracion = Plan::find(value($attr['plan_id']))?->duracion ?? 30;
+            $dias = $diasTranscurridos ?? fake()->numberBetween(1, max(1, $duracion - 5));
+
             return [
                 'estado' => 'activa',
-                'fecha_inicio' => $inicio->format('Y-m-d'),
-                'fecha_fin' => (clone $inicio)->modify('+30 days')->format('Y-m-d'),
+                'fecha_inicio' => now()->subDays($dias)->format('Y-m-d'),
+            ];
+        });
+    }
+
+    public function pendiente(?int $diasTranscurridos = null): static
+    {
+        return $this->state(function (array $attr) use ($diasTranscurridos) {
+            $duracion = Plan::find(value($attr['plan_id']))?->duracion ?? 30;
+            $dias = $diasTranscurridos ?? fake()->numberBetween(1, (int) floor($duracion / 2));
+
+            return [
+                'estado' => 'pendiente',
+                'fecha_inicio' => now()->subDays($dias)->format('Y-m-d'),
             ];
         });
     }
 
     public function vencida(): static
     {
-        return $this->state(function (array $attributes) {
-            $inicio = now()->subDays(fake()->numberBetween(40, 90));
+        return $this->state(function (array $attr) {
+            $duracion = Plan::find(value($attr['plan_id']))?->duracion ?? 30;
+            $dias = $duracion + fake()->numberBetween(5, 45);
+
             return [
                 'estado' => 'vencida',
-                'fecha_inicio' => $inicio->format('Y-m-d'),
-                'fecha_fin' => (clone $inicio)->modify('+30 days')->format('Y-m-d'),
+                'fecha_inicio' => now()->subDays($dias)->format('Y-m-d'),
             ];
         });
     }
 
     public function cancelada(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn(array $attr) => [
             'estado' => 'cancelada',
         ]);
     }

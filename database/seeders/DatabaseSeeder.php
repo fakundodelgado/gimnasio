@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             SubscriptionSeeder::class,
             PaymentSeeder::class,
+            IngresoSeeder::class,
             CarouselSeeder::class,
         ]);
     }

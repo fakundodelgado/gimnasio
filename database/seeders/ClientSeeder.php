@@ -11,7 +11,7 @@ class ClientSeeder extends Seeder
     public function run(): void
     {
 
-        User::factory(30)->create()->each(function ($user) {
+        User::factory(25)->create()->each(function ($user) {
 
             $user->assignRole('client');
 

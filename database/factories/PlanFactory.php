@@ -18,15 +18,9 @@ class PlanFactory extends Factory
     public function definition(): array
     {
         return [
-            'precio' => fake()->randomFloat(2, 10000, 50000),
-            'nombre' => fake()->unique()->randomElement([
-                'Pase Libre Mensual',
-                'Musculación Estándar',
-                'Plan Trimestral',
-                'Plan Anual Premium',
-                'Pase Estudiantil'
-            ]),
-            'descripcion' => fake()->paragraph(),
+            'precio' => fake()->randomElement([20000, 25000, 35000, 50000, 60000]),
+            'nombre' => 'Plan ' . ucfirst(fake()->words(2, true)),
+            'descripcion' => fake()->sentence(10),
             'duracion' => fake()->randomElement([30, 90, 180]),
             'incluye_entrenador' => fake()->boolean(),
         ];

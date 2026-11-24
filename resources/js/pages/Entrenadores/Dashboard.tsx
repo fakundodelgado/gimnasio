@@ -134,16 +134,6 @@ export default function TrainerDashboard({
                                 </span>
                             </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Button
-                                asChild
-                                className="w-full sm:w-auto shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                                <Link href={`/entrenadores/${entrenador.id}`}>
-                                    Perfil
-                                </Link>
-                            </Button>
-                        </div>
                     </div>
 
                     {/* Tarjetas de Métricas Principales */}
