@@ -50,9 +50,20 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        if (!$user->hasRole('client')) {
+            return back()->with('error', 'Usted no tiene permitido eliminar su cuenta, comuniquese con quien corresponda.');
+        }
+
+        $cliente = $user->client;
+
         Auth::logout();
 
-        $user->delete();
+        DB::transaction(function () use ($user, $cliente) {
+            $cliente->trainer_id = null;
+            $cliente->save();
+            $cliente->delete();
+            $user->delete();
+        });
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -335,7 +335,7 @@ export default function Index({ users }: IndexProps) {
                 isDeleting={isDeleting}
                 title="¿Eliminar usuario?"
                 itemLabel={users.find((u) => u.id === idSeleccionado)?.name}
-                description="Esta acción borrará la cuenta permanentemente y no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar usuario"
             />
         </>

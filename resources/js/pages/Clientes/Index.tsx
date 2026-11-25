@@ -777,7 +777,7 @@ export default function Index({
                 onOpenChange={setIsRestoreModalOpen}
                 onConfirm={ejecutarRestauracion}
                 isRestoring={isRestoring}
-                title="¿Restaurar cliente?"
+                title="¿Dar de alta al cliente?"
                 itemLabel={clienteARestaurar?.user?.name}
                 description="El cliente volverá a estar activo en el sistema."
                 confirmText="Sí, restaurar cliente"
@@ -788,9 +788,9 @@ export default function Index({
                 onOpenChange={setIsModalOpen}
                 onConfirm={ejecutarEliminacion}
                 isDeleting={isDeleting}
-                title="¿Eliminar cliente?"
+                title="¿Dar de baja al cliente?"
                 itemLabel={clienteSeleccionado?.user?.name}
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?."
                 confirmText="Sí, eliminar cliente"
             />
         </>

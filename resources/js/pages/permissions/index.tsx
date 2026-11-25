@@ -417,7 +417,7 @@ export default function Index({ permissions }: IndexProps) {
                         </div>
                         <AlertDialogDescription className="text-sm text-gray-500 leading-relaxed">
                             Estás a punto de borrar este permiso
-                            permanentemente. Esta acción no se puede deshacer.
+                            permanentemente. ¿Desea continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="mt-4 gap-2 sm:gap-2">

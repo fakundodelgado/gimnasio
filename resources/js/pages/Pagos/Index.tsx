@@ -890,13 +890,13 @@ export default function Index({
                 onOpenChange={setIsModalOpen}
                 onConfirm={ejecutarEliminacion}
                 isDeleting={isDeleting}
-                title="¿Eliminar pago?"
+                title="¿Anular pago?"
                 itemLabel={
                     pagoSeleccionado
                         ? `Pago #${pagoSeleccionado.id}`
                         : undefined
                 }
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar pago"
             />
         </>

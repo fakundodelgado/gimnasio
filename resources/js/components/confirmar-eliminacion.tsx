@@ -28,7 +28,7 @@ export function ConfirmDeleteDialog({
     onConfirm,
     isDeleting = false,
     title,
-    description = "Esta acción no se puede deshacer.",
+    description = "¿Desea continuar?",
     itemLabel,
     confirmText = "Sí, eliminar",
     cancelText = "Volver",

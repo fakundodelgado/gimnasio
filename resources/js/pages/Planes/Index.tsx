@@ -653,7 +653,7 @@ export default function Index({ planes, duraciones, filtros, esAdmin }: Props) {
                 isDeleting={isDeleting}
                 title="¿Eliminar plan?"
                 itemLabel={planSeleccionado?.nombre}
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar plan"
             />
         </>

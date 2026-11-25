@@ -665,7 +665,7 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                 onOpenChange={setIsRestoreModalOpen}
                 onConfirm={ejecutarRestauracion}
                 isRestoring={isRestoring}
-                title="¿Restaurar empleado?"
+                title="¿Dar de alta al empleado?"
                 itemLabel={empleadoARestaurar?.user?.name}
                 description="El empleado volverá a estar activo en el sistema."
                 confirmText="Sí, restaurar empleado"
@@ -676,9 +676,9 @@ export default function Index({ empleados, filtros, esAdmin }: Props) {
                 onOpenChange={setIsModalOpen}
                 onConfirm={ejecutarEliminacion}
                 isDeleting={isDeleting}
-                title="¿Eliminar empleado?"
+                title="¿Dar de baja al empleado?"
                 itemLabel={empleadoSeleccionado?.user?.name}
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar empleado"
             />
         </>

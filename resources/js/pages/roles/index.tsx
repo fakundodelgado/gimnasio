@@ -316,7 +316,7 @@ export default function Index({ roles }: { roles: Role[] }) {
                         </div>
                         <AlertDialogDescription className="text-sm text-gray-500 leading-relaxed">
                             Estás a punto de borrar este rol permanentemente.
-                            Esta acción no se puede deshacer.
+                            ¿Desea continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="mt-4 gap-2 sm:gap-2">

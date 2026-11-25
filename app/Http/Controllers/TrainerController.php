@@ -214,6 +214,12 @@ class TrainerController extends Controller
 
             $user = $entrenador->employee->user;
             $empleado = $entrenador->employee;
+            $clientes = $entrenador->clients();
+
+            foreach ($clientes as $cliente) {
+                $cliente->trainer_id = null;
+                $cliente->save();
+            }
 
             $entrenador->delete();
 

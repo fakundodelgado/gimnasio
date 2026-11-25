@@ -307,6 +307,9 @@ class ClientController extends Controller
 
             $user = $cliente->user;
 
+            $cliente->trainer_id = null;
+            $cliente->save();
+
             $cliente->delete();
 
             $userService->deleteUser($user);

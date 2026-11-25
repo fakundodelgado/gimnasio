@@ -631,7 +631,7 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                 onOpenChange={setIsRestoreModalOpen}
                 onConfirm={ejecutarRestauracion}
                 isRestoring={isRestoring}
-                title="¿Restaurar entrenador?"
+                title="¿Dar de alta al entrenador?"
                 itemLabel={entrenadorARestaurar?.employee?.user?.name}
                 description="El entrenador volverá a estar activo en el sistema."
                 confirmText="Sí, restaurar entrenador"
@@ -642,9 +642,9 @@ export default function Index({ entrenadores, filtros, esAdmin }: IndexProps) {
                 onOpenChange={setIsModalOpen}
                 onConfirm={ejecutarEliminacion}
                 isDeleting={isDeleting}
-                title="¿Eliminar entrenador?"
+                title="¿Dar de baja al entrenador?"
                 itemLabel={entrenadorSeleccionado?.employee?.user?.name}
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar entrenador"
             />
         </>

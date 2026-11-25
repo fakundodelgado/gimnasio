@@ -824,13 +824,13 @@ export default function Index({
                 onOpenChange={setIsModalOpen}
                 onConfirm={ejecutarEliminacion}
                 isDeleting={isDeleting}
-                title="¿Eliminar suscripción?"
+                title="¿Anular suscripción?"
                 itemLabel={
                     suscripcionSeleccionada
                         ? `Suscripción #${suscripcionSeleccionada.id}${suscripcionSeleccionada.client?.user?.name ? ` (${suscripcionSeleccionada.client?.user?.name})` : ""}`
                         : undefined
                 }
-                description="Esta acción no se puede deshacer."
+                description="¿Desea continuar?"
                 confirmText="Sí, eliminar suscripción"
             />
         </>
